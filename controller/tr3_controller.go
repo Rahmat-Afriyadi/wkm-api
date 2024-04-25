@@ -37,6 +37,7 @@ func (tr *tr3Controller) ExportDataWaBlast(ctx *fiber.Ctx) error {
 }
 
 func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
+	success := true
 	var wg sync.WaitGroup
 	form, err := ctx.MultipartForm()
 	if err != nil { /* handle error */
@@ -50,16 +51,18 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 				file, err := fileHeader.Open()
 				if err != nil {
 					fmt.Println("ini errornya ", err)
-					panic(err)
 				}
 				xlsx, err := excelize.OpenReader(file)
 				if err != nil {
 					fmt.Println("ini errornya ", err)
-					panic(err)
 				}
 				rows := xlsx.GetRows(xlsx.GetSheetName(1))
 				var datas []repository.ParamsUpdateJenisBayar
 				for _, v := range rows[2:] {
+					if len(v) < 9 {
+						success = false
+						continue
+					}
 					datas = append(datas, repository.ParamsUpdateJenisBayar{
 						NoTandaTerima: v[8],
 						NamaCustomer:  v[1],
@@ -70,7 +73,9 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 		}
 	}
 	wg.Wait()
-	fmt.Println("Edit sukses")
-	return ctx.JSON(map[string]string{"message": "Data berhasil di update"})
+	if success {
+		return ctx.Status(200).JSON(map[string]string{"message": "Data berhasil di update"})
+	}
+	return ctx.Status(400).JSON(map[string]string{"message": "Periksa kembali format file anda"})
 
 }
