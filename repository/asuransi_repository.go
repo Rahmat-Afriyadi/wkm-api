@@ -51,13 +51,13 @@ func (lR *asuransiRepository) MasterData() []entity.MasterAsuransi {
 func (lR *asuransiRepository) FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi {
 	var data entity.MasterAsuransi
 	ctx := context.Background()
-	query := "select no_msn NoMsn, nm_customer11 NamaCustomer, no_wa NoTelepon, sts_renewal Status from asuransi where no_msn = ?"
+	query := "select no_msn NoMsn, nm_customer11 NamaCustomer, no_wa NoTelepon, sts_renewal Status, alasan  from asuransi where no_msn = ?"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		panic(err)
 	}
 	row := statement.QueryRow(no_msn)
-	err = row.Scan(&data.NoMsn, &data.NamaCustomer, &data.NoTelepon, &data.Status)
+	err = row.Scan(&data.NoMsn, &data.NamaCustomer, &data.NoTelepon, &data.Status, &data.Alasan)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
 		panic(err)
@@ -67,19 +67,8 @@ func (lR *asuransiRepository) FindAsuransiByNoMsn(no_msn string) entity.MasterAs
 }
 
 func (lR *asuransiRepository) UpdateAsuransi(dataUpdate entity.MasterAsuransi) entity.MasterAsuransi {
-	// var data entity.MasterAsuransi
-	// ctx := context.Background()
-	// query := "select no_msn NoMsn, nm_customer11 NamaCustomer, no_wa NoTelepon, sts_renewal Status from asuransi where no_msn = ?"
-	// statement, err := lR.conn.PrepareContext(ctx, query)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// row := statement.QueryRow(no_msn)
-	// err = row.Scan(&data.NoMsn, &data.NamaCustomer, &data.NoTelepon, &data.Status)
-	// if err != nil {
-	// 	fmt.Println("errornya di rows ", err)
-	// 	panic(err)
-	// }
+	ctx := context.Background()
+	lR.conn.ExecContext(ctx, "UPDATE asuransi set sts_renewal=?, alasan=? where no_msn=? ", dataUpdate.Status, dataUpdate.Alasan, dataUpdate.NoMsn)
 
 	return dataUpdate
 }

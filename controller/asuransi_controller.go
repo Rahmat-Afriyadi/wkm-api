@@ -38,6 +38,7 @@ func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {
 func (tr *asuransiController) UpdateAsuransi(ctx *fiber.Ctx) error {
 	var asuransi entity.MasterAsuransi
 	err := ctx.BodyParser(&asuransi)
+	fmt.Println("ini body ", asuransi)
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
