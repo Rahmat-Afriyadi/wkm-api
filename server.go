@@ -32,6 +32,10 @@ var (
 	userRepository repository.UserRepository = repository.NewUserRepository(conn)
 	authService    service.AuthService       = service.NewAuthService(userRepository)
 	authController controller.AuthController = controller.NewAuthController(authService)
+
+	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(conn)
+	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository)
+	asuransiController controller.AsuransiController = controller.NewAsuransiController(asuransiService)
 )
 
 func main() {
@@ -64,6 +68,10 @@ func main() {
 	app.Post("/edit-jenis-bayar", middleware.DeserializeUser, tr3Controller.EditJenisBayar)
 	app.Get("/leas/master-data", middleware.DeserializeUser, leasController.MasterData)
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)
+
+	app.Get("/asuransi/master-data", middleware.DeserializeUser, asuransiController.MasterData)
+	app.Post("/asuransi/update", middleware.DeserializeUser, asuransiController.UpdateAsuransi)
+	app.Get("/asuransi/:no_msn", middleware.DeserializeUser, asuransiController.FindAsuransiByNoMsn)
 
 	// app.Use(jwtware.New(jwtware.Config{
 	// 	SigningKey: jwtware.SigningKey{Key: []byte("DE6ED21B4E643161949DFCE42DABC")},

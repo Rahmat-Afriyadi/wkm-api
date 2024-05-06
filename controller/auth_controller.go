@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"time"
 	"wkm/request"
 	"wkm/service"
@@ -48,7 +47,6 @@ func (aC *authController) SignInUser(c *fiber.Ctx) error {
 	message := "Invalid email or password"
 
 	user, err := aC.aS.SignInUser(payload)
-	fmt.Println("ini usersnya guys ", user)
 	if err != nil {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": err})
 	}

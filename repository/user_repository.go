@@ -94,23 +94,23 @@ func (lR *userRepository) FindByUsername(username string) entity.User {
 		panic(err)
 	}
 
-	query_permissions := "select permission_type from wkms_permissions where user_id=?"
-	statement_permission, err := lR.conn.PrepareContext(ctx, query_permissions)
-	if err != nil {
-		panic(err)
-	}
-	rows, err := statement_permission.QueryContext(ctx, data.ID)
-	if err != nil {
-		panic(err)
-	}
-	for rows.Next() {
-		var permission string
-		if err := rows.Scan(&permission); err != nil {
-			fmt.Println("Error scanning row:", err)
-			continue
-		}
-		data.Permissions = append(data.Permissions, permission)
-	}
+	// query_permissions := "select permission_type from wkms_permissions where user_id=?"
+	// statement_permission, err := lR.conn.PrepareContext(ctx, query_permissions)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// rows, err := statement_permission.QueryContext(ctx, data.ID)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// for rows.Next() {
+	// 	var permission string
+	// 	if err := rows.Scan(&permission); err != nil {
+	// 		fmt.Println("Error scanning row:", err)
+	// 		continue
+	// 	}
+	// 	data.Permissions = append(data.Permissions, permission)
+	// }
 
 	return data
 }
