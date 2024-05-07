@@ -40,6 +40,10 @@ var (
 	kodeposRepository repository.KodeposRepository = repository.NewKodeposRepository(conn)
 	kodeposService    service.KodeposService       = service.NewKodeposService(kodeposRepository)
 	kodeposController controller.KodeposController = controller.NewKodeposController(kodeposService)
+
+	dlrRepository repository.DlrRepository = repository.NewDlrRepository(conn)
+	dlrService    service.DlrService       = service.NewDlrService(dlrRepository)
+	dlrController controller.DlrController = controller.NewDlrController(dlrService)
 )
 
 func main() {
@@ -78,6 +82,7 @@ func main() {
 	app.Get("/asuransi/:no_msn", middleware.DeserializeUser, asuransiController.FindAsuransiByNoMsn)
 
 	app.Get("/kodepos/master-data", middleware.DeserializeUser, kodeposController.MasterData)
+	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
 	// app.Use(jwtware.New(jwtware.Config{
 	// 	SigningKey: jwtware.SigningKey{Key: []byte("DE6ED21B4E643161949DFCE42DABC")},
 	// 	ErrorHandler: func(c *fiber.Ctx, err error) error {
