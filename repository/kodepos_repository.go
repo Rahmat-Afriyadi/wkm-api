@@ -23,7 +23,7 @@ func NewKodeposRepository(conn *sql.DB) KodeposRepository {
 
 func (lR *kodeposRepository) MasterData(search string) []entity.MasterKodepos {
 	fmt.Println("ini query ", search)
-	var datas []entity.MasterKodepos
+	datas := []entity.MasterKodepos{}
 	ctx := context.Background()
 	query := "select kd_pos, kodepos, kelurahan, kecamatan from kodepos where kodepos like ? or kelurahan like ? or kecamatan like ?"
 	statement, err := lR.conn.PrepareContext(ctx, query)

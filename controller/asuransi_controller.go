@@ -39,9 +39,13 @@ func (tr *asuransiController) UpdateAsuransi(ctx *fiber.Ctx) error {
 	var asuransi entity.MasterAsuransi
 	err := ctx.BodyParser(&asuransi)
 	fmt.Println("ini body ", asuransi)
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	asuransi.KdUser = details.Username
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
+	tr.asuransiService.UpdateAsuransi(asuransi)
 	return ctx.JSON(tr.asuransiService.UpdateAsuransi(asuransi))
 
 }

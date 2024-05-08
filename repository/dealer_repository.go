@@ -23,7 +23,7 @@ func NewDlrRepository(conn *sql.DB) DlrRepository {
 
 func (lR *dlrRepository) MasterData(search string) []entity.MasterDlr {
 	fmt.Println("ini query ", search)
-	var datas []entity.MasterDlr
+	datas := []entity.MasterDlr{}
 	ctx := context.Background()
 	query := "select kd_dlr, nm_dlr from mst_dealer where kd_dlr like ? or nm_dlr like ? "
 	statement, err := lR.conn.PrepareContext(ctx, query)
