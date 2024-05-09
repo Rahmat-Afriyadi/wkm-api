@@ -27,12 +27,12 @@ func (lR *leasRepository) MasterData() []entity.MasterLeas {
 	query := "select no_leas2, nm_leasing from mst_leasing where no_leas2 != ''"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	rows, err := statement.QueryContext(ctx)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
-		panic(err)
+		fmt.Println(err)
 	}
 
 	for rows.Next() {

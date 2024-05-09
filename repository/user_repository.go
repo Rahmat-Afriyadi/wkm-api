@@ -33,12 +33,12 @@ func (lR *userRepository) FindById(id uint32) entity.User {
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println("errror disini")
-		panic(err)
+		fmt.Println(err)
 	}
 	err = statement.QueryRow(id).Scan(&data.ID, &data.Name, &data.Username, &data.Password, &data.Group)
 	if err != nil {
 		fmt.Println("errornya di roww ", err)
-		panic(err)
+		fmt.Println(err)
 	}
 
 	return data
@@ -50,12 +50,12 @@ func (lR *userRepository) MasterData() []entity.User {
 	query := "select * from mst_users"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	rows, err := statement.QueryContext(ctx)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
-		panic(err)
+		fmt.Println(err)
 	}
 
 	for rows.Next() {
@@ -86,22 +86,22 @@ func (lR *userRepository) FindByUsername(username string) entity.User {
 	query := "select id, name, username, password2, 'group' from users_wkms where username=?"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	row := statement.QueryRow(username)
 	err = row.Scan(&data.ID, &data.Name, &data.Username, &data.Password, &data.Group)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 
 	// query_permissions := "select permission_type from wkms_permissions where user_id=?"
 	// statement_permission, err := lR.conn.PrepareContext(ctx, query_permissions)
 	// if err != nil {
-	// 	panic(err)
+	// 	fmt.Println(err)
 	// }
 	// rows, err := statement_permission.QueryContext(ctx, data.ID)
 	// if err != nil {
-	// 	panic(err)
+	// 	fmt.Println(err)
 	// }
 	// for rows.Next() {
 	// 	var permission string

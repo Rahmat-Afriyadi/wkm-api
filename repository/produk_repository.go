@@ -28,12 +28,12 @@ func (lR *produkRepository) MasterData(search string) []entity.MasterProduk {
 	query := "select kd_produk, nm_produk from produk "
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	rows, err := statement.QueryContext(ctx)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
-		panic(err)
+		fmt.Println(err)
 	}
 	for rows.Next() {
 		var data entity.MasterProduk

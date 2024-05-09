@@ -28,12 +28,12 @@ func (lR *kodeposRepository) MasterData(search string) []entity.MasterKodepos {
 	query := "select kd_pos, kodepos, kelurahan, kecamatan from kodepos where kodepos like ? or kelurahan like ? or kecamatan like ?"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	rows, err := statement.QueryContext(ctx, "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
-		panic(err)
+		fmt.Println(err)
 	}
 	for rows.Next() {
 		var data entity.MasterKodepos

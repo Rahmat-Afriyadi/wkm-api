@@ -27,12 +27,12 @@ func (lR *kerjaRepository) MasterData() []entity.MasterKerja {
 	query := "select kode_kerja2, nm_kerja from mst_kerja where kode_kerja2 != ''"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	rows, err := statement.QueryContext(ctx)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
-		panic(err)
+		fmt.Println(err)
 	}
 
 	for rows.Next() {

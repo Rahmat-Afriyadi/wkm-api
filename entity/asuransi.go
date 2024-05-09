@@ -3,6 +3,7 @@ package entity
 type MasterAsuransi struct {
 	NoMsn             string  `form:"no_msn" json:"no_msn"`
 	NamaCustomer      string  `form:"nama_customer" json:"nama_customer"`
+	NamaMotor         string  `form:"nama_motor" json:"nama_motor"`
 	NoTelepon         string  `form:"no_telepon" json:"no_telepon"`
 	Status            string  `form:"status" json:"status"`
 	AlasanPending     *string `form:"alasan_pending" json:"alasan_pending"`
