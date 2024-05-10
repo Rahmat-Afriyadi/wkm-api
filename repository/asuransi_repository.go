@@ -79,13 +79,13 @@ func (lR *asuransiRepository) MasterDataPending() []entity.MasterAsuransi {
 func (lR *asuransiRepository) FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi {
 	var data entity.MasterAsuransi
 	ctx := context.Background()
-	query := "select no_msn NoMsn, nm_customer11, nm_mtr, no_wa, sts_asuransi, alasan_pending, alasan_tdk_berminat,kd_dlr, nm_dlr, kelurahan, kecamatan, kodepos, jns_brg, harga from asuransi where no_msn = ? "
+	query := "select no_msn NoMsn, nm_customer11, nm_mtr, tgl_faktur, no_wa, sts_asuransi, alasan_pending, alasan_tdk_berminat,kd_dlr, nm_dlr, kelurahan, kecamatan, kodepos, jns_brg, harga from asuransi where no_msn = ? "
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)
 	}
 	row := statement.QueryRow(no_msn)
-	err = row.Scan(&data.NoMsn, &data.NamaCustomer, &data.NamaMotor, &data.NoTelepon, &data.Status, &data.AlasanPending, &data.AlasanTdkBerminat, &data.KdDlr, &data.NmDlr, &data.Kelurahan, &data.Kecamatan, &data.Kodepos, &data.JnsBrg, &data.Harga)
+	err = row.Scan(&data.NoMsn, &data.NamaCustomer, &data.NamaMotor, &data.TglFaktur, &data.NoTelepon, &data.Status, &data.AlasanPending, &data.AlasanTdkBerminat, &data.KdDlr, &data.NmDlr, &data.Kelurahan, &data.Kecamatan, &data.Kodepos, &data.JnsBrg, &data.Harga)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
 		fmt.Println(err)
