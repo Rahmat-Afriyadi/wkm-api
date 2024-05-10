@@ -17,6 +17,7 @@ import (
 
 var (
 	conn          *sql.DB                  = config.GetConnection()
+	connAsuransi  *sql.DB                  = config.GetConnectionAsuransi()
 	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
 	tr3Controller controller.Tr3Controller = controller.NewTr3Controller(tr3Service)
@@ -33,19 +34,19 @@ var (
 	authService    service.AuthService       = service.NewAuthService(userRepository)
 	authController controller.AuthController = controller.NewAuthController(authService)
 
-	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(conn)
+	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(connAsuransi)
 	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository)
 	asuransiController controller.AsuransiController = controller.NewAsuransiController(asuransiService)
 
-	kodeposRepository repository.KodeposRepository = repository.NewKodeposRepository(conn)
+	kodeposRepository repository.KodeposRepository = repository.NewKodeposRepository(connAsuransi)
 	kodeposService    service.KodeposService       = service.NewKodeposService(kodeposRepository)
 	kodeposController controller.KodeposController = controller.NewKodeposController(kodeposService)
 
-	dlrRepository repository.DlrRepository = repository.NewDlrRepository(conn)
+	dlrRepository repository.DlrRepository = repository.NewDlrRepository(connAsuransi)
 	dlrService    service.DlrService       = service.NewDlrService(dlrRepository)
 	dlrController controller.DlrController = controller.NewDlrController(dlrService)
 
-	produkRepository repository.ProdukRepository = repository.NewProdukRepository(conn)
+	produkRepository repository.ProdukRepository = repository.NewProdukRepository(connAsuransi)
 	produkService    service.ProdukService       = service.NewProdukService(produkRepository)
 	produkController controller.ProdukController = controller.NewProdukController(produkService)
 )
