@@ -8,6 +8,8 @@ type MasterAsuransi struct {
 	NoTelepon         string  `form:"no_telepon" json:"no_telepon"`
 	Status            string  `form:"status" json:"status"`
 	AlasanPending     *string `form:"alasan_pending" json:"alasan_pending"`
+	StatusBayar       *string `form:"status_bayar" json:"status_bayar"`
+	TglBayar          *string `form:"tgl_bayar" json:"tgl_bayar"`
 	KdUser            string
 	AlasanTdkBerminat *string `form:"alasan_tdk_berminat" json:"alasan_tdk_berminat"`
 	KdDlr             *string `form:"kd_dlr" json:"kd_dlr"`

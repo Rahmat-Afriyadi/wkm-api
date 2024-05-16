@@ -11,6 +11,7 @@ import (
 type AsuransiController interface {
 	MasterData(ctx *fiber.Ctx) error
 	MasterDataPending(ctx *fiber.Ctx) error
+	MasterDataOke(ctx *fiber.Ctx) error
 	FindAsuransiByNoMsn(ctx *fiber.Ctx) error
 	UpdateAsuransi(ctx *fiber.Ctx) error
 	UpdateAmbilAsuransi(ctx *fiber.Ctx) error
@@ -31,7 +32,12 @@ func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
 }
 
 func (tr *asuransiController) MasterDataPending(ctx *fiber.Ctx) error {
-	return ctx.JSON(tr.asuransiService.MasterDataPending())
+	search := ctx.Query("search")
+	return ctx.JSON(tr.asuransiService.MasterDataPending(search))
+}
+
+func (tr *asuransiController) MasterDataOke(ctx *fiber.Ctx) error {
+	return ctx.JSON(tr.asuransiService.MasterDataOke())
 }
 
 func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {

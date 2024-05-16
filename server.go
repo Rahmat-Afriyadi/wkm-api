@@ -84,6 +84,7 @@ func main() {
 
 	app.Get("/asuransi/master-data", middleware.DeserializeUser, asuransiController.MasterData)
 	app.Get("/asuransi/master-data-pending", middleware.DeserializeUser, asuransiController.MasterDataPending)
+	app.Get("/asuransi/master-data-oke", middleware.DeserializeUser, asuransiController.MasterDataOke)
 	app.Post("/asuransi/update", middleware.DeserializeUser, asuransiController.UpdateAsuransi)
 	app.Post("/asuransi/update-ambil-asuransi", middleware.DeserializeUser, asuransiController.UpdateAmbilAsuransi)
 	app.Get("/asuransi/:no_msn", middleware.DeserializeUser, asuransiController.FindAsuransiByNoMsn)
