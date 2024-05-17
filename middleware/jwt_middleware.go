@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"wkm/config"
 	"wkm/repository"
@@ -33,6 +34,8 @@ func DeserializeUser(c *fiber.Ctx) error {
 	}
 
 	user := userRepository.FindByIdAsuransi(tokenClaims.UserID)
+
+	fmt.Println("ini user ", user)
 
 	c.Locals("user", user)
 
