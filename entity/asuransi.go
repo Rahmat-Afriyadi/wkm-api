@@ -3,6 +3,7 @@ package entity
 type MasterAsuransi struct {
 	NoMsn             string  `form:"no_msn" json:"no_msn"`
 	NamaCustomer      string  `form:"nama_customer" json:"nama_customer"`
+	Nik               string  `form:"nik" json:"nik"`
 	NamaMotor         string  `form:"nama_motor" json:"nama_motor"`
 	TglFaktur         string  `form:"tgl_faktur" json:"tgl_faktur"`
 	NoTelepon         string  `form:"no_telepon" json:"no_telepon"`
@@ -19,4 +20,5 @@ type MasterAsuransi struct {
 	Kodepos           *string `form:"kodepos" json:"kodepos"`
 	JnsBrg            *string `form:"jns_brg" json:"jns_brg"`
 	Harga             int64   `form:"harga" json:"harga"`
+	JnsAsuransi       int64   `form:"jenis_asuransi" json:"jenis_asuransi"`
 }

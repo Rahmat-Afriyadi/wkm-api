@@ -28,16 +28,19 @@ func NewAsuransiController(aS service.AsuransiService) AsuransiController {
 }
 
 func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
-	return ctx.JSON(tr.asuransiService.MasterData())
+	dataSource := ctx.Query("dataSource")
+	return ctx.JSON(tr.asuransiService.MasterData(dataSource))
 }
 
 func (tr *asuransiController) MasterDataPending(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
-	return ctx.JSON(tr.asuransiService.MasterDataPending(search))
+	dataSource := ctx.Query("dataSource")
+	return ctx.JSON(tr.asuransiService.MasterDataPending(search, dataSource))
 }
 
 func (tr *asuransiController) MasterDataOke(ctx *fiber.Ctx) error {
-	return ctx.JSON(tr.asuransiService.MasterDataOke())
+	dataSource := ctx.Query("dataSource")
+	return ctx.JSON(tr.asuransiService.MasterDataOke(dataSource))
 }
 
 func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {

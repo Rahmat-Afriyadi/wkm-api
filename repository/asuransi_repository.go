@@ -9,9 +9,9 @@ import (
 )
 
 type AsuransiRepository interface {
-	MasterData() []entity.MasterAsuransi
-	MasterDataPending(search string) []entity.MasterAsuransi
-	MasterDataOke() []entity.MasterAsuransi
+	MasterData(dataSource string) []entity.MasterAsuransi
+	MasterDataPending(search string, dataSource string) []entity.MasterAsuransi
+	MasterDataOke(dataSource string) []entity.MasterAsuransi
 	FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi
 	UpdateAmbilAsuransi(no_msn string, kd_user string)
 	UpdateAsuransi(data entity.MasterAsuransi) entity.MasterAsuransi
@@ -27,15 +27,15 @@ func NewAsuransiRepository(conn *sql.DB) AsuransiRepository {
 	}
 }
 
-func (lR *asuransiRepository) MasterData() []entity.MasterAsuransi {
+func (lR *asuransiRepository) MasterData(dataSource string) []entity.MasterAsuransi {
 	datas := []entity.MasterAsuransi{}
 	ctx := context.Background()
-	query := "select no_msn NoMsn, nm_customer11 NamaCustomer from asuransi where sts_asuransi = '' or sts_asuransi is null"
+	query := "select no_msn NoMsn, nm_customer11 NamaCustomer, jenis_asuransi from asuransi where (sts_asuransi = '' or sts_asuransi is null) and jenis_source = ?"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)
 	}
-	rows, err := statement.QueryContext(ctx)
+	rows, err := statement.QueryContext(ctx, dataSource)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
 		fmt.Println(err)
@@ -43,7 +43,7 @@ func (lR *asuransiRepository) MasterData() []entity.MasterAsuransi {
 
 	for rows.Next() {
 		var data entity.MasterAsuransi
-		if err := rows.Scan(&data.NoMsn, &data.NamaCustomer); err != nil {
+		if err := rows.Scan(&data.NoMsn, &data.NamaCustomer, &data.JnsAsuransi); err != nil {
 			fmt.Println("Error scanning row:", err)
 			continue
 		}
@@ -52,16 +52,16 @@ func (lR *asuransiRepository) MasterData() []entity.MasterAsuransi {
 	return datas
 }
 
-func (lR *asuransiRepository) MasterDataPending(search string) []entity.MasterAsuransi {
+func (lR *asuransiRepository) MasterDataPending(search string, dataSource string) []entity.MasterAsuransi {
 	fmt.Println("ini query ", search)
 	datas := []entity.MasterAsuransi{}
 	ctx := context.Background()
-	query := "select no_msn NoMsn, nm_customer11 NamaCustomer, nm_dlr from asuransi where sts_asuransi = 'P' and (no_msn like ? or nm_customer11 like ? or nm_dlr like ?)"
+	query := "select no_msn NoMsn, nm_customer11 NamaCustomer, nm_dlr from asuransi where sts_asuransi = 'P' and (no_msn like ? or nm_customer11 like ? or nm_dlr like ?) and jenis_source = ?"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)
 	}
-	rows, err := statement.QueryContext(ctx, "%"+search+"%", "%"+search+"%", "%"+search+"%")
+	rows, err := statement.QueryContext(ctx, "%"+search+"%", "%"+search+"%", "%"+search+"%", dataSource)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
 		fmt.Println(err)
@@ -78,15 +78,15 @@ func (lR *asuransiRepository) MasterDataPending(search string) []entity.MasterAs
 	return datas
 }
 
-func (lR *asuransiRepository) MasterDataOke() []entity.MasterAsuransi {
+func (lR *asuransiRepository) MasterDataOke(dataSource string) []entity.MasterAsuransi {
 	datas := []entity.MasterAsuransi{}
 	ctx := context.Background()
-	query := "select no_msn NoMsn, nm_customer11 NamaCustomer from asuransi where sts_asuransi = 'O'"
+	query := "select no_msn NoMsn, nm_customer11 NamaCustomer from asuransi where sts_asuransi = 'O' and jenis_source=?"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)
 	}
-	rows, err := statement.QueryContext(ctx)
+	rows, err := statement.QueryContext(ctx, dataSource)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
 		fmt.Println(err)
@@ -106,19 +106,29 @@ func (lR *asuransiRepository) MasterDataOke() []entity.MasterAsuransi {
 func (lR *asuransiRepository) FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi {
 	var data entity.MasterAsuransi
 	ctx := context.Background()
-	query := "select no_msn NoMsn, nm_customer11, nm_mtr, tgl_faktur, no_wa, sts_asuransi, sts_bayar, tgl_bayar, alasan_pending, alasan_tdk_berminat,kd_dlr, nm_dlr, kelurahan, kecamatan, kodepos, jns_brg, harga from asuransi where no_msn = ? "
+	query := "select no_msn NoMsn, nik, nm_customer11, nm_mtr, tgl_faktur, no_wa, sts_asuransi, sts_bayar, tgl_bayar, alasan_pending, alasan_tdk_berminat,kd_dlr, nm_dlr, kelurahan, kecamatan, kodepos, jns_brg, harga, jenis_asuransi from asuransi where no_msn = ? "
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)
 	}
 	row := statement.QueryRow(no_msn)
-	err = row.Scan(&data.NoMsn, &data.NamaCustomer, &data.NamaMotor, &data.TglFaktur, &data.NoTelepon, &data.Status, &data.StatusBayar, &data.TglBayar, &data.AlasanPending, &data.AlasanTdkBerminat, &data.KdDlr, &data.NmDlr, &data.Kelurahan, &data.Kecamatan, &data.Kodepos, &data.JnsBrg, &data.Harga)
+	err = row.Scan(&data.NoMsn, &data.Nik, &data.NamaCustomer, &data.NamaMotor, &data.TglFaktur, &data.NoTelepon, &data.Status, &data.StatusBayar, &data.TglBayar, &data.AlasanPending, &data.AlasanTdkBerminat, &data.KdDlr, &data.NmDlr, &data.Kelurahan, &data.Kecamatan, &data.Kodepos, &data.JnsBrg, &data.Harga, &data.JnsAsuransi)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
 		fmt.Println(err)
 	}
 
 	return data
+}
+
+func NewNullString(s string) sql.NullString {
+	if len(s) == 0 {
+		return sql.NullString{}
+	}
+	return sql.NullString{
+		String: s,
+		Valid:  true,
+	}
 }
 
 func (lR *asuransiRepository) UpdateAsuransi(dataUpdate entity.MasterAsuransi) entity.MasterAsuransi {
@@ -129,7 +139,8 @@ func (lR *asuransiRepository) UpdateAsuransi(dataUpdate entity.MasterAsuransi) e
 	Kodepos := ""
 	JnsBrg := ""
 	stsBayar := ""
-	tglBayar := ""
+	var tglBayar string
+	fmt.Println("ini tanggal bayar ", dataUpdate)
 	if dataUpdate.KdDlr != nil {
 		KdDlr = *dataUpdate.KdDlr
 	}
@@ -155,7 +166,7 @@ func (lR *asuransiRepository) UpdateAsuransi(dataUpdate entity.MasterAsuransi) e
 		tglBayar = *dataUpdate.TglBayar
 	}
 	ctx := context.Background()
-	_, err := lR.conn.ExecContext(ctx, "UPDATE asuransi set tgl_bayar=?, sts_bayar=?, sts_asuransi=?, alasan_pending=?, alasan_tdk_berminat=?, kd_dlr=?, nm_dlr=?, kelurahan=?, kecamatan=?, kodepos=?, jns_brg=?, harga=?, kd_user=?, tgl_update=? where no_msn=? ", tglBayar, stsBayar, dataUpdate.Status, dataUpdate.AlasanPending, dataUpdate.AlasanTdkBerminat, KdDlr, NmDlr, Kelurahan, Kecamatan, Kodepos, JnsBrg, dataUpdate.Harga, dataUpdate.KdUser, time.Now().Format("2006-01-02"), dataUpdate.NoMsn)
+	_, err := lR.conn.ExecContext(ctx, "UPDATE asuransi set tgl_bayar=?, sts_bayar=?, sts_asuransi=?, alasan_pending=?, alasan_tdk_berminat=?, kd_dlr=?, nm_dlr=?, kelurahan=?, kecamatan=?, kodepos=?, jns_brg=?, harga=?, kd_user=?, tgl_update=? where no_msn=? ", NewNullString(tglBayar), stsBayar, dataUpdate.Status, dataUpdate.AlasanPending, dataUpdate.AlasanTdkBerminat, KdDlr, NmDlr, Kelurahan, Kecamatan, Kodepos, JnsBrg, dataUpdate.Harga, dataUpdate.KdUser, time.Now().Format("2006-01-02"), dataUpdate.NoMsn)
 	if err != nil {
 		fmt.Println("ini error update ", err)
 	}

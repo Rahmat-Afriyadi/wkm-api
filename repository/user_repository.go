@@ -11,7 +11,9 @@ import (
 
 type UserRepository interface {
 	FindById(id uint32) entity.User
+	FindByIdAsuransi(id uint32) entity.UserAsuransi
 	FindByUsername(username string) entity.User
+	FindByUsernameAsuransi(username string) entity.UserAsuransi
 	MasterData() []entity.User
 	GeneratePassword()
 }
@@ -36,6 +38,24 @@ func (lR *userRepository) FindById(id uint32) entity.User {
 		fmt.Println(err)
 	}
 	err = statement.QueryRow(id).Scan(&data.ID, &data.Name, &data.Username, &data.Password, &data.Group)
+	if err != nil {
+		fmt.Println("errornya di roww user", err)
+		fmt.Println(err)
+	}
+
+	return data
+}
+
+func (lR *userRepository) FindByIdAsuransi(id uint32) entity.UserAsuransi {
+	var data entity.UserAsuransi
+	ctx := context.Background()
+	query := "select id, name, username, password2, data_source from users where id=?"
+	statement, err := lR.conn.PrepareContext(ctx, query)
+	if err != nil {
+		fmt.Println("errror disini")
+		fmt.Println(err)
+	}
+	err = statement.QueryRow(id).Scan(&data.ID, &data.Nama, &data.Username, &data.Password, &data.DataSource)
 	if err != nil {
 		fmt.Println("errornya di roww ", err)
 		fmt.Println(err)
@@ -111,6 +131,23 @@ func (lR *userRepository) FindByUsername(username string) entity.User {
 	// 	}
 	// 	data.Permissions = append(data.Permissions, permission)
 	// }
+
+	return data
+}
+
+func (lR *userRepository) FindByUsernameAsuransi(username string) entity.UserAsuransi {
+	var data entity.UserAsuransi
+	ctx := context.Background()
+	query := "select id, name, username, password2, data_source from users where username=?"
+	statement, err := lR.conn.PrepareContext(ctx, query)
+	if err != nil {
+		fmt.Println(err)
+	}
+	row := statement.QueryRow(username)
+	err = row.Scan(&data.ID, &data.Nama, &data.Username, &data.Password, &data.DataSource)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return data
 }

@@ -8,7 +8,7 @@ import (
 )
 
 type ProdukRepository interface {
-	MasterData(search string) []entity.MasterProduk
+	MasterData(search string, jenis_asuransi string) []entity.MasterProduk
 }
 
 type produkRepository struct {
@@ -21,16 +21,16 @@ func NewProdukRepository(conn *sql.DB) ProdukRepository {
 	}
 }
 
-func (lR *produkRepository) MasterData(search string) []entity.MasterProduk {
+func (lR *produkRepository) MasterData(search string, jenis_asuransi string) []entity.MasterProduk {
 	fmt.Println("ini query ", search)
-	var datas []entity.MasterProduk
+	datas := []entity.MasterProduk{}
 	ctx := context.Background()
-	query := "select kd_produk, nm_produk from produk "
+	query := "select id_produk, nm_produk from produk where jns_asuransi = ?"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)
 	}
-	rows, err := statement.QueryContext(ctx)
+	rows, err := statement.QueryContext(ctx, jenis_asuransi)
 	if err != nil {
 		fmt.Println("errornya di rows ", err)
 		fmt.Println(err)

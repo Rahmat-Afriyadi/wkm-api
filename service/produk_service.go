@@ -6,7 +6,7 @@ import (
 )
 
 type ProdukService interface {
-	MasterData(search string) []entity.MasterProduk
+	MasterData(search string, jenis_asuransi string) []entity.MasterProduk
 }
 
 type produkService struct {
@@ -19,6 +19,6 @@ func NewProdukService(tR repository.ProdukRepository) ProdukService {
 	}
 }
 
-func (s *produkService) MasterData(search string) []entity.MasterProduk {
-	return s.trR.MasterData(search)
+func (s *produkService) MasterData(search string, jenis_asuransi string) []entity.MasterProduk {
+	return s.trR.MasterData(search, jenis_asuransi)
 }

@@ -8,3 +8,11 @@ type User struct {
 	Group       string
 	Permissions []string
 }
+
+type UserAsuransi struct {
+	ID         uint32
+	Nama       string
+	Username   string
+	Password   string
+	DataSource string
+}

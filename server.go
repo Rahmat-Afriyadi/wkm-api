@@ -30,9 +30,13 @@ var (
 	leasService    service.LeasService       = service.NewLeasService(leasRepository)
 	leasController controller.LeasController = controller.NewLeasController(leasService)
 
-	userRepository repository.UserRepository = repository.NewUserRepository(conn)
+	userRepository repository.UserRepository = repository.NewUserRepository(connAsuransi)
 	authService    service.AuthService       = service.NewAuthService(userRepository)
 	authController controller.AuthController = controller.NewAuthController(authService)
+
+	// userRepositoryAsuransi repository.UserRepository = repository.NewUserRepository(conn)
+	// authServiceAsuransi    service.AuthService       = service.NewAuthService(userRepository)
+	// authControllerAsuransi controller.AuthController = controller.NewAuthController(authService)
 
 	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(connAsuransi)
 	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository)
@@ -72,8 +76,8 @@ func main() {
 	}))
 
 	auth := app.Group("/auth")
-	auth.Post("/login", authController.SignInUser)
-	auth.Post("/refresh-token", authController.RefreshAccessToken)
+	auth.Post("/login", authController.SignInUserAsuransi)
+	auth.Post("/refresh-token", authController.RefreshAccessTokenAsuransi)
 	auth.Post("/logout", authController.LogoutUser)
 	auth.Get("/generate-password", authController.GeneratePassword)
 

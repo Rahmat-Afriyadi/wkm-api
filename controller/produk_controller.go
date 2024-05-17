@@ -22,6 +22,6 @@ func NewProdukController(aS service.ProdukService) ProdukController {
 
 func (tr *produkController) MasterData(ctx *fiber.Ctx) error {
 
-	return ctx.JSON(tr.produkService.MasterData(ctx.Query("search")))
+	return ctx.JSON(tr.produkService.MasterData(ctx.Query("search"), ctx.Query("jenis_asuransi")))
 
 }

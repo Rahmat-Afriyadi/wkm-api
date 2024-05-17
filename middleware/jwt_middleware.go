@@ -11,7 +11,7 @@ import (
 )
 
 func DeserializeUser(c *fiber.Ctx) error {
-	var conn *sql.DB = config.GetConnection()
+	var conn *sql.DB = config.GetConnectionAsuransi()
 	defer conn.Close()
 	userRepository := repository.NewUserRepository(conn)
 	var access_token string
@@ -32,7 +32,7 @@ func DeserializeUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
-	user := userRepository.FindById(tokenClaims.UserID)
+	user := userRepository.FindByIdAsuransi(tokenClaims.UserID)
 
 	c.Locals("user", user)
 
