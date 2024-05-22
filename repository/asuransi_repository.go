@@ -194,6 +194,7 @@ func (lR *asuransiRepository) UpdateAsuransiBerminat(no_msn string) {
 				AppTransId:   data.AppTransId,
 				NoMsn:        data.NoMsn,
 				Created:      time.Now(),
+				Amount:       int(data.Harga),
 				StsPembelian: "1",
 			}
 			result := lR.connG.Create(&transaksi)
