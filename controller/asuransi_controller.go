@@ -14,6 +14,8 @@ type AsuransiController interface {
 	MasterDataOke(ctx *fiber.Ctx) error
 	FindAsuransiByNoMsn(ctx *fiber.Ctx) error
 	UpdateAsuransi(ctx *fiber.Ctx) error
+	UpdateAsuransiBerminat(ctx *fiber.Ctx) error
+	UpdateAsuransiBatalBayar(ctx *fiber.Ctx) error
 	UpdateAmbilAsuransi(ctx *fiber.Ctx) error
 }
 
@@ -50,7 +52,7 @@ func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {
 }
 
 func (tr *asuransiController) UpdateAsuransi(ctx *fiber.Ctx) error {
-	var asuransi entity.MasterAsuransi
+	var asuransi entity.MasterAsuransiReal
 	err := ctx.BodyParser(&asuransi)
 	fmt.Println("ini body ", asuransi)
 	user := ctx.Locals("user")
@@ -61,6 +63,30 @@ func (tr *asuransiController) UpdateAsuransi(ctx *fiber.Ctx) error {
 		fmt.Println("error body parser ", err)
 	}
 	tr.asuransiService.UpdateAsuransi(asuransi)
+	return ctx.JSON("Hallo guys")
+
+}
+
+func (tr *asuransiController) UpdateAsuransiBerminat(ctx *fiber.Ctx) error {
+	var body map[string]interface{}
+	err := ctx.BodyParser(&body)
+	if err != nil {
+		fmt.Println("error body parser ", err)
+	}
+	fmt.Println("ini body ", body["no_msn"])
+	tr.asuransiService.UpdateAsuransiBerminat(body["no_msn"].(string))
+	return ctx.JSON("Hallo guys")
+
+}
+
+func (tr *asuransiController) UpdateAsuransiBatalBayar(ctx *fiber.Ctx) error {
+	var body map[string]interface{}
+	err := ctx.BodyParser(&body)
+	if err != nil {
+		fmt.Println("error body parser ", err)
+	}
+	fmt.Println("ini body ", body["no_msn"])
+	tr.asuransiService.UpdateAsuransiBatalBayar(body["no_msn"].(string))
 	return ctx.JSON("Hallo guys")
 
 }

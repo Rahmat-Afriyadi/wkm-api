@@ -25,7 +25,7 @@ func (lR *dlrRepository) MasterData(search string) []entity.MasterDlr {
 	fmt.Println("ini query ", search)
 	datas := []entity.MasterDlr{}
 	ctx := context.Background()
-	query := "select kd_dlr, nm_dlr from mst_dealer where kd_dlr like ? or nm_dlr like ? "
+	query := "select kd_dlr, nm_dlr from mst_dealer where kd_dlr like ? or nm_dlr like ? limit 20"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)

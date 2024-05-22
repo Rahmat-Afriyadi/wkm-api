@@ -1,9 +1,12 @@
 package service
 
 import (
+	"fmt"
 	"wkm/entity"
 	"wkm/repository"
 	"wkm/request"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
@@ -12,6 +15,7 @@ type AuthService interface {
 	RefreshToken(r uint32) (entity.User, error)
 	RefreshTokenAsuransi(r uint32) (entity.UserAsuransi, error)
 	GeneratePassword()
+	ResetPassword(data request.ResetPassword) request.Response
 }
 
 type authService struct {
@@ -42,4 +46,21 @@ func (s *authService) RefreshTokenAsuransi(r uint32) (entity.UserAsuransi, error
 
 func (s *authService) GeneratePassword() {
 	s.uR.GeneratePassword()
+}
+
+func (s *authService) ResetPassword(data request.ResetPassword) request.Response {
+	user := s.uR.FindByIdAsuransi(data.IdUser)
+	if user.ID == 0 {
+		return request.Response{Status: 400, Message: "User tidak ditemukan"}
+	}
+	fmt.Println("ini data update user ", user)
+	fmt.Println("ini data update password ", data)
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data.PasswordLama))
+	if err != nil {
+		return request.Response{Status: 400, Message: "Password salah"}
+	}
+	password, _ := bcrypt.GenerateFromPassword([]byte(data.Password), 8)
+	data.Password = string(password)
+	s.uR.ResetPassword(data)
+	return request.Response{Status: 201, Message: "Data berhasil diupdate"}
 }

@@ -13,11 +13,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"gorm.io/gorm"
 )
 
 var (
-	conn          *sql.DB                  = config.GetConnection()
-	connAsuransi  *sql.DB                  = config.GetConnectionAsuransi()
+	conn         *sql.DB  = config.GetConnection()
+	connAsuransi *sql.DB  = config.GetConnectionAsuransi()
+	connGorm     *gorm.DB = config.NewAsuransiGorm()
+
 	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
 	tr3Controller controller.Tr3Controller = controller.NewTr3Controller(tr3Service)
@@ -38,7 +41,7 @@ var (
 	// authServiceAsuransi    service.AuthService       = service.NewAuthService(userRepository)
 	// authControllerAsuransi controller.AuthController = controller.NewAuthController(authService)
 
-	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(connAsuransi)
+	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(connAsuransi, connGorm)
 	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository)
 	asuransiController controller.AsuransiController = controller.NewAsuransiController(asuransiService)
 
@@ -78,6 +81,7 @@ func main() {
 	auth := app.Group("/auth")
 	auth.Post("/login", authController.SignInUserAsuransi)
 	auth.Post("/refresh-token", authController.RefreshAccessTokenAsuransi)
+	auth.Post("/reset-password", middleware.DeserializeUser, authController.ResetPassword)
 	auth.Post("/logout", authController.LogoutUser)
 	auth.Get("/generate-password", authController.GeneratePassword)
 
@@ -90,6 +94,8 @@ func main() {
 	app.Get("/asuransi/master-data-pending", middleware.DeserializeUser, asuransiController.MasterDataPending)
 	app.Get("/asuransi/master-data-oke", middleware.DeserializeUser, asuransiController.MasterDataOke)
 	app.Post("/asuransi/update", middleware.DeserializeUser, asuransiController.UpdateAsuransi)
+	app.Post("/asuransi/update/berminat", asuransiController.UpdateAsuransiBerminat)
+	app.Post("/asuransi/update/batal-bayar", asuransiController.UpdateAsuransiBatalBayar)
 	app.Post("/asuransi/update-ambil-asuransi", middleware.DeserializeUser, asuransiController.UpdateAmbilAsuransi)
 	app.Get("/asuransi/:no_msn", middleware.DeserializeUser, asuransiController.FindAsuransiByNoMsn)
 

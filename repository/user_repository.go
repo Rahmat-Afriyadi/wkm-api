@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"wkm/entity"
+	"wkm/request"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,6 +17,7 @@ type UserRepository interface {
 	FindByUsernameAsuransi(username string) entity.UserAsuransi
 	MasterData() []entity.User
 	GeneratePassword()
+	ResetPassword(data request.ResetPassword)
 }
 
 type userRepository struct {
@@ -98,6 +100,11 @@ func (lR *userRepository) GeneratePassword() {
 		// Execute the SQL query
 		lR.conn.Exec(query, password, v.ID)
 	}
+}
+
+func (lR *userRepository) ResetPassword(data request.ResetPassword) {
+	query := "UPDATE users SET password2 = ? WHERE id = ?"
+	lR.conn.Exec(query, data.Password, data.IdUser)
 }
 
 func (lR *userRepository) FindByUsername(username string) entity.User {

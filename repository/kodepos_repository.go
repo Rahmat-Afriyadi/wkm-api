@@ -25,7 +25,7 @@ func (lR *kodeposRepository) MasterData(search string) []entity.MasterKodepos {
 	fmt.Println("ini query ", search)
 	datas := []entity.MasterKodepos{}
 	ctx := context.Background()
-	query := "select kd_pos, kodepos, kelurahan, kecamatan from kodepos where kodepos like ? or kelurahan like ? or kecamatan like ?"
+	query := "select kd_pos, kodepos, kelurahan, kecamatan from kodepos where kodepos like ? or kelurahan like ? or kecamatan like ? limit 20"
 	statement, err := lR.conn.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)

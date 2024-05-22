@@ -2,6 +2,7 @@ package controller
 
 import (
 	"time"
+	"wkm/entity"
 	"wkm/request"
 	"wkm/service"
 	"wkm/utils"
@@ -16,6 +17,7 @@ type AuthController interface {
 	RefreshAccessTokenAsuransi(c *fiber.Ctx) error
 	LogoutUser(c *fiber.Ctx) error
 	GeneratePassword(c *fiber.Ctx) error
+	ResetPassword(c *fiber.Ctx) error
 	SignInUserAsuransi(c *fiber.Ctx) error
 }
 
@@ -32,6 +34,19 @@ func NewAuthController(aS service.AuthService) AuthController {
 func (aC *authController) GeneratePassword(c *fiber.Ctx) error {
 	aC.aS.GeneratePassword()
 	return c.JSON(map[string]interface{}{"message": "Hallo guys"})
+}
+
+func (aC *authController) ResetPassword(c *fiber.Ctx) error {
+	user := c.Locals("user")
+	details, _ := user.(entity.UserAsuransi)
+	var body request.ResetPassword
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
+	}
+	body.IdUser = details.ID
+	response := aC.aS.ResetPassword(body)
+
+	return c.Status(response.Status).JSON(map[string]interface{}{"message": response.Message})
 }
 
 func (aC *authController) SignInUser(c *fiber.Ctx) error {
