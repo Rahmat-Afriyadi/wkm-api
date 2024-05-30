@@ -67,7 +67,7 @@ func GetConnectionAsuransi() *sql.DB {
 func NewAsuransiGorm() *gorm.DB {
 	time.LoadLocation("Asia/Jakarta")
 	// dsn := "root@tcp(localhost:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta"
-	dsn := "root2:root2@tcp(192.168.12.171:3306:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta"
+	dsn := "root2:root2@tcp(192.168.12.171:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta"
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger:                                   logger.Default.LogMode(logger.Info),
