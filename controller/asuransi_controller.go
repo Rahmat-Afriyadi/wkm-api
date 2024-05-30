@@ -10,13 +10,13 @@ import (
 
 type AsuransiController interface {
 	MasterData(ctx *fiber.Ctx) error
-	MasterDataPending(ctx *fiber.Ctx) error
-	MasterDataOke(ctx *fiber.Ctx) error
 	FindAsuransiByNoMsn(ctx *fiber.Ctx) error
 	UpdateAsuransi(ctx *fiber.Ctx) error
 	UpdateAsuransiBerminat(ctx *fiber.Ctx) error
 	UpdateAsuransiBatalBayar(ctx *fiber.Ctx) error
 	UpdateAmbilAsuransi(ctx *fiber.Ctx) error
+	MasterDataRekapTele(ctx *fiber.Ctx) error
+	RekapByStatus(ctx *fiber.Ctx) error
 }
 
 type asuransiController struct {
@@ -29,20 +29,16 @@ func NewAsuransiController(aS service.AsuransiService) AsuransiController {
 	}
 }
 
+func (tr *asuransiController) MasterDataRekapTele(ctx *fiber.Ctx) error {
+	return ctx.JSON(tr.asuransiService.MasterDataRekapTele())
+}
 func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
 	dataSource := ctx.Query("dataSource")
-	return ctx.JSON(tr.asuransiService.MasterData(dataSource))
-}
-
-func (tr *asuransiController) MasterDataPending(ctx *fiber.Ctx) error {
+	sts := ctx.Params("status")
 	search := ctx.Query("search")
-	dataSource := ctx.Query("dataSource")
-	return ctx.JSON(tr.asuransiService.MasterDataPending(search, dataSource))
-}
-
-func (tr *asuransiController) MasterDataOke(ctx *fiber.Ctx) error {
-	dataSource := ctx.Query("dataSource")
-	return ctx.JSON(tr.asuransiService.MasterDataOke(dataSource))
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	return ctx.JSON(tr.asuransiService.MasterData(search, dataSource, sts, details.Username))
 }
 
 func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {
@@ -52,18 +48,26 @@ func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {
 }
 
 func (tr *asuransiController) UpdateAsuransi(ctx *fiber.Ctx) error {
-	var asuransi entity.MasterAsuransiReal
+	var asuransi entity.MasterAsuransi
 	err := ctx.BodyParser(&asuransi)
 	fmt.Println("ini body ", asuransi)
 	user := ctx.Locals("user")
-	details, _ := user.(entity.UserAsuransi)
+	details, _ := user.(entity.User)
 	asuransi.KdUser = details.Username
-	fmt.Println("ini kd user ", details.Username)
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
 	tr.asuransiService.UpdateAsuransi(asuransi)
 	return ctx.JSON("Hallo guys")
+
+}
+
+func (tr *asuransiController) RekapByStatus(ctx *fiber.Ctx) error {
+	user := ctx.Locals("user")
+	tgl := ctx.Query("tgl")
+	details, _ := user.(entity.User)
+	result := tr.asuransiService.RekapByStatus(details.Username, tgl)
+	return ctx.JSON(result)
 
 }
 

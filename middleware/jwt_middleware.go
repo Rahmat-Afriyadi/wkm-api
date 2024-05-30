@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 	"wkm/config"
 	"wkm/repository"
@@ -12,9 +11,10 @@ import (
 )
 
 func DeserializeUser(c *fiber.Ctx) error {
+	connUser := config.GetConnectionUser()
 	var conn *sql.DB = config.GetConnectionAsuransi()
 	defer conn.Close()
-	userRepository := repository.NewUserRepository(conn)
+	userRepository := repository.NewUserRepository(connUser, conn)
 	var access_token string
 	authorization := c.Get("Authorization")
 
@@ -33,9 +33,7 @@ func DeserializeUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
-	user := userRepository.FindByIdAsuransi(tokenClaims.UserID)
-
-	fmt.Println("ini user ", user)
+	user := userRepository.FindById(tokenClaims.UserID)
 
 	c.Locals("user", user)
 

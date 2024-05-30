@@ -1,29 +1,6 @@
 package entity
 
 type MasterAsuransi struct {
-	NoMsn             string  `form:"no_msn" json:"no_msn"`
-	NamaCustomer      string  `form:"nama_customer" json:"nama_customer"`
-	Nik               string  `form:"nik" json:"nik"`
-	NamaMotor         string  `form:"nama_motor" json:"nama_motor"`
-	TglFaktur         string  `form:"tgl_faktur" json:"tgl_faktur"`
-	NoTelepon         string  `form:"no_telepon" json:"no_telepon"`
-	Status            string  `form:"status" json:"status"`
-	AlasanPending     *string `form:"alasan_pending" json:"alasan_pending"`
-	StatusBayar       *string `form:"status_bayar" json:"status_bayar"`
-	TglBayar          *string `form:"tgl_bayar" json:"tgl_bayar"`
-	KdUser            string
-	AlasanTdkBerminat *string `form:"alasan_tdk_berminat" json:"alasan_tdk_berminat"`
-	KdDlr             *string `form:"kd_dlr" json:"kd_dlr"`
-	NmDlr             *string `form:"nm_dlr" json:"nm_dlr"`
-	Kelurahan         *string `form:"kelurahan" json:"kelurahan"`
-	Kecamatan         *string `form:"kecamatan" json:"kecamatan"`
-	Kodepos           *string `form:"kodepos" json:"kodepos"`
-	JnsBrg            *string `form:"jns_brg" json:"jns_brg"`
-	Harga             int64   `form:"harga" json:"harga"`
-	JnsAsuransi       int64   `form:"jenis_asuransi" json:"jenis_asuransi"`
-}
-
-type MasterAsuransiReal struct {
 	NoMsn             string  `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
 	NamaCustomer      string  `form:"nama_customer" json:"nama_customer" gorm:"column:nm_customer11"`
 	Nik               string  `form:"nik" json:"nik" gorm:"column:nik"`
@@ -49,9 +26,10 @@ type MasterAsuransiReal struct {
 	JnsAsuransi       int64   `form:"jenis_asuransi" json:"jenis_asuransi" gorm:"column:jenis_asuransi"`
 	JnsSource         string  `form:"jenis_source" json:"jenis_source" gorm:"column:jenis_source"`
 	IdTransaksi       string  `form:"id_transaksi" json:"id_transaksi" gorm:"->"`
+	TglUpdate         string  `gorm:"column:tgl_update"`
 }
 
-func (MasterAsuransiReal) TableName() string {
+func (MasterAsuransi) TableName() string {
 	return "asuransi"
 }
 
@@ -62,4 +40,38 @@ type MasterAsuransiGorm struct {
 
 func (MasterAsuransiGorm) TableName() string {
 	return "asuransi"
+}
+
+type MasterRekapTele struct {
+	Id          string `gorm:"column:kd_user" json:"id"`
+	Nama        string `gorm:"column:nama" json:"nama"`
+	Total       uint32 `gorm:"column:total" json:"total"`
+	Pending     uint32 `gorm:"column:pending" json:"pending"`
+	TdkBerminat uint32 `gorm:"column:tidak_berminat" json:"tdk_berminat"`
+	Berminat    uint32 `gorm:"column:berminat" json:"berminat"`
+}
+
+type MasterStatusAsuransi struct {
+	KdUser      string `gorm:"column:kd_user"`
+	Pending     uint32 `gorm:"column:p"`
+	TdkBerminat uint32 `gorm:"column:t"`
+	Berminat    uint32 `gorm:"column:o"`
+}
+
+type MasterAlasanPending struct {
+	Id   string `gorm:"column:kd_user" json:"id"`
+	Nama string `gorm:"column:nama" json:"nama"`
+}
+
+func (MasterAlasanPending) TableName() string {
+	return "mst_alasan_pending"
+}
+
+type MasterAlasanTdkBerminat struct {
+	Id   string `gorm:"column:kd_user" json:"id"`
+	Nama string `gorm:"column:nama" json:"nama"`
+}
+
+func (MasterAlasanTdkBerminat) TableName() string {
+	return "mst_alasan_tdk_berminat"
 }

@@ -18,6 +18,7 @@ import (
 
 var (
 	conn         *sql.DB  = config.GetConnection()
+	connUser     *gorm.DB = config.GetConnectionUser()
 	connAsuransi *sql.DB  = config.GetConnectionAsuransi()
 	connGorm     *gorm.DB = config.NewAsuransiGorm()
 
@@ -33,7 +34,7 @@ var (
 	leasService    service.LeasService       = service.NewLeasService(leasRepository)
 	leasController controller.LeasController = controller.NewLeasController(leasService)
 
-	userRepository repository.UserRepository = repository.NewUserRepository(connAsuransi)
+	userRepository repository.UserRepository = repository.NewUserRepository(connUser, connAsuransi)
 	authService    service.AuthService       = service.NewAuthService(userRepository)
 	authController controller.AuthController = controller.NewAuthController(authService)
 
@@ -42,7 +43,7 @@ var (
 	// authControllerAsuransi controller.AuthController = controller.NewAuthController(authService)
 
 	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(connAsuransi, connGorm)
-	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository)
+	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository, userRepository)
 	asuransiController controller.AsuransiController = controller.NewAsuransiController(asuransiService)
 
 	kodeposRepository repository.KodeposRepository = repository.NewKodeposRepository(connAsuransi)
@@ -90,9 +91,9 @@ func main() {
 	app.Get("/leas/master-data", middleware.DeserializeUser, leasController.MasterData)
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)
 
-	app.Get("/asuransi/master-data", middleware.DeserializeUser, asuransiController.MasterData)
-	app.Get("/asuransi/master-data-pending", middleware.DeserializeUser, asuransiController.MasterDataPending)
-	app.Get("/asuransi/master-data-oke", middleware.DeserializeUser, asuransiController.MasterDataOke)
+	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
+	app.Get("/asuransi/master-data-rekap", middleware.DeserializeUser, asuransiController.MasterDataRekapTele)
+	app.Get("/asuransi/rekap-by-status-tele", middleware.DeserializeUser, asuransiController.RekapByStatus)
 	app.Post("/asuransi/update", middleware.DeserializeUser, asuransiController.UpdateAsuransi)
 	app.Post("/asuransi/update/berminat", asuransiController.UpdateAsuransiBerminat)
 	app.Post("/asuransi/update/batal-bayar", asuransiController.UpdateAsuransiBatalBayar)
@@ -102,6 +103,7 @@ func main() {
 	app.Get("/kodepos/master-data", middleware.DeserializeUser, kodeposController.MasterData)
 	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
+	// asuransiService.ExportReport("TS1", "2024-05-30")
 	// app.Use(jwtware.New(jwtware.Config{
 	// 	SigningKey: jwtware.SigningKey{Key: []byte("DE6ED21B4E643161949DFCE42DABC")},
 	// 	ErrorHandler: func(c *fiber.Ctx, err error) error {

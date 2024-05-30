@@ -8,69 +8,47 @@ import (
 	"wkm/request"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type UserRepository interface {
 	FindById(id uint32) entity.User
-	FindByIdAsuransi(id uint32) entity.UserAsuransi
 	FindByUsername(username string) entity.User
-	FindByUsernameAsuransi(username string) entity.UserAsuransi
 	MasterData() []entity.User
 	GeneratePassword()
 	ResetPassword(data request.ResetPassword)
 }
 
 type userRepository struct {
-	conn *sql.DB
+	connUser     *gorm.DB
+	connAsuransi *sql.DB
 }
 
-func NewUserRepository(conn *sql.DB) UserRepository {
+func NewUserRepository(connUser *gorm.DB, connAsuransi *sql.DB) UserRepository {
 	return &userRepository{
-		conn: conn,
+		connUser:     connUser,
+		connAsuransi: connAsuransi,
 	}
 }
 
 func (lR *userRepository) FindById(id uint32) entity.User {
-	var data entity.User
-	ctx := context.Background()
-	query := "select id, name, username, password2, 'group' from users_wkms where id=?"
-	statement, err := lR.conn.PrepareContext(ctx, query)
-	if err != nil {
-		fmt.Println("errror disini")
-		fmt.Println(err)
-	}
-	err = statement.QueryRow(id).Scan(&data.ID, &data.Name, &data.Username, &data.Password, &data.Group)
-	if err != nil {
-		fmt.Println("errornya di roww user", err)
-		fmt.Println(err)
+	user := entity.User{ID: id}
+	lR.connUser.Find(&user)
+
+	var permissions []entity.Permission
+	lR.connUser.Where("role_id", user.RoleId).Find(&permissions)
+	for _, v := range permissions {
+		user.Permissions = append(user.Permissions, v.Name)
 	}
 
-	return data
-}
-
-func (lR *userRepository) FindByIdAsuransi(id uint32) entity.UserAsuransi {
-	var data entity.UserAsuransi
-	ctx := context.Background()
-	query := "select id, name, username, password2, data_source from users where id=?"
-	statement, err := lR.conn.PrepareContext(ctx, query)
-	if err != nil {
-		fmt.Println("errror disini")
-		fmt.Println(err)
-	}
-	err = statement.QueryRow(id).Scan(&data.ID, &data.Nama, &data.Username, &data.Password, &data.DataSource)
-	if err != nil {
-		fmt.Println("errornya di roww ", err)
-		fmt.Println(err)
-	}
-
-	return data
+	return user
 }
 
 func (lR *userRepository) MasterData() []entity.User {
 	var datas []entity.User
 	ctx := context.Background()
 	query := "select * from mst_users"
-	statement, err := lR.conn.PrepareContext(ctx, query)
+	statement, err := lR.connAsuransi.PrepareContext(ctx, query)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -82,8 +60,7 @@ func (lR *userRepository) MasterData() []entity.User {
 
 	for rows.Next() {
 		var data entity.User
-		var a string
-		if err := rows.Scan(&data.ID, &data.Name, &data.Username, &data.Password, &data.Group, &a); err != nil {
+		if err := rows.Scan(&data.ID, &data.Name, &data.Username, &data.Password, &data.RoleId, &data.DataSource); err != nil {
 			fmt.Println("Error scanning row:", err)
 			continue
 		}
@@ -98,63 +75,24 @@ func (lR *userRepository) GeneratePassword() {
 		query := "UPDATE mst_users SET password2 = ? WHERE id = ?"
 		password, _ := bcrypt.GenerateFromPassword([]byte(v.Password), 8)
 		// Execute the SQL query
-		lR.conn.Exec(query, password, v.ID)
+		lR.connAsuransi.Exec(query, password, v.ID)
 	}
 }
 
 func (lR *userRepository) ResetPassword(data request.ResetPassword) {
 	query := "UPDATE users SET password2 = ? WHERE id = ?"
-	lR.conn.Exec(query, data.Password, data.IdUser)
+	lR.connAsuransi.Exec(query, data.Password, data.IdUser)
 }
 
 func (lR *userRepository) FindByUsername(username string) entity.User {
-	var data entity.User
-	ctx := context.Background()
-	query := "select id, name, username, password2, 'group' from users_wkms where username=?"
-	statement, err := lR.conn.PrepareContext(ctx, query)
-	if err != nil {
-		fmt.Println(err)
-	}
-	row := statement.QueryRow(username)
-	err = row.Scan(&data.ID, &data.Name, &data.Username, &data.Password, &data.Group)
-	if err != nil {
-		fmt.Println(err)
+	var user entity.User
+	lR.connUser.Where("username", username).First(&user)
+
+	var permissions []entity.Permission
+	lR.connUser.Where("role_id", user.RoleId).Find(&permissions)
+	for _, v := range permissions {
+		user.Permissions = append(user.Permissions, v.Name)
 	}
 
-	// query_permissions := "select permission_type from wkms_permissions where user_id=?"
-	// statement_permission, err := lR.conn.PrepareContext(ctx, query_permissions)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// rows, err := statement_permission.QueryContext(ctx, data.ID)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// for rows.Next() {
-	// 	var permission string
-	// 	if err := rows.Scan(&permission); err != nil {
-	// 		fmt.Println("Error scanning row:", err)
-	// 		continue
-	// 	}
-	// 	data.Permissions = append(data.Permissions, permission)
-	// }
-
-	return data
-}
-
-func (lR *userRepository) FindByUsernameAsuransi(username string) entity.UserAsuransi {
-	var data entity.UserAsuransi
-	ctx := context.Background()
-	query := "select id, name, username, password2, data_source from users where username=?"
-	statement, err := lR.conn.PrepareContext(ctx, query)
-	if err != nil {
-		fmt.Println(err)
-	}
-	row := statement.QueryRow(username)
-	err = row.Scan(&data.ID, &data.Nama, &data.Username, &data.Password, &data.DataSource)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return data
+	return user
 }

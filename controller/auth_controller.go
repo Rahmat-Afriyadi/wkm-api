@@ -38,7 +38,7 @@ func (aC *authController) GeneratePassword(c *fiber.Ctx) error {
 
 func (aC *authController) ResetPassword(c *fiber.Ctx) error {
 	user := c.Locals("user")
-	details, _ := user.(entity.UserAsuransi)
+	details, _ := user.(entity.User)
 	var body request.ResetPassword
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "message": err.Error()})
@@ -176,7 +176,7 @@ func (aC *authController) SignInUserAsuransi(c *fiber.Ctx) error {
 	// 	Domain:   "localhost",
 	// })
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "access_token": accessTokenDetails.Token, "name": user.Nama, "refresh_token": refreshTokenDetails.Token, "data_source": user.DataSource})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "access_token": accessTokenDetails.Token, "name": user.Name, "refresh_token": refreshTokenDetails.Token, "data_source": user.DataSource, "permissions": user.Permissions})
 }
 
 func (aC *authController) RefreshAccessToken(c *fiber.Ctx) error {

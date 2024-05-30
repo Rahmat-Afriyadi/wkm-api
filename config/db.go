@@ -25,6 +25,29 @@ func GetConnection() *sql.DB {
 	return db
 }
 
+func GetConnectionUser() *gorm.DB {
+	dsn := "root:@tcp(localhost:3306)/users?parseTime=true&loc=Asia%2FJakarta"
+	// dsn := "root2:root2@tcp(192.168.70.30:3306)/db_wkm?parseTime=true"
+	// db, err := sql.Open("mysql", "root2:root2@tcp(192.168.70.30:3306)/db_wkm?parseTime=true")
+	time.LoadLocation("Asia/Jakarta")
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		SkipDefaultTransaction:                   true,
+		DisableForeignKeyConstraintWhenMigrating: true,
+		NamingStrategy: schema.NamingStrategy{
+			NoLowerCase:         true,
+			IdentifierMaxLength: 30,
+		},
+		PrepareStmt:     false,
+		CreateBatchSize: 50,
+	})
+	if err != nil {
+		fmt.Println("Masuk sini gk guys ", err)
+		panic(err)
+	}
+
+	return db
+}
+
 func GetConnectionAsuransi() *sql.DB {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta")
 	// db, err := sql.Open("mysql", "root2:root2@tcp(192.168.70.30:3306)/asuransi?parseTime=true")

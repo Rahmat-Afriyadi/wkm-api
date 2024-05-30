@@ -11,9 +11,9 @@ import (
 
 type AuthService interface {
 	SignInUser(r request.SigninRequest) (entity.User, error)
-	SignInUserAsuransi(r request.SigninRequest) (entity.UserAsuransi, error)
+	SignInUserAsuransi(r request.SigninRequest) (entity.User, error)
 	RefreshToken(r uint32) (entity.User, error)
-	RefreshTokenAsuransi(r uint32) (entity.UserAsuransi, error)
+	RefreshTokenAsuransi(r uint32) (entity.User, error)
 	GeneratePassword()
 	ResetPassword(data request.ResetPassword) request.Response
 }
@@ -32,16 +32,16 @@ func (s *authService) SignInUser(r request.SigninRequest) (entity.User, error) {
 	return s.uR.FindByUsername(r.Username), nil
 }
 
-func (s *authService) SignInUserAsuransi(r request.SigninRequest) (entity.UserAsuransi, error) {
-	return s.uR.FindByUsernameAsuransi(r.Username), nil
+func (s *authService) SignInUserAsuransi(r request.SigninRequest) (entity.User, error) {
+	return s.uR.FindByUsername(r.Username), nil
 }
 
 func (s *authService) RefreshToken(r uint32) (entity.User, error) {
 	return s.uR.FindById(r), nil
 }
 
-func (s *authService) RefreshTokenAsuransi(r uint32) (entity.UserAsuransi, error) {
-	return s.uR.FindByIdAsuransi(r), nil
+func (s *authService) RefreshTokenAsuransi(r uint32) (entity.User, error) {
+	return s.uR.FindById(r), nil
 }
 
 func (s *authService) GeneratePassword() {
@@ -49,7 +49,7 @@ func (s *authService) GeneratePassword() {
 }
 
 func (s *authService) ResetPassword(data request.ResetPassword) request.Response {
-	user := s.uR.FindByIdAsuransi(data.IdUser)
+	user := s.uR.FindById(data.IdUser)
 	if user.ID == 0 {
 		return request.Response{Status: 400, Message: "User tidak ditemukan"}
 	}
