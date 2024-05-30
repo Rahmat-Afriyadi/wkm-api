@@ -231,6 +231,7 @@ func (lR *asuransiRepository) UpdateAsuransi(dataUpdate entity.MasterAsuransi) e
 		}
 	}
 	dataUpdate.TglUpdate = time.Now().Format("2006-01-02")
+	dataUpdate.TglVerifikasi = time.Now().Format("2006-01-02")
 	result := lR.connG.Save(&dataUpdate)
 	fmt.Println("ini update error ", result.Error)
 	return dataUpdate

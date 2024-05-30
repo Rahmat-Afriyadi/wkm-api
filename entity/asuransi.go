@@ -27,6 +27,7 @@ type MasterAsuransi struct {
 	JnsSource         string  `form:"jenis_source" json:"jenis_source" gorm:"column:jenis_source"`
 	IdTransaksi       string  `form:"id_transaksi" json:"id_transaksi" gorm:"->"`
 	TglUpdate         string  `gorm:"column:tgl_update"`
+	TglVerifikasi     string  `gorm:"column:tgl_verifikasi"`
 }
 
 func (MasterAsuransi) TableName() string {
@@ -59,8 +60,8 @@ type MasterStatusAsuransi struct {
 }
 
 type MasterAlasanPending struct {
-	Id   string `gorm:"column:kd_user" json:"id"`
-	Nama string `gorm:"column:nama" json:"nama"`
+	Id   string `gorm:"column:id" json:"id"`
+	Nama string `gorm:"column:name" json:"name"`
 }
 
 func (MasterAlasanPending) TableName() string {
@@ -68,8 +69,8 @@ func (MasterAlasanPending) TableName() string {
 }
 
 type MasterAlasanTdkBerminat struct {
-	Id   string `gorm:"column:kd_user" json:"id"`
-	Nama string `gorm:"column:nama" json:"nama"`
+	Id   string `gorm:"column:id" json:"id"`
+	Nama string `gorm:"column:name" json:"name"`
 }
 
 func (MasterAlasanTdkBerminat) TableName() string {
