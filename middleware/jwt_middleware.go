@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"database/sql"
 	"strings"
 	"wkm/config"
 	"wkm/repository"
@@ -12,9 +11,7 @@ import (
 
 func DeserializeUser(c *fiber.Ctx) error {
 	connUser := config.GetConnectionUser()
-	var conn *sql.DB = config.GetConnectionAsuransi()
-	defer conn.Close()
-	userRepository := repository.NewUserRepository(connUser, conn)
+	userRepository := repository.NewUserRepository(connUser)
 	var access_token string
 	authorization := c.Get("Authorization")
 

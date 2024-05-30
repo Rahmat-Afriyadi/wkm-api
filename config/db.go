@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
@@ -66,7 +67,9 @@ func GetConnectionAsuransi() *sql.DB {
 func NewAsuransiGorm() *gorm.DB {
 	time.LoadLocation("Asia/Jakarta")
 	dsn := "root@tcp(localhost:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta"
+
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger:                                   logger.Default.LogMode(logger.Info),
 		SkipDefaultTransaction:                   true,
 		DisableForeignKeyConstraintWhenMigrating: true,
 		NamingStrategy: schema.NamingStrategy{
@@ -77,7 +80,7 @@ func NewAsuransiGorm() *gorm.DB {
 		CreateBatchSize: 50,
 	})
 	if err != nil {
-		fmt.Println("Masuk sini gk guys ", err)
+		fmt.Println("Masuk sini gk guys logger ", err)
 		panic(err)
 	}
 	return db

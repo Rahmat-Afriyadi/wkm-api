@@ -48,18 +48,25 @@ func (lR *asuransiRepository) MasterDataRekapTele() []entity.MasterRekapTele {
 }
 
 func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string) []entity.MasterAsuransi {
+	fmt.Println("ini search ", sts)
 	if search == "undefined" {
 		search = ""
 	}
 	datas := []entity.MasterAsuransi{}
 	filter := entity.MasterAsuransi{JnsSource: dataSource}
-	if sts != "all" {
+	query := lR.connG.Where("no_msn like ? or nm_customer11 like ? or nm_dlr like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
+
+	if sts != "all" && sts != "pre" {
 		filter.Status = strings.ToUpper(sts)
 	}
-	if sts != "" {
+	if sts == "pre" {
+		query.Where("sts_asuransi = ? or sts_asuransi is null", "")
+	}
+	if sts != "pre" {
 		filter.KdUser = username
 	}
-	lR.connG.Where(&filter).Where("no_msn like ? or nm_customer11 like ? or nm_dlr like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%").Select("no_msn, nm_customer11, nm_dlr").Find(&datas)
+	fmt.Println("ini status ", filter.Status)
+	query.Where(&filter).Find(&datas)
 	return datas
 
 }
@@ -265,13 +272,13 @@ func (lR *asuransiRepository) RekapByStatusKdUser(tglStart string, tglEnd string
 }
 
 func (lR *asuransiRepository) MasterAlasanPending() []entity.MasterAlasanPending {
-	var result []entity.MasterAlasanPending
+	result := []entity.MasterAlasanPending{}
 	lR.connG.Find(&result)
 	return result
 }
 
 func (lR *asuransiRepository) MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat {
-	var result []entity.MasterAlasanTdkBerminat
+	result := []entity.MasterAlasanTdkBerminat{}
 	lR.connG.Find(&result)
 	return result
 }

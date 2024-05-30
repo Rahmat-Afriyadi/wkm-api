@@ -17,6 +17,8 @@ type AsuransiController interface {
 	UpdateAmbilAsuransi(ctx *fiber.Ctx) error
 	MasterDataRekapTele(ctx *fiber.Ctx) error
 	RekapByStatus(ctx *fiber.Ctx) error
+	MasterAlasanPending(ctx *fiber.Ctx) error
+	MasterAlasanTdkBerminat(ctx *fiber.Ctx) error
 }
 
 type asuransiController struct {
@@ -32,6 +34,13 @@ func NewAsuransiController(aS service.AsuransiService) AsuransiController {
 func (tr *asuransiController) MasterDataRekapTele(ctx *fiber.Ctx) error {
 	return ctx.JSON(tr.asuransiService.MasterDataRekapTele())
 }
+func (tr *asuransiController) MasterAlasanPending(ctx *fiber.Ctx) error {
+	return ctx.JSON(tr.asuransiService.MasterAlasanPending())
+}
+func (tr *asuransiController) MasterAlasanTdkBerminat(ctx *fiber.Ctx) error {
+	return ctx.JSON(tr.asuransiService.MasterAlasanTdkBerminat())
+}
+
 func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
 	dataSource := ctx.Query("dataSource")
 	sts := ctx.Params("status")

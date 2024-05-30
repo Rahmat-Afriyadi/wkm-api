@@ -34,7 +34,7 @@ var (
 	leasService    service.LeasService       = service.NewLeasService(leasRepository)
 	leasController controller.LeasController = controller.NewLeasController(leasService)
 
-	userRepository repository.UserRepository = repository.NewUserRepository(connUser, connAsuransi)
+	userRepository repository.UserRepository = repository.NewUserRepository(connUser)
 	authService    service.AuthService       = service.NewAuthService(userRepository)
 	authController controller.AuthController = controller.NewAuthController(authService)
 
@@ -93,6 +93,8 @@ func main() {
 
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
 	app.Get("/asuransi/master-data-rekap", middleware.DeserializeUser, asuransiController.MasterDataRekapTele)
+	app.Get("/asuransi/master-alasan-pending", middleware.DeserializeUser, asuransiController.MasterAlasanPending)
+	app.Get("/asuransi/master-alasan-tdk-berminat", middleware.DeserializeUser, asuransiController.MasterAlasanTdkBerminat)
 	app.Get("/asuransi/rekap-by-status-tele", middleware.DeserializeUser, asuransiController.RekapByStatus)
 	app.Post("/asuransi/update", middleware.DeserializeUser, asuransiController.UpdateAsuransi)
 	app.Post("/asuransi/update/berminat", asuransiController.UpdateAsuransiBerminat)
@@ -103,7 +105,7 @@ func main() {
 	app.Get("/kodepos/master-data", middleware.DeserializeUser, kodeposController.MasterData)
 	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
-	// asuransiService.ExportReport("TS1", "2024-05-30")
+	// asuransiService.ExportReport("2024-05-01", "2024-05-30")
 	// app.Use(jwtware.New(jwtware.Config{
 	// 	SigningKey: jwtware.SigningKey{Key: []byte("DE6ED21B4E643161949DFCE42DABC")},
 	// 	ErrorHandler: func(c *fiber.Ctx, err error) error {

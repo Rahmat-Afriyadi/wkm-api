@@ -6,7 +6,7 @@ type User struct {
 	Username    string   `form:"username" json:"username" gorm:"column:username"`
 	Password    string   `form:"password" json:"password" gorm:"column:password2"`
 	DataSource  string   `form:"data_source" json:"data_source" gorm:"column:data_source"`
-	Permissions []string `gorm:"type:text"`
+	Permissions []string `gorm:"type:text;->"`
 	RoleId      uint32   `form:"role_id" json:"role_id" gorm:"column:role_id"`
 }
 

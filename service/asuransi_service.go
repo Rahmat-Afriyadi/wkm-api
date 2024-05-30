@@ -88,6 +88,7 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	xlsx.NewSheet(pendingSheet)
 	xlsx.NewSheet(tdkBerminatSheet)
 	xlsx.SetCellValue(rekapSheet, "A2", "Source Info")
+	xlsx.SetColWidth(rekapSheet, "A", "G", 14)
 	xlsx.SetCellValue(rekapSheet, "B2", "Pending")
 	xlsx.SetCellValue(rekapSheet, "C2", "Tidak Berminat")
 	xlsx.SetCellValue(rekapSheet, "D2", "Berminat")
@@ -104,6 +105,10 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		"font": {
 			"bold": true
 		},
+		"alignment": {
+            "horizontal": "center",
+            "vertical": "center"
+        },
 		"fill": {
 			"type": "pattern",
 			"color": [
@@ -164,36 +169,49 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	if err != nil {
 		fmt.Println("ini error style ", err)
 	}
+	xlsx.SetCellStyle(rekapSheet, "A1", "G1", headerStyle)
 	xlsx.SetCellStyle(rekapSheet, "A2", "E2", headerStyle)
 	xlsx.SetCellStyle(rekapSheet, "A3", "A4", headerStyle)
 	xlsx.SetCellStyle(rekapSheet, "A6", "G6", headerStyle)
 	xlsx.SetCellStyle(rekapSheet, "B3", "E4", styleBorder)
 	xlsx.MergeCell(rekapSheet, "A1", "G1")
 
+	jenis_source := ""
 	for i, each := range rekapSourceInfo {
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("A%d", i+3), each["jenis_source"])
+		if each["jenis_source"] == "W" {
+			jenis_source = "Wanda"
+		}
+		if each["jenis_source"] == "E" {
+			jenis_source = "Excel"
+		}
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("A%d", i+3), jenis_source)
 		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("B%d", i+3), each["p"])
 		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("C%d", i+3), each["t"])
 		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("D%d", i+3), each["o"])
 		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("E%d", i+3), each["total"])
 	}
 
-	for i, each := range rekapKdUser {
+	xlsx.SetCellValue(rekapSheet, "A1", "Report Asuransi Periode "+tgl1+" - "+tgl2)
+	rowCountKdUser := 7
+	for _, each := range rekapKdUser {
 		user := s.uR.FindByUsername(each["kd_user"].(string))
 		if user.ID == 0 {
+			fmt.Println("ini count ", rowCountKdUser)
 			continue
 		}
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("A%d", i+7), user.Username)
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("B%d", i+7), user.Name)
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("C%d", i+7), each["p"])
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("D%d", i+7), each["t"])
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("E%d", i+7), each["o"])
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("F%d", i+7), each["total"])
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("G%d", i+7), user.DataSource)
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("A%d", rowCountKdUser), user.Username)
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("B%d", rowCountKdUser), user.Name)
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("C%d", rowCountKdUser), each["p"])
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("D%d", rowCountKdUser), each["t"])
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("E%d", rowCountKdUser), each["o"])
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("F%d", rowCountKdUser), each["total"])
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("G%d", rowCountKdUser), user.DataSource)
+		rowCountKdUser += 1
 	}
+	xlsx.SetCellStyle(rekapSheet, fmt.Sprintf("A%d", rowCountKdUser-1), fmt.Sprintf("G%d", rowCountKdUser-1), styleBorder)
 
-	// err = xlsx.SaveAs("./file-report-asuransi.xlsx")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	err = xlsx.SaveAs("./file-report-asuransi.xlsx")
+	if err != nil {
+		fmt.Println(err)
+	}
 }

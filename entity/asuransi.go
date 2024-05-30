@@ -8,7 +8,7 @@ type MasterAsuransi struct {
 	TglFaktur         string  `form:"tgl_faktur" json:"tgl_faktur" gorm:"column:tgl_faktur"`
 	NoTelepon         string  `form:"no_telp" json:"no_telp" gorm:"column:no_telp"`
 	NoTelepon2        string  `form:"no_telp2" json:"no_telp2" gorm:"column:no_telp2"`
-	Status            string  `form:"status" json:"status" gorm:"column:sts_asuransi"`
+	Status            string  `form:"status" json:"status" gorm:"column:sts_asuransi;not null;type:varchar(100);default:null"`
 	AlasanPending     *string `form:"alasan_pending" json:"alasan_pending" gorm:"column:alasan_pending"`
 	StatusBayar       *string `form:"status_bayar" json:"status_bayar" gorm:"column:sts_bayar"`
 	TglBayar          *string `form:"tgl_bayar" json:"tgl_bayar" gorm:"column:tgl_bayar"`

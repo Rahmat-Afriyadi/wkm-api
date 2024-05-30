@@ -32,7 +32,6 @@ func NewAuthController(aS service.AuthService) AuthController {
 }
 
 func (aC *authController) GeneratePassword(c *fiber.Ctx) error {
-	aC.aS.GeneratePassword()
 	return c.JSON(map[string]interface{}{"message": "Hallo guys"})
 }
 
