@@ -48,7 +48,6 @@ func (lR *asuransiRepository) MasterDataRekapTele() []entity.MasterRekapTele {
 }
 
 func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string) []entity.MasterAsuransi {
-	fmt.Println("ini search ", sts)
 	if search == "undefined" {
 		search = ""
 	}
@@ -65,7 +64,6 @@ func (lR *asuransiRepository) MasterData(search string, dataSource string, sts s
 	if sts != "pre" {
 		filter.KdUser = username
 	}
-	fmt.Println("ini status ", filter.Status)
 	query.Where(&filter).Find(&datas)
 	return datas
 
@@ -182,7 +180,6 @@ func (lR *asuransiRepository) UpdateAsuransiBatalBayar(no_msn string) {
 			fmt.Println("ini error update asuransi ", result.Error)
 		}
 	}
-	fmt.Println("ini asuransi ", data)
 	if data.AppTransId != "" {
 		lR.connG.Where("app_trans_id = ?", data.AppTransId).First(&transaksi)
 		if transaksi.ID != "" {
@@ -251,13 +248,11 @@ func (lR *asuransiRepository) MasterDataGorm() {
 		Nik:   "ininikaku",
 	}
 	lR.connG.Save(&data)
-	fmt.Println(" Ini data", data)
 }
 
 func (lR *asuransiRepository) RekapByStatus(u string, tgl string) entity.MasterStatusAsuransi {
 	var result entity.MasterStatusAsuransi
 	lR.connG.Select("kd_user, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("kd_user = ?", u).Where("tgl_verifikasi = ?", tgl).Table("asuransi").Group("kd_user").Find(&result)
-	fmt.Println(" Ini data", u, tgl)
 	return result
 }
 
