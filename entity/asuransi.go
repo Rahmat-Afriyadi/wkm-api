@@ -26,7 +26,7 @@ type MasterAsuransi struct {
 	JnsAsuransi       int64   `form:"jenis_asuransi" json:"jenis_asuransi" gorm:"column:jenis_asuransi"`
 	JnsSource         string  `form:"jenis_source" json:"jenis_source" gorm:"column:jenis_source"`
 	IdTransaksi       string  `form:"id_transaksi" json:"id_transaksi" gorm:"->"`
-	TglUpdate         string  `gorm:"column:tgl_update"`
+	TglUpdate         *string `gorm:"column:tgl_update"`
 	TglVerifikasi     string  `gorm:"column:tgl_verifikasi"`
 }
 

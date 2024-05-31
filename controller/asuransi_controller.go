@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"strconv"
 	"wkm/entity"
 	"wkm/service"
 
@@ -10,6 +11,7 @@ import (
 
 type AsuransiController interface {
 	MasterData(ctx *fiber.Ctx) error
+	MasterDataCount(ctx *fiber.Ctx) error
 	FindAsuransiByNoMsn(ctx *fiber.Ctx) error
 	UpdateAsuransi(ctx *fiber.Ctx) error
 	UpdateAsuransiBerminat(ctx *fiber.Ctx) error
@@ -45,9 +47,20 @@ func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
 	dataSource := ctx.Query("dataSource")
 	sts := ctx.Params("status")
 	search := ctx.Query("search")
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	return ctx.JSON(tr.asuransiService.MasterData(search, dataSource, sts, details.Username))
+	return ctx.JSON(tr.asuransiService.MasterData(search, dataSource, sts, details.Username, limit, pageParams))
+}
+
+func (tr *asuransiController) MasterDataCount(ctx *fiber.Ctx) error {
+	dataSource := ctx.Query("dataSource")
+	sts := ctx.Params("status")
+	search := ctx.Query("search")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	return ctx.JSON(tr.asuransiService.MasterDataCount(search, dataSource, sts, details.Username))
 }
 
 func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {

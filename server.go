@@ -17,10 +17,11 @@ import (
 )
 
 var (
-	conn         *sql.DB  = config.GetConnection()
-	connUser     *gorm.DB = config.GetConnectionUser()
-	connAsuransi *sql.DB  = config.GetConnectionAsuransi()
-	connGorm     *gorm.DB = config.NewAsuransiGorm()
+	conn             *sql.DB  = config.GetConnection()
+	connUser         *gorm.DB = config.GetConnectionUser()
+	connGormAsuransi *gorm.DB = config.NewAsuransiGorm()
+
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 
 	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
@@ -42,19 +43,19 @@ var (
 	// authServiceAsuransi    service.AuthService       = service.NewAuthService(userRepository)
 	// authControllerAsuransi controller.AuthController = controller.NewAuthController(authService)
 
-	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(connAsuransi, connGorm)
+	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(connGormAsuransi)
 	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository, userRepository)
 	asuransiController controller.AsuransiController = controller.NewAsuransiController(asuransiService)
 
-	kodeposRepository repository.KodeposRepository = repository.NewKodeposRepository(connAsuransi)
+	kodeposRepository repository.KodeposRepository = repository.NewKodeposRepository(connGormAsuransi)
 	kodeposService    service.KodeposService       = service.NewKodeposService(kodeposRepository)
 	kodeposController controller.KodeposController = controller.NewKodeposController(kodeposService)
 
-	dlrRepository repository.DlrRepository = repository.NewDlrRepository(connAsuransi)
+	dlrRepository repository.DlrRepository = repository.NewDlrRepository(connGormAsuransi)
 	dlrService    service.DlrService       = service.NewDlrService(dlrRepository)
 	dlrController controller.DlrController = controller.NewDlrController(dlrService)
 
-	produkRepository repository.ProdukRepository = repository.NewProdukRepository(connAsuransi)
+	produkRepository repository.ProdukRepository = repository.NewProdukRepository(connGormAsuransi)
 	produkService    service.ProdukService       = service.NewProdukService(produkRepository)
 	produkController controller.ProdukController = controller.NewProdukController(produkService)
 )
@@ -62,9 +63,7 @@ var (
 func main() {
 	defer conn.Close()
 
-	app := fiber.New(fiber.Config{
-		Prefork: true,
-	})
+	app := fiber.New(fiber.Config{})
 
 	app.Use(logger.New(logger.Config{
 		Format:     "${time} | ${status} | ${method} | ${path} | ${ip} | ${queryParams} |${latency} | ${body}\n\n",
@@ -92,6 +91,7 @@ func main() {
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)
 
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
+	app.Get("/asuransi/master-data-count/:status", middleware.DeserializeUser, asuransiController.MasterDataCount)
 	app.Get("/asuransi/master-data-rekap", middleware.DeserializeUser, asuransiController.MasterDataRekapTele)
 	app.Get("/asuransi/master-alasan-pending", middleware.DeserializeUser, asuransiController.MasterAlasanPending)
 	app.Get("/asuransi/master-alasan-tdk-berminat", middleware.DeserializeUser, asuransiController.MasterAlasanTdkBerminat)

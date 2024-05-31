@@ -1,20 +1,21 @@
 package repository
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 	"wkm/entity"
+	"wkm/utils"
 
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 )
 
 type AsuransiRepository interface {
-	MasterData(search string, dataSource string, sts string, usename string) []entity.MasterAsuransi
+	MasterData(search string, dataSource string, sts string, usename string, limit int, pageParams int) []entity.MasterAsuransi
+	MasterDataCount(search string, dataSource string, sts string, username string) int64
 	FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi
 	UpdateAmbilAsuransi(no_msn string, kd_user string)
 	UpdateAsuransi(data entity.MasterAsuransi) entity.MasterAsuransi
@@ -34,9 +35,8 @@ type asuransiRepository struct {
 	connG *gorm.DB
 }
 
-func NewAsuransiRepository(conn *sql.DB, connG *gorm.DB) AsuransiRepository {
+func NewAsuransiRepository(connG *gorm.DB) AsuransiRepository {
 	return &asuransiRepository{
-		conn:  conn,
 		connG: connG,
 	}
 }
@@ -47,7 +47,7 @@ func (lR *asuransiRepository) MasterDataRekapTele() []entity.MasterRekapTele {
 	return datas
 }
 
-func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string) []entity.MasterAsuransi {
+func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string, limit int, pageParams int) []entity.MasterAsuransi {
 	if search == "undefined" {
 		search = ""
 	}
@@ -64,9 +64,29 @@ func (lR *asuransiRepository) MasterData(search string, dataSource string, sts s
 	if sts != "pre" {
 		filter.KdUser = username
 	}
-	query.Where(&filter).Find(&datas)
+	query.Where(&filter).Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Order("tgl_update desc").Find(&datas)
 	return datas
+}
 
+func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, sts string, username string) int64 {
+	if search == "undefined" {
+		search = ""
+	}
+	datas := []entity.MasterAsuransi{}
+	filter := entity.MasterAsuransi{JnsSource: dataSource}
+	query := lR.connG.Where("no_msn like ? or nm_customer11 like ? or nm_dlr like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
+
+	if sts != "all" && sts != "pre" {
+		filter.Status = strings.ToUpper(sts)
+	}
+	if sts == "pre" {
+		query.Where("sts_asuransi = ? or sts_asuransi is null", "")
+	}
+	if sts != "pre" {
+		filter.KdUser = username
+	}
+	query.Where(&filter).Select("no_msn").Find(&datas)
+	return int64(len(datas))
 }
 
 func (lR *asuransiRepository) FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi {
@@ -227,7 +247,8 @@ func (lR *asuransiRepository) UpdateAsuransi(dataUpdate entity.MasterAsuransi) e
 			dataUpdate.TglBayar = nil
 		}
 	}
-	dataUpdate.TglUpdate = time.Now().Format("2006-01-02")
+	today := time.Now().Format("2006-01-02")
+	dataUpdate.TglUpdate = &today
 	dataUpdate.TglVerifikasi = time.Now().Format("2006-01-02")
 	result := lR.connG.Save(&dataUpdate)
 	fmt.Println("ini update error ", result.Error)
@@ -235,11 +256,12 @@ func (lR *asuransiRepository) UpdateAsuransi(dataUpdate entity.MasterAsuransi) e
 }
 
 func (lR *asuransiRepository) UpdateAmbilAsuransi(no_msn string, kd_user string) {
-	ctx := context.Background()
-	_, err := lR.conn.ExecContext(ctx, "UPDATE asuransi set sts_asuransi='P', tgl_update=?, kd_user=?, tgl_verifikasi=? where no_msn=?", time.Now().Format("2006-01-02"), kd_user, time.Now().Format("2006-01-02"), no_msn)
-	if err != nil {
-		fmt.Println("ini error update ", err)
-	}
+	asuransi := entity.MasterAsuransi{NoMsn: no_msn}
+	lR.connG.Find(&asuransi)
+	asuransi.KdUser = kd_user
+	asuransi.TglVerifikasi = time.Now().Format("2006-01-02")
+	asuransi.Status = "P"
+	lR.connG.Save(&asuransi)
 }
 
 func (lR *asuransiRepository) MasterDataGorm() {

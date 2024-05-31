@@ -9,7 +9,8 @@ import (
 )
 
 type AsuransiService interface {
-	MasterData(search string, dataSource string, sts string, usename string) []entity.MasterAsuransi
+	MasterData(search string, dataSource string, sts string, usename string, limit int, pageParams int) []entity.MasterAsuransi
+	MasterDataCount(search string, dataSource string, sts string, usename string) int64
 	FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi
 	UpdateAsuransi(data entity.MasterAsuransi) entity.MasterAsuransi
 	UpdateAsuransiBerminat(no_msn string)
@@ -34,8 +35,12 @@ func NewAsuransiService(tR repository.AsuransiRepository, ur repository.UserRepo
 	}
 }
 
-func (s *asuransiService) MasterData(search string, dataSource string, sts string, usename string) []entity.MasterAsuransi {
-	return s.trR.MasterData(search, dataSource, sts, usename)
+func (s *asuransiService) MasterData(search string, dataSource string, sts string, usename string, limit int, pageParams int) []entity.MasterAsuransi {
+	return s.trR.MasterData(search, dataSource, sts, usename, limit, pageParams)
+}
+
+func (s *asuransiService) MasterDataCount(search string, dataSource string, sts string, usename string) int64 {
+	return s.trR.MasterDataCount(search, dataSource, sts, usename)
 }
 
 func (s *asuransiService) MasterDataRekapTele() []entity.MasterRekapTele {
