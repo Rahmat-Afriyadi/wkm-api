@@ -83,6 +83,7 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 
 	rekapSourceInfo := s.trR.RekapByStatusJenisSource("2024-05-01", "2024-05-30")
 	rekapKdUser := s.trR.RekapByStatusKdUser("2024-05-01", "2024-05-30")
+	fmt.Println("ini rekap user ", rekapKdUser)
 
 	xlsx := excelize.NewFile()
 
@@ -105,6 +106,16 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	xlsx.SetCellValue(rekapSheet, "E6", "Berminat")
 	xlsx.SetCellValue(rekapSheet, "F6", "Total")
 	xlsx.SetCellValue(rekapSheet, "G6", "Source Info")
+
+	xlsx.SetCellValue(pendingSheet, "A2", "Alasan")
+	xlsx.SetCellValue(pendingSheet, "B2", "Total")
+	xlsx.SetColWidth(pendingSheet, "A", "A", 20)
+	xlsx.SetColWidth(pendingSheet, "B", "G", 11)
+
+	xlsx.SetCellValue(tdkBerminatSheet, "A2", "Alasan")
+	xlsx.SetCellValue(tdkBerminatSheet, "B2", "Total")
+	xlsx.SetColWidth(tdkBerminatSheet, "A", "A", 20)
+	xlsx.SetColWidth(tdkBerminatSheet, "B", "G", 11)
 
 	headerStyle, err := xlsx.NewStyle(`{
 		"font": {
@@ -174,12 +185,24 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	if err != nil {
 		fmt.Println("ini error style ", err)
 	}
-	xlsx.SetCellStyle(rekapSheet, "A1", "G1", headerStyle)
+
+	xlsx.SetCellStyle(pendingSheet, "A1", "G1", headerStyle)
+	xlsx.SetCellStyle(tdkBerminatSheet, "A1", "G1", headerStyle)
+
 	xlsx.SetCellStyle(rekapSheet, "A2", "E2", headerStyle)
+	xlsx.SetCellStyle(pendingSheet, "A2", "B2", headerStyle)
+	xlsx.SetCellStyle(tdkBerminatSheet, "A2", "B2", headerStyle)
+
 	xlsx.SetCellStyle(rekapSheet, "A3", "A4", headerStyle)
 	xlsx.SetCellStyle(rekapSheet, "A6", "G6", headerStyle)
 	xlsx.SetCellStyle(rekapSheet, "B3", "E4", styleBorder)
 	xlsx.MergeCell(rekapSheet, "A1", "G1")
+	xlsx.MergeCell(pendingSheet, "A1", "G1")
+	xlsx.MergeCell(tdkBerminatSheet, "A1", "G1")
+
+	xlsx.SetCellValue(rekapSheet, "A1", "Report Asuransi Periode "+tgl1+" - "+tgl2)
+	xlsx.SetCellValue(pendingSheet, "A1", "Report Asuransi Periode "+tgl1+" - "+tgl2)
+	xlsx.SetCellValue(tdkBerminatSheet, "A1", "Report Asuransi Periode "+tgl1+" - "+tgl2)
 
 	jenis_source := ""
 	for i, each := range rekapSourceInfo {
@@ -196,12 +219,10 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("E%d", i+3), each["total"])
 	}
 
-	xlsx.SetCellValue(rekapSheet, "A1", "Report Asuransi Periode "+tgl1+" - "+tgl2)
 	rowCountKdUser := 7
 	for _, each := range rekapKdUser {
 		user := s.uR.FindByUsername(each["kd_user"].(string))
 		if user.ID == 0 {
-			fmt.Println("ini count ", rowCountKdUser)
 			continue
 		}
 		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("A%d", rowCountKdUser), user.Username)
@@ -214,6 +235,26 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		rowCountKdUser += 1
 	}
 	xlsx.SetCellStyle(rekapSheet, fmt.Sprintf("A%d", rowCountKdUser-1), fmt.Sprintf("G%d", rowCountKdUser-1), styleBorder)
+
+	rowCountRekapByAlasanPending := 3
+	awalRowCountRekapByAlasanPending := 3
+	rekapByAlasanPending := s.trR.RekapByAlasanPending(tgl1, tgl2)
+	for _, each := range rekapByAlasanPending {
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending), each["alasan"])
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending), each["total"])
+		rowCountRekapByAlasanPending += 1
+	}
+	xlsx.SetCellStyle(pendingSheet, fmt.Sprintf("A%d", awalRowCountRekapByAlasanPending), fmt.Sprintf("B%d", rowCountRekapByAlasanPending-1), styleBorder)
+
+	rowCountRekapByAlasanTdkBerminat := 3
+	awalRowCountRekapByAlasanTdkBerminat := 3
+	rekapByAlasanTdkBerminat := s.trR.RekapByAlasanTdkBerminat(tgl1, tgl2)
+	for _, each := range rekapByAlasanTdkBerminat {
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), each["alasan"])
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanTdkBerminat), each["total"])
+		rowCountRekapByAlasanTdkBerminat += 1
+	}
+	xlsx.SetCellStyle(tdkBerminatSheet, fmt.Sprintf("A%d", awalRowCountRekapByAlasanTdkBerminat), fmt.Sprintf("B%d", rowCountRekapByAlasanTdkBerminat-1), styleBorder)
 
 	err = xlsx.SaveAs("./file-report-asuransi.xlsx")
 	if err != nil {

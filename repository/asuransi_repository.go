@@ -28,6 +28,10 @@ type AsuransiRepository interface {
 	MasterDataRekapTele() []entity.MasterRekapTele
 	RekapByStatusJenisSource(tglStart string, tglEnd string) []map[string]interface{}
 	RekapByStatusKdUser(tglStart string, tglEnd string) []map[string]interface{}
+	RekapByAlasanPending(tgl1 string, tgl2 string) []map[string]interface{}
+	RekapByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{}
+	RekapByAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
+	RekapByAlasanTdkBerminatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 }
 
 type asuransiRepository struct {
@@ -261,6 +265,8 @@ func (lR *asuransiRepository) UpdateAmbilAsuransi(no_msn string, kd_user string)
 	asuransi.KdUser = kd_user
 	asuransi.TglVerifikasi = time.Now().Format("2006-01-02")
 	asuransi.Status = "P"
+	alasanPending := "1"
+	asuransi.AlasanPending = &alasanPending
 	lR.connG.Save(&asuransi)
 }
 
@@ -298,5 +304,30 @@ func (lR *asuransiRepository) MasterAlasanPending() []entity.MasterAlasanPending
 func (lR *asuransiRepository) MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat {
 	result := []entity.MasterAlasanTdkBerminat{}
 	lR.connG.Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RekapByAlasanPending(tgl1 string, tgl2 string) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	fmt.Println("ini tgl ", tgl1, tgl2)
+	lR.connG.Raw("select case when ap.name is null then 'Tidak Ada Alasan' else ap.name end as alasan, a.total from (select alasan_pending, count(*) total from asuransi where sts_asuransi = 'P' and jenis_source = 'W' and tgl_verifikasi >= ? and tgl_verifikasi <= ? group by alasan_pending) a left join mst_alasan_pending ap on ap.id = a.alasan_pending", tgl1, tgl2).Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RekapByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	lR.connG.Raw("select a.kd_user, case when ap.name is null then 'Tidak Ada Alasan' else ap.name end as alasan, a.total from (select kd_user, alasan_pending, count(*) total from asuransi where sts_asuransi = 'P' and jenis_source = 'W' and tgl_verifikasi >= ? and tgl_verifikasi <= ? group by alasan_pending, kd_user) a left join mst_alasan_pending ap on ap.id = a.alasan_pending", tgl1, tgl2).Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RekapByAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	lR.connG.Raw("select case when ap.name is null then 'Tidak Ada Alasan' else ap.name end as alasan, a.total from (select alasan_tdk_berminat, count(*) total from asuransi where sts_asuransi = 'T' and jenis_source = 'W' and tgl_verifikasi >= ? and tgl_verifikasi <= ? group by alasan_tdk_berminat) a left join mst_alasan_tdk_berminat ap on ap.id = a.alasan_tdk_berminat", tgl1, tgl2).Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RekapByAlasanTdkBerminatKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	lR.connG.Raw("select a.kd_user, case when ap.name is null then 'Tidak Ada Alasan' else ap.name end as alasan, a.total from (select kd_user, alasan_tdk_berminat, count(*) total from asuransi where sts_asuransi = 'T' and jenis_source = 'W' and tgl_verifikasi >= ? and tgl_verifikasi <= ? group by alasan_tdk_berminat, kd_user) a left join mst_alasan_tdk_berminat ap on ap.id = a.alasan_tdk_berminat", tgl1, tgl2).Find(&result)
 	return result
 }

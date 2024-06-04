@@ -21,8 +21,6 @@ var (
 	connUser         *gorm.DB = config.GetConnectionUser()
 	connGormAsuransi *gorm.DB = config.NewAsuransiGorm()
 
-	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-
 	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
 	tr3Controller controller.Tr3Controller = controller.NewTr3Controller(tr3Service)
@@ -38,10 +36,6 @@ var (
 	userRepository repository.UserRepository = repository.NewUserRepository(connUser)
 	authService    service.AuthService       = service.NewAuthService(userRepository)
 	authController controller.AuthController = controller.NewAuthController(authService)
-
-	// userRepositoryAsuransi repository.UserRepository = repository.NewUserRepository(conn)
-	// authServiceAsuransi    service.AuthService       = service.NewAuthService(userRepository)
-	// authControllerAsuransi controller.AuthController = controller.NewAuthController(authService)
 
 	asuransiRepository repository.AsuransiRepository = repository.NewAsuransiRepository(connGormAsuransi)
 	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository, userRepository)
@@ -90,6 +84,7 @@ func main() {
 	app.Get("/leas/master-data", middleware.DeserializeUser, leasController.MasterData)
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)
 
+	app.Get("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
 	app.Get("/asuransi/master-data-count/:status", middleware.DeserializeUser, asuransiController.MasterDataCount)
 	app.Get("/asuransi/master-data-rekap", middleware.DeserializeUser, asuransiController.MasterDataRekapTele)

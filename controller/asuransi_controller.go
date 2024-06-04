@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"wkm/entity"
+	"wkm/request"
 	"wkm/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,6 +22,7 @@ type AsuransiController interface {
 	RekapByStatus(ctx *fiber.Ctx) error
 	MasterAlasanPending(ctx *fiber.Ctx) error
 	MasterAlasanTdkBerminat(ctx *fiber.Ctx) error
+	ExportReportAsuransi(ctx *fiber.Ctx) error
 }
 
 type asuransiController struct {
@@ -31,6 +33,16 @@ func NewAsuransiController(aS service.AsuransiService) AsuransiController {
 	return &asuransiController{
 		asuransiService: aS,
 	}
+}
+
+func (tr *asuransiController) ExportReportAsuransi(ctx *fiber.Ctx) error {
+	var request request.ReportAsuransi
+	if err := ctx.BodyParser(&request); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	tr.asuransiService.ExportReport(request.AwalTanggal, request.AkhirTAnggal)
+	return ctx.Download("./file-report-asuransi.xlsx")
+
 }
 
 func (tr *asuransiController) MasterDataRekapTele(ctx *fiber.Ctx) error {

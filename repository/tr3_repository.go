@@ -88,6 +88,7 @@ func (tr *tr3Repository) UpdateJenisBayar(data []ParamsUpdateJenisBayar) {
 	for _, v := range data {
 		_, err := tr.conn.ExecContext(ctx, "UPDATE tr_wms_faktur3 set sts_jenis_bayar='T' where no_tanda_terima=? and nm_customer11=?", v.NoTandaTerima, v.NamaCustomer)
 		if err != nil {
+			fmt.Println("errornya disin yaa ", err)
 			continue
 		}
 
