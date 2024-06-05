@@ -363,7 +363,7 @@ func (lR *asuransiRepository) RincianByAlasanPendingKdUser(tgl1 string, tgl2 str
 func (lR *asuransiRepository) RincianByAlasanTidakMinatKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	a := lR.MasterAlasanTdkBerminat()
-	queryKoloms := ", count(case when alasan_tdk_berminat = '' then 1 end) as kosong"
+	queryKoloms := " "
 	for _, v := range a {
 		queryKoloms += fmt.Sprintf(", count(case when alasan_tdk_berminat = %d then 1 end) as '%d' ", v.Id, v.Id)
 	}

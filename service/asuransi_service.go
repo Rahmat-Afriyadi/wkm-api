@@ -269,7 +269,7 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending), "Id User")
 	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending), "Nama")
 	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanPending), "Tidak Ada Alasan")
-	xlsx.SetCellStyle(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending), fmt.Sprintf("%s%d", listCol[len(masterPending)+3], rowCountRekapByAlasanPending), headerStyle)
+	xlsx.SetCellStyle(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending), fmt.Sprintf("%s%d", listCol[len(masterPending)+2], rowCountRekapByAlasanPending), headerStyle)
 	for i, v := range masterPending {
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[i+3], rowCountRekapByAlasanPending), v.Nama)
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[i+3], rowCountRekapByAlasanPending), v.Nama)
@@ -277,12 +277,13 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	}
 	for _, v := range rincianPending {
 		user := s.uR.FindByUsername(v["kd_user"].(string))
+		fmt.Println("ini user id nya yaa ", user)
 		if user.ID == 0 {
 			continue
 		}
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending+1), v["kd_user"])
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending+1), user.Name)
-		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanPending+1), v["kosong"])
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending+1), v["kosong"])
 		for j, vj := range masterPending {
 			xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[j+3], rowCountRekapByAlasanPending+1), v[fmt.Sprintf("%d", vj.Id)])
 		}
@@ -302,7 +303,7 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	rowCountRekapByAlasanTdkBerminat += 1
 	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), "Id User")
 	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanTdkBerminat), "Nama")
-	xlsx.SetCellStyle(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), fmt.Sprintf("%s%d", listCol[len(masterPending)+3], rowCountRekapByAlasanTdkBerminat), headerStyle)
+	xlsx.SetCellStyle(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), fmt.Sprintf("%s%d", listCol[len(masterAlasanTdkBerminat)+2], rowCountRekapByAlasanTdkBerminat), headerStyle)
 	for i, v := range masterAlasanTdkBerminat {
 		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[i+2], rowCountRekapByAlasanTdkBerminat), v.Nama)
 		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[i+2], rowCountRekapByAlasanTdkBerminat), v.Nama)
@@ -315,9 +316,8 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		}
 		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat+1), v["kd_user"])
 		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanTdkBerminat+1), user.Name)
-		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanTdkBerminat+1), v["kosong"])
 		for j, vj := range masterAlasanTdkBerminat {
-			xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[j+3], rowCountRekapByAlasanTdkBerminat+1), v[fmt.Sprintf("%d", vj.Id)])
+			xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[j+2], rowCountRekapByAlasanTdkBerminat+1), v[fmt.Sprintf("%d", vj.Id)])
 		}
 		rowCountRekapByAlasanTdkBerminat += 1
 	}
