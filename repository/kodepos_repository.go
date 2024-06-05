@@ -22,6 +22,9 @@ func NewKodeposRepository(conn *gorm.DB) KodeposRepository {
 
 func (lR *kodeposRepository) MasterData(search string) []entity.MasterKodepos {
 	datas := []entity.MasterKodepos{}
+	if search == "undefined" {
+		search = ""
+	}
 	lR.conn.Where("kodepos like ? or kelurahan like ? or kecamatan like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%").Limit(15).Find(&datas)
 	return datas
 }

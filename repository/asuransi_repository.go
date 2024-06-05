@@ -14,8 +14,8 @@ import (
 )
 
 type AsuransiRepository interface {
-	MasterData(search string, dataSource string, sts string, usename string, limit int, pageParams int) []entity.MasterAsuransi
-	MasterDataCount(search string, dataSource string, sts string, username string) int64
+	MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi
+	MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string) int64
 	FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi
 	UpdateAmbilAsuransi(no_msn string, kd_user string)
 	UpdateAsuransi(data entity.MasterAsuransi) entity.MasterAsuransi
@@ -30,6 +30,7 @@ type AsuransiRepository interface {
 	RekapByStatusKdUser(tglStart string, tglEnd string) []map[string]interface{}
 	RekapByAlasanPending(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{}
+	RincianByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 }
@@ -51,9 +52,15 @@ func (lR *asuransiRepository) MasterDataRekapTele() []entity.MasterRekapTele {
 	return datas
 }
 
-func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string, limit int, pageParams int) []entity.MasterAsuransi {
+func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi {
 	if search == "undefined" {
 		search = ""
+	}
+	if tgl1 == "undefined" {
+		tgl1 = ""
+	}
+	if tgl2 == "undefined" {
+		tgl2 = ""
 	}
 	datas := []entity.MasterAsuransi{}
 	filter := entity.MasterAsuransi{JnsSource: dataSource}
@@ -61,6 +68,11 @@ func (lR *asuransiRepository) MasterData(search string, dataSource string, sts s
 
 	if sts != "all" && sts != "pre" {
 		filter.Status = strings.ToUpper(sts)
+	}
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("tgl_verifikasi >= ? and tgl_verifikasi <= ?", tgl1, tgl2)
+	} else if tgl1 != "" {
+		query.Where("tgl_verifikasi = ? ", tgl1)
 	}
 	if sts == "pre" {
 		query.Where("sts_asuransi = ? or sts_asuransi is null", "")
@@ -72,9 +84,15 @@ func (lR *asuransiRepository) MasterData(search string, dataSource string, sts s
 	return datas
 }
 
-func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, sts string, username string) int64 {
+func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string) int64 {
 	if search == "undefined" {
 		search = ""
+	}
+	if tgl1 == "undefined" {
+		tgl1 = ""
+	}
+	if tgl2 == "undefined" {
+		tgl2 = ""
 	}
 	datas := []entity.MasterAsuransi{}
 	filter := entity.MasterAsuransi{JnsSource: dataSource}
@@ -82,6 +100,11 @@ func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, 
 
 	if sts != "all" && sts != "pre" {
 		filter.Status = strings.ToUpper(sts)
+	}
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("tgl_verifikasi >= ? and tgl_verifikasi <= ?", tgl1, tgl2)
+	} else if tgl1 != "" {
+		query.Where("tgl_verifikasi = ? ", tgl1)
 	}
 	if sts == "pre" {
 		query.Where("sts_asuransi = ? or sts_asuransi is null", "")
@@ -291,13 +314,13 @@ func (lR *asuransiRepository) RekapByStatusJenisSource(tglStart string, tglEnd s
 }
 func (lR *asuransiRepository) RekapByStatusKdUser(tglStart string, tglEnd string) []map[string]interface{} {
 	var result []map[string]interface{}
-	lR.connG.Select("kd_user, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ?", tglStart).Where("tgl_verifikasi <= ?", tglEnd).Table("asuransi").Group("kd_user").Find(&result)
+	lR.connG.Select("kd_user, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ?", tglStart).Where("tgl_verifikasi <= ?", tglEnd).Where("kd_user is not null and kd_user != ''").Table("asuransi").Group("kd_user").Find(&result)
 	return result
 }
 
 func (lR *asuransiRepository) MasterAlasanPending() []entity.MasterAlasanPending {
 	result := []entity.MasterAlasanPending{}
-	lR.connG.Find(&result)
+	lR.connG.Order("id asc").Find(&result)
 	return result
 }
 
@@ -317,6 +340,19 @@ func (lR *asuransiRepository) RekapByAlasanPending(tgl1 string, tgl2 string) []m
 func (lR *asuransiRepository) RekapByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	lR.connG.Raw("select a.kd_user, case when ap.name is null then 'Tidak Ada Alasan' else ap.name end as alasan, a.total from (select kd_user, alasan_pending, count(*) total from asuransi where sts_asuransi = 'P' and jenis_source = 'W' and tgl_verifikasi >= ? and tgl_verifikasi <= ? group by alasan_pending, kd_user) a left join mst_alasan_pending ap on ap.id = a.alasan_pending", tgl1, tgl2).Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RincianByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	a := lR.MasterAlasanPending()
+	queryKoloms := ", count(case when alasan_pending = '' then 1 end) as kosong"
+	for _, v := range a {
+		queryKoloms += fmt.Sprintf(", count(case when alasan_pending = %d then 1 end) as '%d' ", v.Id, v.Id)
+	}
+	query := "select kd_user, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'P' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by kd_user "
+	fmt.Println("ini query yaa ", query)
+	lR.connG.Raw(query, tgl1, tgl2).Find(&result)
 	return result
 }
 

@@ -84,9 +84,10 @@ func main() {
 	app.Get("/leas/master-data", middleware.DeserializeUser, leasController.MasterData)
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)
 
-	app.Get("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
+	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
 	app.Get("/asuransi/master-data-count/:status", middleware.DeserializeUser, asuransiController.MasterDataCount)
+	app.Get("/asuransi/rekap-by-status-kduser", middleware.DeserializeUser, asuransiController.RekapByStatusKdUser)
 	app.Get("/asuransi/master-data-rekap", middleware.DeserializeUser, asuransiController.MasterDataRekapTele)
 	app.Get("/asuransi/master-alasan-pending", middleware.DeserializeUser, asuransiController.MasterAlasanPending)
 	app.Get("/asuransi/master-alasan-tdk-berminat", middleware.DeserializeUser, asuransiController.MasterAlasanTdkBerminat)
@@ -101,6 +102,8 @@ func main() {
 	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
 	// asuransiService.ExportReport("2024-05-01", "2024-05-30")
+	// a := asuransiRepository.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
+	// fmt.Println("ini data yaa guys yaa ", a)
 	// app.Use(jwtware.New(jwtware.Config{
 	// 	SigningKey: jwtware.SigningKey{Key: []byte("DE6ED21B4E643161949DFCE42DABC")},
 	// 	ErrorHandler: func(c *fiber.Ctx, err error) error {

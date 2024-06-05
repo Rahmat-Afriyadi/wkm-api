@@ -13,6 +13,7 @@ import (
 type AsuransiController interface {
 	MasterData(ctx *fiber.Ctx) error
 	MasterDataCount(ctx *fiber.Ctx) error
+	RekapByStatusKdUser(ctx *fiber.Ctx) error
 	FindAsuransiByNoMsn(ctx *fiber.Ctx) error
 	UpdateAsuransi(ctx *fiber.Ctx) error
 	UpdateAsuransiBerminat(ctx *fiber.Ctx) error
@@ -40,6 +41,7 @@ func (tr *asuransiController) ExportReportAsuransi(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(400).JSON(err)
 	}
+	fmt.Println("ini request ", request)
 	tr.asuransiService.ExportReport(request.AwalTanggal, request.AkhirTAnggal)
 	return ctx.Download("./file-report-asuransi.xlsx")
 
@@ -59,20 +61,30 @@ func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
 	dataSource := ctx.Query("dataSource")
 	sts := ctx.Params("status")
 	search := ctx.Query("search")
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	return ctx.JSON(tr.asuransiService.MasterData(search, dataSource, sts, details.Username, limit, pageParams))
+	return ctx.JSON(tr.asuransiService.MasterData(search, dataSource, sts, details.Username, tgl1, tgl2, limit, pageParams))
+}
+
+func (tr *asuransiController) RekapByStatusKdUser(ctx *fiber.Ctx) error {
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	return ctx.JSON(tr.asuransiService.RekapByStatusKdUser(tgl1, tgl2))
 }
 
 func (tr *asuransiController) MasterDataCount(ctx *fiber.Ctx) error {
 	dataSource := ctx.Query("dataSource")
 	sts := ctx.Params("status")
 	search := ctx.Query("search")
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	return ctx.JSON(tr.asuransiService.MasterDataCount(search, dataSource, sts, details.Username))
+	return ctx.JSON(tr.asuransiService.MasterDataCount(search, dataSource, sts, details.Username, tgl1, tgl2))
 }
 
 func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {

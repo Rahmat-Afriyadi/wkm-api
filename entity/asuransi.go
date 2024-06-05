@@ -60,7 +60,7 @@ type MasterStatusAsuransi struct {
 }
 
 type MasterAlasanPending struct {
-	Id   string `gorm:"column:id" json:"id"`
+	Id   int    `gorm:"column:id" json:"id"`
 	Nama string `gorm:"column:name" json:"name"`
 }
 
@@ -69,7 +69,7 @@ func (MasterAlasanPending) TableName() string {
 }
 
 type MasterAlasanTdkBerminat struct {
-	Id   string `gorm:"column:id" json:"id"`
+	Id   int    `gorm:"column:id" json:"id"`
 	Nama string `gorm:"column:name" json:"name"`
 }
 

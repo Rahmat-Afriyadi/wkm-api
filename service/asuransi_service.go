@@ -9,8 +9,9 @@ import (
 )
 
 type AsuransiService interface {
-	MasterData(search string, dataSource string, sts string, usename string, limit int, pageParams int) []entity.MasterAsuransi
-	MasterDataCount(search string, dataSource string, sts string, usename string) int64
+	MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi
+	MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string) int64
+	RekapByStatusKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 	FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi
 	UpdateAsuransi(data entity.MasterAsuransi) entity.MasterAsuransi
 	UpdateAsuransiBerminat(no_msn string)
@@ -35,16 +36,28 @@ func NewAsuransiService(tR repository.AsuransiRepository, ur repository.UserRepo
 	}
 }
 
-func (s *asuransiService) MasterData(search string, dataSource string, sts string, usename string, limit int, pageParams int) []entity.MasterAsuransi {
-	return s.trR.MasterData(search, dataSource, sts, usename, limit, pageParams)
+func (s *asuransiService) MasterData(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi {
+	return s.trR.MasterData(search, dataSource, sts, usename, tgl1, tgl2, limit, pageParams)
 }
 
-func (s *asuransiService) MasterDataCount(search string, dataSource string, sts string, usename string) int64 {
-	return s.trR.MasterDataCount(search, dataSource, sts, usename)
+func (s *asuransiService) MasterDataCount(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string) int64 {
+	return s.trR.MasterDataCount(search, dataSource, sts, usename, tgl1, tgl2)
 }
 
 func (s *asuransiService) MasterDataRekapTele() []entity.MasterRekapTele {
 	return s.trR.MasterDataRekapTele()
+}
+
+func (s *asuransiService) RekapByStatusKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
+	datas := s.trR.RekapByStatusKdUser(tgl1, tgl2)
+	for _, v := range datas {
+		user := s.uR.FindByUsername(v["kd_user"].(string))
+		if user.ID == 0 {
+			continue
+		}
+		v["name"] = user.Name
+	}
+	return datas
 }
 
 func (s *asuransiService) FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi {
@@ -83,6 +96,8 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 
 	rekapSourceInfo := s.trR.RekapByStatusJenisSource("2024-05-01", "2024-05-30")
 	rekapKdUser := s.trR.RekapByStatusKdUser("2024-05-01", "2024-05-30")
+	rincianPending := s.trR.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
+	masterPending := s.trR.MasterAlasanPending()
 	fmt.Println("ini rekap user ", rekapKdUser)
 
 	xlsx := excelize.NewFile()
@@ -93,27 +108,27 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	xlsx.SetSheetName(xlsx.GetSheetName(1), rekapSheet)
 	xlsx.NewSheet(pendingSheet)
 	xlsx.NewSheet(tdkBerminatSheet)
-	xlsx.SetCellValue(rekapSheet, "A2", "Source Info")
+	xlsx.SetCellValue(rekapSheet, "A3", "Source Info")
 	xlsx.SetColWidth(rekapSheet, "A", "G", 14)
-	xlsx.SetCellValue(rekapSheet, "B2", "Pending")
-	xlsx.SetCellValue(rekapSheet, "C2", "Tidak Berminat")
-	xlsx.SetCellValue(rekapSheet, "D2", "Berminat")
-	xlsx.SetCellValue(rekapSheet, "E2", "Total")
-	xlsx.SetCellValue(rekapSheet, "A6", "Id User")
-	xlsx.SetCellValue(rekapSheet, "B6", "Nama")
-	xlsx.SetCellValue(rekapSheet, "C6", "Pending")
-	xlsx.SetCellValue(rekapSheet, "D6", "Tidak Berminat")
-	xlsx.SetCellValue(rekapSheet, "E6", "Berminat")
-	xlsx.SetCellValue(rekapSheet, "F6", "Total")
-	xlsx.SetCellValue(rekapSheet, "G6", "Source Info")
+	xlsx.SetCellValue(rekapSheet, "B3", "Pending")
+	xlsx.SetCellValue(rekapSheet, "C3", "Tidak Berminat")
+	xlsx.SetCellValue(rekapSheet, "D3", "Berminat")
+	xlsx.SetCellValue(rekapSheet, "E3", "Total")
+	xlsx.SetCellValue(rekapSheet, "A7", "Id User")
+	xlsx.SetCellValue(rekapSheet, "B7", "Nama")
+	xlsx.SetCellValue(rekapSheet, "C7", "Pending")
+	xlsx.SetCellValue(rekapSheet, "D7", "Tidak Berminat")
+	xlsx.SetCellValue(rekapSheet, "E7", "Berminat")
+	xlsx.SetCellValue(rekapSheet, "F7", "Total")
+	xlsx.SetCellValue(rekapSheet, "G7", "Source Info")
 
-	xlsx.SetCellValue(pendingSheet, "A2", "Alasan")
-	xlsx.SetCellValue(pendingSheet, "B2", "Total")
+	xlsx.SetCellValue(pendingSheet, "A3", "Alasan")
+	xlsx.SetCellValue(pendingSheet, "B3", "Total")
 	xlsx.SetColWidth(pendingSheet, "A", "A", 20)
 	xlsx.SetColWidth(pendingSheet, "B", "G", 11)
 
-	xlsx.SetCellValue(tdkBerminatSheet, "A2", "Alasan")
-	xlsx.SetCellValue(tdkBerminatSheet, "B2", "Total")
+	xlsx.SetCellValue(tdkBerminatSheet, "A3", "Alasan")
+	xlsx.SetCellValue(tdkBerminatSheet, "B3", "Total")
 	xlsx.SetColWidth(tdkBerminatSheet, "A", "A", 20)
 	xlsx.SetColWidth(tdkBerminatSheet, "B", "G", 11)
 
@@ -186,14 +201,15 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		fmt.Println("ini error style ", err)
 	}
 
+	xlsx.SetCellStyle(rekapSheet, "A1", "G1", headerStyle)
 	xlsx.SetCellStyle(pendingSheet, "A1", "G1", headerStyle)
 	xlsx.SetCellStyle(tdkBerminatSheet, "A1", "G1", headerStyle)
 
-	xlsx.SetCellStyle(rekapSheet, "A2", "E2", headerStyle)
-	xlsx.SetCellStyle(pendingSheet, "A2", "B2", headerStyle)
-	xlsx.SetCellStyle(tdkBerminatSheet, "A2", "B2", headerStyle)
+	xlsx.SetCellStyle(rekapSheet, "A3", "E3", headerStyle)
+	xlsx.SetCellStyle(pendingSheet, "A3", "B3", headerStyle)
+	xlsx.SetCellStyle(tdkBerminatSheet, "A3", "B3", headerStyle)
 
-	xlsx.SetCellStyle(rekapSheet, "A3", "A4", headerStyle)
+	xlsx.SetCellStyle(rekapSheet, "A4", "A5", headerStyle)
 	xlsx.SetCellStyle(rekapSheet, "A6", "G6", headerStyle)
 	xlsx.SetCellStyle(rekapSheet, "B3", "E4", styleBorder)
 	xlsx.MergeCell(rekapSheet, "A1", "G1")
@@ -212,14 +228,14 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		if each["jenis_source"] == "E" {
 			jenis_source = "Excel"
 		}
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("A%d", i+3), jenis_source)
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("B%d", i+3), each["p"])
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("C%d", i+3), each["t"])
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("D%d", i+3), each["o"])
-		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("E%d", i+3), each["total"])
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("A%d", i+4), jenis_source)
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("B%d", i+4), each["p"])
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("C%d", i+4), each["t"])
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("D%d", i+4), each["o"])
+		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("E%d", i+4), each["total"])
 	}
 
-	rowCountKdUser := 7
+	rowCountKdUser := 8
 	for _, each := range rekapKdUser {
 		user := s.uR.FindByUsername(each["kd_user"].(string))
 		if user.ID == 0 {
@@ -236,8 +252,8 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	}
 	xlsx.SetCellStyle(rekapSheet, fmt.Sprintf("A%d", rowCountKdUser-1), fmt.Sprintf("G%d", rowCountKdUser-1), styleBorder)
 
-	rowCountRekapByAlasanPending := 3
-	awalRowCountRekapByAlasanPending := 3
+	rowCountRekapByAlasanPending := 4
+	awalRowCountRekapByAlasanPending := 4
 	rekapByAlasanPending := s.trR.RekapByAlasanPending(tgl1, tgl2)
 	for _, each := range rekapByAlasanPending {
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending), each["alasan"])
@@ -246,8 +262,33 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	}
 	xlsx.SetCellStyle(pendingSheet, fmt.Sprintf("A%d", awalRowCountRekapByAlasanPending), fmt.Sprintf("B%d", rowCountRekapByAlasanPending-1), styleBorder)
 
-	rowCountRekapByAlasanTdkBerminat := 3
-	awalRowCountRekapByAlasanTdkBerminat := 3
+	listCol := []string{"D", "E", "F", "G", "H", "I"}
+	rowCountRekapByAlasanPending += 1
+	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending), "Id User")
+	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending), "Nama")
+	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanPending), "Tidak Ada Alasan")
+	for i, v := range masterPending {
+		fmt.Println("ini col nya ", fmt.Sprintf("%s%d", listCol[i], rowCountRekapByAlasanPending), v.Nama)
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[i], rowCountRekapByAlasanPending), v.Nama)
+	}
+	for _, v := range rincianPending {
+		user := s.uR.FindByUsername(v["kd_user"].(string))
+		if user.ID == 0 {
+			continue
+		}
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending+1), v["kd_user"])
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending+1), user.Name)
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanPending+1), v["kosong"])
+		for j, vj := range masterPending {
+			xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[j], rowCountRekapByAlasanPending+1), v[fmt.Sprintf("%d", vj.Id)])
+		}
+
+		rowCountRekapByAlasanPending += 1
+
+	}
+
+	rowCountRekapByAlasanTdkBerminat := 4
+	awalRowCountRekapByAlasanTdkBerminat := 4
 	rekapByAlasanTdkBerminat := s.trR.RekapByAlasanTdkBerminat(tgl1, tgl2)
 	for _, each := range rekapByAlasanTdkBerminat {
 		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), each["alasan"])
