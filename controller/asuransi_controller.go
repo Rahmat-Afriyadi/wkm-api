@@ -21,6 +21,7 @@ type AsuransiController interface {
 	UpdateAmbilAsuransi(ctx *fiber.Ctx) error
 	MasterDataRekapTele(ctx *fiber.Ctx) error
 	RekapByStatus(ctx *fiber.Ctx) error
+	RekapByStatusLt(ctx *fiber.Ctx) error
 	MasterAlasanPending(ctx *fiber.Ctx) error
 	MasterAlasanTdkBerminat(ctx *fiber.Ctx) error
 	ExportReportAsuransi(ctx *fiber.Ctx) error
@@ -110,11 +111,18 @@ func (tr *asuransiController) UpdateAsuransi(ctx *fiber.Ctx) error {
 
 func (tr *asuransiController) RekapByStatus(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user")
-	tgl := ctx.Query("tgl")
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
 	details, _ := user.(entity.User)
-	result := tr.asuransiService.RekapByStatus(details.Username, tgl)
+	result := tr.asuransiService.RekapByStatus(details.Username, tgl1, tgl2)
 	return ctx.JSON(result)
+}
 
+func (tr *asuransiController) RekapByStatusLt(ctx *fiber.Ctx) error {
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	result := tr.asuransiService.RekapByStatus("", tgl1, tgl2)
+	return ctx.JSON(result)
 }
 
 func (tr *asuransiController) UpdateAsuransiBerminat(ctx *fiber.Ctx) error {

@@ -18,7 +18,7 @@ type AsuransiService interface {
 	UpdateAsuransiBatalBayar(no_msn string)
 	UpdateAmbilAsuransi(no_msn string, kd_user string)
 	MasterDataRekapTele() []entity.MasterRekapTele
-	RekapByStatus(u string, tgl string) entity.MasterStatusAsuransi
+	RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi
 	ExportReport(u string, tgl string)
 	MasterAlasanPending() []entity.MasterAlasanPending
 	MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat
@@ -80,8 +80,8 @@ func (s *asuransiService) UpdateAmbilAsuransi(no_msn string, kd_user string) {
 	s.trR.UpdateAmbilAsuransi(no_msn, kd_user)
 }
 
-func (s *asuransiService) RekapByStatus(u string, tgl string) entity.MasterStatusAsuransi {
-	return s.trR.RekapByStatus(u, tgl)
+func (s *asuransiService) RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi {
+	return s.trR.RekapByStatus(u, tgl1, tgl2)
 }
 
 func (s *asuransiService) MasterAlasanPending() []entity.MasterAlasanPending {
@@ -97,7 +97,9 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	rekapSourceInfo := s.trR.RekapByStatusJenisSource("2024-05-01", "2024-05-30")
 	rekapKdUser := s.trR.RekapByStatusKdUser("2024-05-01", "2024-05-30")
 	rincianPending := s.trR.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
+	rincianTdkBerminat := s.trR.RincianByAlasanTidakMinatKdUser("2024-05-01", "2024-05-30")
 	masterPending := s.trR.MasterAlasanPending()
+	masterAlasanTdkBerminat := s.trR.MasterAlasanTdkBerminat()
 	fmt.Println("ini rekap user ", rekapKdUser)
 
 	xlsx := excelize.NewFile()
@@ -210,8 +212,8 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	xlsx.SetCellStyle(tdkBerminatSheet, "A3", "B3", headerStyle)
 
 	xlsx.SetCellStyle(rekapSheet, "A4", "A5", headerStyle)
-	xlsx.SetCellStyle(rekapSheet, "A6", "G6", headerStyle)
-	xlsx.SetCellStyle(rekapSheet, "B3", "E4", styleBorder)
+	xlsx.SetCellStyle(rekapSheet, "A7", "G7", headerStyle)
+	xlsx.SetCellStyle(rekapSheet, "B4", "E5", styleBorder)
 	xlsx.MergeCell(rekapSheet, "A1", "G1")
 	xlsx.MergeCell(pendingSheet, "A1", "G1")
 	xlsx.MergeCell(tdkBerminatSheet, "A1", "G1")
@@ -262,14 +264,16 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	}
 	xlsx.SetCellStyle(pendingSheet, fmt.Sprintf("A%d", awalRowCountRekapByAlasanPending), fmt.Sprintf("B%d", rowCountRekapByAlasanPending-1), styleBorder)
 
-	listCol := []string{"D", "E", "F", "G", "H", "I"}
+	listCol := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I"}
 	rowCountRekapByAlasanPending += 1
 	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending), "Id User")
 	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending), "Nama")
 	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanPending), "Tidak Ada Alasan")
+	xlsx.SetCellStyle(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending), fmt.Sprintf("%s%d", listCol[len(masterPending)+3], rowCountRekapByAlasanPending), headerStyle)
 	for i, v := range masterPending {
-		fmt.Println("ini col nya ", fmt.Sprintf("%s%d", listCol[i], rowCountRekapByAlasanPending), v.Nama)
-		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[i], rowCountRekapByAlasanPending), v.Nama)
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[i+3], rowCountRekapByAlasanPending), v.Nama)
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[i+3], rowCountRekapByAlasanPending), v.Nama)
+		xlsx.SetColWidth(pendingSheet, listCol[i+3], listCol[i+3], float64(len(v.Nama))+4)
 	}
 	for _, v := range rincianPending {
 		user := s.uR.FindByUsername(v["kd_user"].(string))
@@ -280,11 +284,9 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending+1), user.Name)
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanPending+1), v["kosong"])
 		for j, vj := range masterPending {
-			xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[j], rowCountRekapByAlasanPending+1), v[fmt.Sprintf("%d", vj.Id)])
+			xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[j+3], rowCountRekapByAlasanPending+1), v[fmt.Sprintf("%d", vj.Id)])
 		}
-
 		rowCountRekapByAlasanPending += 1
-
 	}
 
 	rowCountRekapByAlasanTdkBerminat := 4
@@ -296,6 +298,29 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		rowCountRekapByAlasanTdkBerminat += 1
 	}
 	xlsx.SetCellStyle(tdkBerminatSheet, fmt.Sprintf("A%d", awalRowCountRekapByAlasanTdkBerminat), fmt.Sprintf("B%d", rowCountRekapByAlasanTdkBerminat-1), styleBorder)
+
+	rowCountRekapByAlasanTdkBerminat += 1
+	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), "Id User")
+	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanTdkBerminat), "Nama")
+	xlsx.SetCellStyle(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), fmt.Sprintf("%s%d", listCol[len(masterPending)+3], rowCountRekapByAlasanTdkBerminat), headerStyle)
+	for i, v := range masterAlasanTdkBerminat {
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[i+2], rowCountRekapByAlasanTdkBerminat), v.Nama)
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[i+2], rowCountRekapByAlasanTdkBerminat), v.Nama)
+		xlsx.SetColWidth(tdkBerminatSheet, listCol[i+2], listCol[i+2], float64(len(v.Nama))+4)
+	}
+	for _, v := range rincianTdkBerminat {
+		user := s.uR.FindByUsername(v["kd_user"].(string))
+		if user.ID == 0 {
+			continue
+		}
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat+1), v["kd_user"])
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanTdkBerminat+1), user.Name)
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanTdkBerminat+1), v["kosong"])
+		for j, vj := range masterAlasanTdkBerminat {
+			xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[j+3], rowCountRekapByAlasanTdkBerminat+1), v[fmt.Sprintf("%d", vj.Id)])
+		}
+		rowCountRekapByAlasanTdkBerminat += 1
+	}
 
 	err = xlsx.SaveAs("./file-report-asuransi.xlsx")
 	if err != nil {

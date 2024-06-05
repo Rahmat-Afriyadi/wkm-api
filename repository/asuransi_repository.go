@@ -24,19 +24,19 @@ type AsuransiRepository interface {
 	MasterDataGorm()
 	MasterAlasanPending() []entity.MasterAlasanPending
 	MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat
-	RekapByStatus(u string, tgl string) entity.MasterStatusAsuransi
+	RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi
 	MasterDataRekapTele() []entity.MasterRekapTele
 	RekapByStatusJenisSource(tglStart string, tglEnd string) []map[string]interface{}
 	RekapByStatusKdUser(tglStart string, tglEnd string) []map[string]interface{}
 	RekapByAlasanPending(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 	RincianByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{}
+	RincianByAlasanTidakMinatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 }
 
 type asuransiRepository struct {
-	conn  *sql.DB
 	connG *gorm.DB
 }
 
@@ -301,9 +301,13 @@ func (lR *asuransiRepository) MasterDataGorm() {
 	lR.connG.Save(&data)
 }
 
-func (lR *asuransiRepository) RekapByStatus(u string, tgl string) entity.MasterStatusAsuransi {
+func (lR *asuransiRepository) RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi {
 	var result entity.MasterStatusAsuransi
-	lR.connG.Select("kd_user, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("kd_user = ?", u).Where("tgl_verifikasi = ?", tgl).Table("asuransi").Group("kd_user").Find(&result)
+	query := lR.connG.Select("kd_user, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ? and tgl_verifikasi <= ?", tgl1, tgl2)
+	if u != "" {
+		query.Where("kd_user = ?", u)
+	}
+	query.Table("asuransi").Group("kd_user").Find(&result)
 	return result
 }
 
@@ -313,7 +317,7 @@ func (lR *asuransiRepository) RekapByStatusJenisSource(tglStart string, tglEnd s
 	return result
 }
 func (lR *asuransiRepository) RekapByStatusKdUser(tglStart string, tglEnd string) []map[string]interface{} {
-	var result []map[string]interface{}
+	result := []map[string]interface{}{}
 	lR.connG.Select("kd_user, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ?", tglStart).Where("tgl_verifikasi <= ?", tglEnd).Where("kd_user is not null and kd_user != ''").Table("asuransi").Group("kd_user").Find(&result)
 	return result
 }
@@ -351,6 +355,19 @@ func (lR *asuransiRepository) RincianByAlasanPendingKdUser(tgl1 string, tgl2 str
 		queryKoloms += fmt.Sprintf(", count(case when alasan_pending = %d then 1 end) as '%d' ", v.Id, v.Id)
 	}
 	query := "select kd_user, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'P' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by kd_user "
+	fmt.Println("ini query yaa ", query)
+	lR.connG.Raw(query, tgl1, tgl2).Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RincianByAlasanTidakMinatKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	a := lR.MasterAlasanTdkBerminat()
+	queryKoloms := ", count(case when alasan_tdk_berminat = '' then 1 end) as kosong"
+	for _, v := range a {
+		queryKoloms += fmt.Sprintf(", count(case when alasan_tdk_berminat = %d then 1 end) as '%d' ", v.Id, v.Id)
+	}
+	query := "select kd_user, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'T' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by kd_user "
 	fmt.Println("ini query yaa ", query)
 	lR.connG.Raw(query, tgl1, tgl2).Find(&result)
 	return result

@@ -92,6 +92,7 @@ func main() {
 	app.Get("/asuransi/master-alasan-pending", middleware.DeserializeUser, asuransiController.MasterAlasanPending)
 	app.Get("/asuransi/master-alasan-tdk-berminat", middleware.DeserializeUser, asuransiController.MasterAlasanTdkBerminat)
 	app.Get("/asuransi/rekap-by-status-tele", middleware.DeserializeUser, asuransiController.RekapByStatus)
+	app.Get("/asuransi/rekap-by-status-leader-tele", middleware.DeserializeUser, asuransiController.RekapByStatusLt)
 	app.Post("/asuransi/update", middleware.DeserializeUser, asuransiController.UpdateAsuransi)
 	app.Post("/asuransi/update/berminat", asuransiController.UpdateAsuransiBerminat)
 	app.Post("/asuransi/update/batal-bayar", asuransiController.UpdateAsuransiBatalBayar)
@@ -101,7 +102,7 @@ func main() {
 	app.Get("/kodepos/master-data", middleware.DeserializeUser, kodeposController.MasterData)
 	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
-	// asuransiService.ExportReport("2024-05-01", "2024-05-30")
+	asuransiService.ExportReport("2024-05-01", "2024-05-30")
 	// a := asuransiRepository.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
 	// fmt.Println("ini data yaa guys yaa ", a)
 	// app.Use(jwtware.New(jwtware.Config{
