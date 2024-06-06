@@ -59,6 +59,25 @@ type MasterStatusAsuransi struct {
 	Berminat    uint32 `gorm:"column:o"`
 }
 
+type DetailApproval struct {
+	Admin        uint32  `json:"admin" gorm:"column:admin"`
+	Alamat       string  `json:"alamat" gorm:"column:alamat"`
+	IdProduk     string  `json:"id_produk" gorm:"column:id_produk"`
+	IdTransaksi  string  `json:"id_transaksi" gorm:"column:id_transaksi"`
+	Nik          string  `json:"nik" gorm:"column:nik"`
+	NamaKonsumen string  `json:"nm_konsumen" gorm:"column:nm_konsumen"`
+	NamaProduk   string  `json:"nm_produk" gorm:"column:nm_produk"`
+	NoHp         string  `json:"no_hp" gorm:"column:no_hp"`
+	NoMsn        string  `json:"no_msn" gorm:"column:no_msn"`
+	NoPlat       string  `json:"no_plat" gorm:"column:no_plat"`
+	NoRgk        string  `json:"no_rgk" gorm:"column:no_rgk"`
+	Otr          uint32  `json:"otr" gorm:"column:otr"`
+	Premi        float64 `json:"premi" gorm:"column:premi"`
+	Rate         float32 `json:"rate" gorm:"column:rate"`
+	TahunMtr     uint32  `json:"thn_mtr" gorm:"column:thn_mtr"`
+	Warna        string  `json:"warna" gorm:"column:warna"`
+}
+
 type MasterAlasanPending struct {
 	Id   int    `gorm:"column:id" json:"id"`
 	Nama string `gorm:"column:name" json:"name"`

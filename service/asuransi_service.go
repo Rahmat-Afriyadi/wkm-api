@@ -22,6 +22,7 @@ type AsuransiService interface {
 	ExportReport(u string, tgl string)
 	MasterAlasanPending() []entity.MasterAlasanPending
 	MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat
+	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
 }
 
 type asuransiService struct {
@@ -42,6 +43,10 @@ func (s *asuransiService) MasterData(search string, dataSource string, sts strin
 
 func (s *asuransiService) MasterDataCount(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string) int64 {
 	return s.trR.MasterDataCount(search, dataSource, sts, usename, tgl1, tgl2)
+}
+
+func (s *asuransiService) DetailApprovalTransaksi(idTrx string) entity.DetailApproval {
+	return s.trR.DetailApprovalTransaksi(idTrx)
 }
 
 func (s *asuransiService) MasterDataRekapTele() []entity.MasterRekapTele {

@@ -34,6 +34,7 @@ type AsuransiRepository interface {
 	RincianByAlasanTidakMinatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
+	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
 }
 
 type asuransiRepository struct {
@@ -50,6 +51,12 @@ func (lR *asuransiRepository) MasterDataRekapTele() []entity.MasterRekapTele {
 	datas := []entity.MasterRekapTele{}
 	lR.connG.Raw("select a.name nama, b.* from users a  inner join (select kd_user, count(*) as total,  count(case when sts_asuransi = 'P' then 1 end) as pending,  count(case when sts_asuransi = 'T' then 1 end) as tidak_berminat,  count(case when sts_asuransi = 'O' then 1 end) as berminat  from asuransi where tgl_update = ? group by kd_user) b on a.username = b.kd_user", "2024-05-21").Scan(&datas)
 	return datas
+}
+
+func (lR *asuransiRepository) DetailApprovalTransaksi(idTrx string) entity.DetailApproval {
+	detail := entity.DetailApproval{}
+	lR.connG.Raw("select t.id_transaksi, t.id_produk, p.nm_produk, p.rate, p.admin, t.otr, (t.otr * (p.rate / 100) + admin) premi, t.thn_mtr, t.warna, t.no_msn, t.no_rgk, t.no_plat, t.nik, k.nm_konsumen, k.no_hp, k.alamat from transaksi t inner join produk p on t.id_produk = p.id_produk inner join konsumen k on k.nik = t.nik left join asuransi a on a.no_msn = t.no_msn where t.id_transaksi = ?", idTrx).Find(&detail)
+	return detail
 }
 
 func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi {

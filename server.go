@@ -86,6 +86,7 @@ func main() {
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
+	app.Get("/asuransi/detail-approval/:idTrx", middleware.DeserializeUser, asuransiController.DetailApprovalTransaksi)
 	app.Get("/asuransi/master-data-count/:status", middleware.DeserializeUser, asuransiController.MasterDataCount)
 	app.Get("/asuransi/rekap-by-status-kduser", middleware.DeserializeUser, asuransiController.RekapByStatusKdUser)
 	app.Get("/asuransi/master-data-rekap", middleware.DeserializeUser, asuransiController.MasterDataRekapTele)

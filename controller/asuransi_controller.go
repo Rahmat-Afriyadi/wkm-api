@@ -25,6 +25,7 @@ type AsuransiController interface {
 	MasterAlasanPending(ctx *fiber.Ctx) error
 	MasterAlasanTdkBerminat(ctx *fiber.Ctx) error
 	ExportReportAsuransi(ctx *fiber.Ctx) error
+	DetailApprovalTransaksi(ctx *fiber.Ctx) error
 }
 
 type asuransiController struct {
@@ -51,6 +52,12 @@ func (tr *asuransiController) ExportReportAsuransi(ctx *fiber.Ctx) error {
 func (tr *asuransiController) MasterDataRekapTele(ctx *fiber.Ctx) error {
 	return ctx.JSON(tr.asuransiService.MasterDataRekapTele())
 }
+
+func (tr *asuransiController) DetailApprovalTransaksi(ctx *fiber.Ctx) error {
+	idTrx := ctx.Params("idTrx")
+	return ctx.JSON(tr.asuransiService.DetailApprovalTransaksi(idTrx))
+}
+
 func (tr *asuransiController) MasterAlasanPending(ctx *fiber.Ctx) error {
 	return ctx.JSON(tr.asuransiService.MasterAlasanPending())
 }
