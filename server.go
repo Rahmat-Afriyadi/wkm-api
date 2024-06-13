@@ -13,13 +13,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"gorm.io/gorm"
 )
 
 var (
-	conn             *sql.DB  = config.GetConnection()
-	connUser         *gorm.DB = config.GetConnectionUser()
-	connGormAsuransi *gorm.DB = config.NewAsuransiGorm()
+	conn                                  *sql.DB = config.GetConnection()
+	connUser, sqlConnUser                         = config.GetConnectionUser()
+	connGormAsuransi, sqlConnGormAsuransi         = config.NewAsuransiGorm()
 
 	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
@@ -41,6 +40,10 @@ var (
 	asuransiService    service.AsuransiService       = service.NewAsuransiService(asuransiRepository, userRepository)
 	asuransiController controller.AsuransiController = controller.NewAsuransiController(asuransiService)
 
+	approvalRepository repository.ApprovalRepository = repository.NewApprovalRepository(connGormAsuransi)
+	approvalService    service.ApprovalService       = service.NewApprovalService(approvalRepository)
+	approvalController controller.ApprovalController = controller.NewApprovalController(approvalService)
+
 	kodeposRepository repository.KodeposRepository = repository.NewKodeposRepository(connGormAsuransi)
 	kodeposService    service.KodeposService       = service.NewKodeposService(kodeposRepository)
 	kodeposController controller.KodeposController = controller.NewKodeposController(kodeposService)
@@ -56,6 +59,8 @@ var (
 
 func main() {
 	defer conn.Close()
+	defer sqlConnUser.Close()
+	defer sqlConnGormAsuransi.Close()
 
 	app := fiber.New(fiber.Config{})
 
@@ -84,8 +89,12 @@ func main() {
 	app.Get("/leas/master-data", middleware.DeserializeUser, leasController.MasterData)
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)
 
+	app.Post("/approval/update", middleware.DeserializeUser, approvalController.Update)
+
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
+	app.Get("/asuransi/master-approval", middleware.DeserializeUser, asuransiController.ListApprovalTransaksi)
+	app.Get("/asuransi/master-approval-count", middleware.DeserializeUser, asuransiController.ListApprovalTransaksiCount)
 	app.Get("/asuransi/detail-approval/:idTrx", middleware.DeserializeUser, asuransiController.DetailApprovalTransaksi)
 	app.Get("/asuransi/master-data-count/:status", middleware.DeserializeUser, asuransiController.MasterDataCount)
 	app.Get("/asuransi/rekap-by-status-kduser", middleware.DeserializeUser, asuransiController.RekapByStatusKdUser)

@@ -10,7 +10,8 @@ import (
 )
 
 func DeserializeUser(c *fiber.Ctx) error {
-	connUser := config.GetConnectionUser()
+	connUser, sqlConnUser := config.GetConnectionUser()
+	defer sqlConnUser.Close()
 	userRepository := repository.NewUserRepository(connUser)
 	var access_token string
 	authorization := c.Get("Authorization")

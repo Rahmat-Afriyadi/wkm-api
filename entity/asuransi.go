@@ -60,22 +60,34 @@ type MasterStatusAsuransi struct {
 }
 
 type DetailApproval struct {
-	Admin        uint32  `json:"admin" gorm:"column:admin"`
-	Alamat       string  `json:"alamat" gorm:"column:alamat"`
-	IdProduk     string  `json:"id_produk" gorm:"column:id_produk"`
-	IdTransaksi  string  `json:"id_transaksi" gorm:"column:id_transaksi"`
-	Nik          string  `json:"nik" gorm:"column:nik"`
-	NamaKonsumen string  `json:"nm_konsumen" gorm:"column:nm_konsumen"`
-	NamaProduk   string  `json:"nm_produk" gorm:"column:nm_produk"`
-	NoHp         string  `json:"no_hp" gorm:"column:no_hp"`
-	NoMsn        string  `json:"no_msn" gorm:"column:no_msn"`
-	NoPlat       string  `json:"no_plat" gorm:"column:no_plat"`
-	NoRgk        string  `json:"no_rgk" gorm:"column:no_rgk"`
-	Otr          uint32  `json:"otr" gorm:"column:otr"`
-	Premi        float64 `json:"premi" gorm:"column:premi"`
-	Rate         float32 `json:"rate" gorm:"column:rate"`
-	TahunMtr     uint32  `json:"thn_mtr" gorm:"column:thn_mtr"`
-	Warna        string  `json:"warna" gorm:"column:warna"`
+	IdTransaksi   string  `json:"id_transaksi" gorm:"column:id_transaksi"`
+	Admin         uint32  `json:"admin" gorm:"column:admin"`
+	Alamat        string  `json:"alamat" gorm:"column:alamat"`
+	IdProduk      string  `json:"id_produk" gorm:"column:id_produk"`
+	Nik           string  `json:"nik" gorm:"column:nik"`
+	AppTransId    string  `json:"app_trans_id" gorm:"column:app_trans_id"`
+	NamaKonsumen  string  `json:"nm_konsumen" gorm:"column:nm_konsumen"`
+	NamaProduk    string  `json:"nm_produk" gorm:"column:nm_produk"`
+	NoHp          string  `json:"no_hp" gorm:"column:no_hp"`
+	NoMsn         string  `json:"no_msn" gorm:"column:no_msn"`
+	NmMtr         string  `json:"nm_mtr" gorm:"column:nm_mtr"`
+	NoPlat        string  `json:"no_plat" gorm:"column:no_plat"`
+	NoRgk         string  `json:"no_rgk" gorm:"column:no_rgk"`
+	Otr           uint32  `json:"otr" gorm:"column:otr"`
+	Premi         float64 `json:"premi" gorm:"column:premi"`
+	Rate          float32 `json:"rate" gorm:"column:rate"`
+	TahunMtr      uint32  `json:"thn_mtr" gorm:"column:thn_mtr"`
+	Warna         string  `json:"warna" gorm:"column:warna"`
+	StatusApprove string  `json:"sts_beli" gorm:"->"`
+	Status        string  `json:"sts_pembelian" gorm:"column:sts_pembelian"`
+}
+
+type ListApproval struct {
+	IdTransaksi  string `json:"id_transaksi" gorm:"column:id_transaksi"`
+	NamaKonsumen string `json:"nm_konsumen" gorm:"column:nm_konsumen"`
+	NoHp         string `json:"no_hp" gorm:"column:no_hp"`
+	TglPengajuan string `json:"tgl_beli" gorm:"column:tgl_beli"`
+	Status       string `json:"sts_pembelian" gorm:"column:sts_pembelian"`
 }
 
 type MasterAlasanPending struct {

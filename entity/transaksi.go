@@ -28,8 +28,8 @@ type Transaksi struct {
 	ReferralId     string    `form:"referral_id" json:"referral_id" gorm:"column:referral_id"`
 	ThnMtr         string    `form:"thn_mtr" json:"thn_mtr" gorm:"column:thn_mtr"`
 	TglBeli        string    `gorm:"column:tgl_beli"`
-	Created        time.Time `gorm:"default:current_timestamp;column:created"`
-	Updated        time.Time `gorm:"default:current_timestamp;column:updated"`
+	Created        time.Time `gorm:"column:created;autoCreateTime"`
+	Updated        time.Time `gorm:"column:updated;autoUpdateTime"`
 }
 
 func (Transaksi) TableName() string {

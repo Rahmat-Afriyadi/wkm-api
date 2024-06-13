@@ -15,7 +15,7 @@ type Konsumen struct {
 	Kec      string    `form:"kec" json:"kec" gorm:"column:kec"`
 	TglLahir *string   `form:"tgl_lahir" json:"tgl_lahir" gorm:"column:tgl_lahir"`
 	Created  time.Time `gorm:"default:current_timestamp;column:created"`
-	Updated  time.Time `gorm:"default:current_timestamp;column:updated"`
+	Updated  time.Time `gorm:"column:updated;autoUpdateTime"`
 }
 
 func (Konsumen) TableName() string {

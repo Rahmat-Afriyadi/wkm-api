@@ -45,7 +45,7 @@ func GetConnection() *sql.DB {
 	return db
 }
 
-func GetConnectionUser() *gorm.DB {
+func GetConnectionUser() (*gorm.DB, *sql.DB) {
 	dsn := "root:@tcp(localhost:3306)/users?parseTime=true&loc=Asia%2FJakarta"
 	// dsn := "root2:root2@tcp(192.168.70.30:3306)/users?parseTime=true"
 	// db, err := sql.Open("mysql", "root2:root2@tcp(192.168.70.30:3306)/db_wkm?parseTime=true")
@@ -71,10 +71,10 @@ func GetConnectionUser() *gorm.DB {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetConnMaxLifetime(10 * time.Minute)
 	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
-	return db
+	return db, sqlDB
 }
 
-func NewAsuransiGorm() *gorm.DB {
+func NewAsuransiGorm() (*gorm.DB, *sql.DB) {
 	time.LoadLocation("Asia/Jakarta")
 	dsn := "root@tcp(localhost:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta"
 	// dsn := "root2:root2@tcp(192.168.12.171:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta"
@@ -100,5 +100,5 @@ func NewAsuransiGorm() *gorm.DB {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetConnMaxLifetime(20 * time.Minute)
 	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
-	return db
+	return db, sqlDB
 }

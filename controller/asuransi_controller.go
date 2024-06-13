@@ -26,6 +26,8 @@ type AsuransiController interface {
 	MasterAlasanTdkBerminat(ctx *fiber.Ctx) error
 	ExportReportAsuransi(ctx *fiber.Ctx) error
 	DetailApprovalTransaksi(ctx *fiber.Ctx) error
+	ListApprovalTransaksi(ctx *fiber.Ctx) error
+	ListApprovalTransaksiCount(ctx *fiber.Ctx) error
 }
 
 type asuransiController struct {
@@ -47,6 +49,33 @@ func (tr *asuransiController) ExportReportAsuransi(ctx *fiber.Ctx) error {
 	tr.asuransiService.ExportReport(request.AwalTanggal, request.AkhirTAnggal)
 	return ctx.Download("./file-report-asuransi.xlsx")
 
+}
+
+func (tr *asuransiController) ListApprovalTransaksi(ctx *fiber.Ctx) error {
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	search := ctx.Query("search")
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	userParams := ""
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	if details.RoleId == 1 {
+		userParams = details.Username
+	}
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
+	return ctx.JSON(tr.asuransiService.ListApprovalTransaksi(userParams, tgl1, tgl2, search, pageParams, limit))
+}
+func (tr *asuransiController) ListApprovalTransaksiCount(ctx *fiber.Ctx) error {
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	search := ctx.Query("search")
+	userParams := ""
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	if details.RoleId == 1 {
+		userParams = details.Username
+	}
+	return ctx.JSON(tr.asuransiService.ListApprovalTransaksiCount(userParams, tgl1, tgl2, search))
 }
 
 func (tr *asuransiController) MasterDataRekapTele(ctx *fiber.Ctx) error {

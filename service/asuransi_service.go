@@ -23,6 +23,8 @@ type AsuransiService interface {
 	MasterAlasanPending() []entity.MasterAlasanPending
 	MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat
 	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
+	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, pageParams int, limit int) []entity.ListApproval
+	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string) int64
 }
 
 type asuransiService struct {
@@ -37,6 +39,12 @@ func NewAsuransiService(tR repository.AsuransiRepository, ur repository.UserRepo
 	}
 }
 
+func (s *asuransiService) ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, pageParams int, limit int) []entity.ListApproval {
+	return s.trR.ListApprovalTransaksi(username, tgl1, tgl2, search, pageParams, limit)
+}
+func (s *asuransiService) ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string) int64 {
+	return s.trR.ListApprovalTransaksiCount(username, tgl1, tgl2, search)
+}
 func (s *asuransiService) MasterData(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi {
 	return s.trR.MasterData(search, dataSource, sts, usename, tgl1, tgl2, limit, pageParams)
 }
