@@ -25,6 +25,6 @@ func (lR *kodeposRepository) MasterData(search string) []entity.MasterKodepos {
 	if search == "undefined" {
 		search = ""
 	}
-	lR.conn.Where("kodepos like ? or kelurahan like ? or kecamatan like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%").Limit(15).Find(&datas)
+	lR.conn.Where("province like ? or city like ? or subdistrict like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%").Limit(15).Find(&datas)
 	return datas
 }

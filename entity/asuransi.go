@@ -18,9 +18,12 @@ type MasterAsuransi struct {
 	AlasanTdkBerminat *string `form:"alasan_tdk_berminat" json:"alasan_tdk_berminat" gorm:"column:alasan_tdk_berminat"`
 	KdDlr             *string `form:"kd_dlr" json:"kd_dlr" gorm:"column:kd_dlr"`
 	NmDlr             *string `form:"nm_dlr" json:"nm_dlr" gorm:"column:nm_dlr"`
-	Kelurahan         *string `form:"kelurahan" json:"kelurahan" gorm:"column:kelurahan"`
-	Kecamatan         *string `form:"kecamatan" json:"kecamatan" gorm:"column:kecamatan"`
-	Kodepos           *string `form:"kodepos" json:"kodepos" gorm:"column:kodepos"`
+	Province          *string `form:"province" json:"province" gorm:"column:province"`
+	ProvinceName      *string `form:"province_name" json:"province_name" gorm:"->;column:province_name"`
+	City              *string `form:"city" json:"city" gorm:"column:city"`
+	CityName          *string `form:"city_name" json:"city_name" gorm:"->;column:city_name"`
+	Subdistrict       *string `form:"subdistrict" json:"subdistrict" gorm:"column:subdistrict"`
+	SubdistrictName   *string `form:"subdistrict_name" json:"subdistrict_name" gorm:"->;column:subdistrict_name"`
 	JnsBrg            string  `form:"jns_brg" json:"jns_brg" gorm:"column:jns_brg"`
 	Harga             int64   `form:"harga" json:"harga" gorm:"column:harga"`
 	JnsAsuransi       int64   `form:"jenis_asuransi" json:"jenis_asuransi" gorm:"column:jenis_asuransi"`
