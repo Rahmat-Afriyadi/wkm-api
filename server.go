@@ -112,7 +112,6 @@ func main() {
 	app.Get("/kodepos/master-data", middleware.DeserializeUser, kodeposController.MasterData)
 	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
-	asuransiService.ExportReport("2024-05-01", "2024-05-30")
 	// a := asuransiRepository.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
 	// fmt.Println("ini data yaa guys yaa ", a)
 	// app.Use(jwtware.New(jwtware.Config{

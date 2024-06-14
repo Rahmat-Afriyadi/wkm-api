@@ -25,7 +25,7 @@ type AsuransiRepository interface {
 	MasterAlasanPending() []entity.MasterAlasanPending
 	MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat
 	RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi
-	MasterDataRekapTele() []entity.MasterRekapTele
+	MasterDataRekapTele(tgl1 string, tgl2 string) []entity.MasterRekapTele
 	RekapByStatusJenisSource(tglStart string, tglEnd string) []map[string]interface{}
 	RekapByStatusKdUser(tglStart string, tglEnd string) []map[string]interface{}
 	RekapByAlasanPending(tgl1 string, tgl2 string) []map[string]interface{}
@@ -49,15 +49,15 @@ func NewAsuransiRepository(connG *gorm.DB) AsuransiRepository {
 	}
 }
 
-func (lR *asuransiRepository) MasterDataRekapTele() []entity.MasterRekapTele {
+func (lR *asuransiRepository) MasterDataRekapTele(tgl1 string, tgl2 string) []entity.MasterRekapTele {
 	datas := []entity.MasterRekapTele{}
-	lR.connG.Raw("select a.name nama, b.* from users a  inner join (select kd_user, count(*) as total,  count(case when sts_asuransi = 'P' then 1 end) as pending,  count(case when sts_asuransi = 'T' then 1 end) as tidak_berminat,  count(case when sts_asuransi = 'O' then 1 end) as berminat  from asuransi where tgl_update = ? group by kd_user) b on a.username = b.kd_user", "2024-05-21").Scan(&datas)
+	lR.connG.Raw("select a.name nama, b.* from users a  inner join (select kd_user, count(*) as total,  count(case when sts_asuransi = 'P' then 1 end) as pending,  count(case when sts_asuransi = 'T' then 1 end) as tidak_berminat,  count(case when sts_asuransi = 'O' then 1 end) as berminat  from asuransi where tgl_verifikasi >= ? and tgl_verifikasi <= ? group by kd_user) b on a.username = b.kd_user", tgl1, tgl2).Scan(&datas)
 	return datas
 }
 
 func (lR *asuransiRepository) DetailApprovalTransaksi(idTrx string) entity.DetailApproval {
 	detail := entity.DetailApproval{}
-	lR.connG.Raw("select  t.id_transaksi, m.nm_mtr,  t.sts_pembelian, t.app_trans_id, t.id_produk, p.nm_produk, p.rate, p.admin, t.otr, (t.otr * (p.rate / 100) + admin) premi, t.thn_mtr, t.warna, t.no_msn, t.no_rgk, t.no_plat, t.nik, k.nm_konsumen, k.no_hp, k.alamat from transaksi t inner join produk p on t.id_produk = p.id_produk inner join konsumen k on k.nik = t.nik left join asuransi a on a.no_msn = t.no_msn left join mst_mtr m on m.kd_mdl = t.motorprice_kode where t.id_transaksi = ?", idTrx).Find(&detail)
+	lR.connG.Raw("select ko.province province_name, ko.province_code province, ko.city city_name, ko.city_code city, ko.subdistrict subdistrict_name, ko.subdistrict_code subdistrict,  t.id_transaksi, m.nm_mtr,  t.sts_pembelian, t.app_trans_id, t.id_produk, p.nm_produk, p.rate, p.admin, t.otr, (t.otr * (p.rate / 100) + admin) premi, t.thn_mtr, t.warna, t.no_msn, t.no_rgk, t.no_plat, t.nik, k.nm_konsumen, k.no_hp, k.alamat from transaksi t inner join produk p on t.id_produk = p.id_produk inner join konsumen k on k.nik = t.nik left join asuransi a on a.no_msn = t.no_msn left join mst_mtr m on m.kd_mdl = t.motorprice_kode left join kota ko on k.kec = ko.subdistrict_code  where t.id_transaksi = ?", idTrx).Find(&detail)
 
 	return detail
 }
@@ -68,7 +68,7 @@ func (lR *asuransiRepository) ListApprovalTransaksi(username string, tgl1 string
 	if username != "" {
 		query.Where("a.kd_user = ?", username)
 	}
-	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
+	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Order("t.tgl_beli desc").Find(&datas)
 	return datas
 }
 

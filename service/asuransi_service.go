@@ -17,7 +17,7 @@ type AsuransiService interface {
 	UpdateAsuransiBerminat(no_msn string)
 	UpdateAsuransiBatalBayar(no_msn string)
 	UpdateAmbilAsuransi(no_msn string, kd_user string)
-	MasterDataRekapTele() []entity.MasterRekapTele
+	MasterDataRekapTele(tgl1 string, tgl2 string) []entity.MasterRekapTele
 	RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi
 	ExportReport(u string, tgl string)
 	MasterAlasanPending() []entity.MasterAlasanPending
@@ -57,8 +57,8 @@ func (s *asuransiService) DetailApprovalTransaksi(idTrx string) entity.DetailApp
 	return s.trR.DetailApprovalTransaksi(idTrx)
 }
 
-func (s *asuransiService) MasterDataRekapTele() []entity.MasterRekapTele {
-	return s.trR.MasterDataRekapTele()
+func (s *asuransiService) MasterDataRekapTele(tgl1 string, tgl2 string) []entity.MasterRekapTele {
+	return s.trR.MasterDataRekapTele(tgl1, tgl2)
 }
 
 func (s *asuransiService) RekapByStatusKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
@@ -107,10 +107,10 @@ func (s *asuransiService) MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerm
 
 func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 
-	rekapSourceInfo := s.trR.RekapByStatusJenisSource("2024-05-01", "2024-05-30")
-	rekapKdUser := s.trR.RekapByStatusKdUser("2024-05-01", "2024-05-30")
-	rincianPending := s.trR.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
-	rincianTdkBerminat := s.trR.RincianByAlasanTidakMinatKdUser("2024-05-01", "2024-05-30")
+	rekapSourceInfo := s.trR.RekapByStatusJenisSource(tgl1, tgl2)
+	rekapKdUser := s.trR.RekapByStatusKdUser(tgl1, tgl2)
+	rincianPending := s.trR.RincianByAlasanPendingKdUser(tgl1, tgl2)
+	rincianTdkBerminat := s.trR.RincianByAlasanTidakMinatKdUser(tgl1, tgl2)
 	masterPending := s.trR.MasterAlasanPending()
 	masterAlasanTdkBerminat := s.trR.MasterAlasanTdkBerminat()
 	fmt.Println("ini rekap user ", rekapKdUser)
@@ -251,6 +251,7 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	}
 
 	rowCountKdUser := 8
+	awalRowCountKdUser := 8
 	for _, each := range rekapKdUser {
 		user := s.uR.FindByUsername(each["kd_user"].(string))
 		if user.ID == 0 {
@@ -265,7 +266,7 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		xlsx.SetCellValue(rekapSheet, fmt.Sprintf("G%d", rowCountKdUser), user.DataSource)
 		rowCountKdUser += 1
 	}
-	xlsx.SetCellStyle(rekapSheet, fmt.Sprintf("A%d", rowCountKdUser-1), fmt.Sprintf("G%d", rowCountKdUser-1), styleBorder)
+	xlsx.SetCellStyle(rekapSheet, fmt.Sprintf("A%d", awalRowCountKdUser), fmt.Sprintf("G%d", rowCountKdUser-1), styleBorder)
 
 	rowCountRekapByAlasanPending := 4
 	awalRowCountRekapByAlasanPending := 4
@@ -296,7 +297,7 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		}
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanPending+1), v["kd_user"])
 		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending+1), user.Name)
-		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanPending+1), v["kosong"])
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", rowCountRekapByAlasanPending+1), v["kosong"])
 		for j, vj := range masterPending {
 			xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[j+3], rowCountRekapByAlasanPending+1), v[fmt.Sprintf("%d", vj.Id)])
 		}
@@ -316,7 +317,7 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	rowCountRekapByAlasanTdkBerminat += 1
 	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), "Id User")
 	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("B%d", rowCountRekapByAlasanTdkBerminat), "Nama")
-	xlsx.SetCellStyle(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), fmt.Sprintf("%s%d", listCol[len(masterAlasanTdkBerminat)+2], rowCountRekapByAlasanTdkBerminat), headerStyle)
+	xlsx.SetCellStyle(tdkBerminatSheet, fmt.Sprintf("A%d", rowCountRekapByAlasanTdkBerminat), fmt.Sprintf("%s%d", listCol[len(masterAlasanTdkBerminat)+1], rowCountRekapByAlasanTdkBerminat), headerStyle)
 	for i, v := range masterAlasanTdkBerminat {
 		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[i+2], rowCountRekapByAlasanTdkBerminat), v.Nama)
 		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[i+2], rowCountRekapByAlasanTdkBerminat), v.Nama)

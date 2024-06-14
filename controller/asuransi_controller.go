@@ -79,7 +79,9 @@ func (tr *asuransiController) ListApprovalTransaksiCount(ctx *fiber.Ctx) error {
 }
 
 func (tr *asuransiController) MasterDataRekapTele(ctx *fiber.Ctx) error {
-	return ctx.JSON(tr.asuransiService.MasterDataRekapTele())
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	return ctx.JSON(tr.asuransiService.MasterDataRekapTele(tgl1, tgl2))
 }
 
 func (tr *asuransiController) DetailApprovalTransaksi(ctx *fiber.Ctx) error {
