@@ -9,6 +9,7 @@ import (
 
 type ApprovalRepository interface {
 	Update(data entity.DetailApproval)
+	MokitaToken() entity.MstToken
 }
 
 type approvalRepository struct {
@@ -19,6 +20,12 @@ func NewApprovalRepository(conn *gorm.DB) ApprovalRepository {
 	return &approvalRepository{
 		conn: conn,
 	}
+}
+
+func (lR *approvalRepository) MokitaToken() entity.MstToken {
+	token := entity.MstToken{}
+	lR.conn.Where("nm_user = ? ", "MOKITA").First(&token)
+	return token
 }
 
 func (lR *approvalRepository) Update(data entity.DetailApproval) {
@@ -57,6 +64,5 @@ func (lR *approvalRepository) Update(data entity.DetailApproval) {
 	if data.Subdistrict != nil {
 		konsumen.Kec = *data.Subdistrict
 	}
-
 	lR.conn.Save(&konsumen)
 }

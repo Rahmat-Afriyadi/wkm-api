@@ -7,6 +7,7 @@ import (
 
 type ApprovalService interface {
 	Update(data entity.DetailApproval)
+	MokitaToken() entity.MstToken
 }
 
 type approvalService struct {
@@ -21,4 +22,7 @@ func NewApprovalService(tR repository.ApprovalRepository) ApprovalService {
 
 func (s *approvalService) Update(data entity.DetailApproval) {
 	s.trR.Update(data)
+}
+func (s *approvalService) MokitaToken() entity.MstToken {
+	return s.trR.MokitaToken()
 }

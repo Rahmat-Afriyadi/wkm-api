@@ -3,8 +3,10 @@ package config
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -31,7 +33,13 @@ import (
 // }
 
 func GetConnection() *sql.DB {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/db_wkm?parseTime=true&loc=Asia%2FJakarta")
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		fmt.Println("ini errornya ", errEnv)
+		panic("Failed to load env file")
+	}
+
+	db, err := sql.Open("mysql", os.Getenv("DB_WKM"))
 	// db, err := sql.Open("mysql", "root2:root2@tcp(192.168.70.30:3306)/db_wkm?parseTime=true")
 	if err != nil {
 		fmt.Println(err)
@@ -46,7 +54,14 @@ func GetConnection() *sql.DB {
 }
 
 func GetConnectionUser() (*gorm.DB, *sql.DB) {
-	dsn := "root:@tcp(localhost:3306)/users?parseTime=true&loc=Asia%2FJakarta"
+
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		fmt.Println("ini errornya ", errEnv)
+		panic("Failed to load env file")
+	}
+	dsn := os.Getenv("MST_USER")
+	// dsn := "root:@tcp(localhost:3306)/users?parseTime=true&loc=Asia%2FJakarta"
 	// dsn := "root2:root2@tcp(192.168.70.30:3306)/users?parseTime=true"
 	// db, err := sql.Open("mysql", "root2:root2@tcp(192.168.70.30:3306)/db_wkm?parseTime=true")
 	time.LoadLocation("Asia/Jakarta")
@@ -75,8 +90,13 @@ func GetConnectionUser() (*gorm.DB, *sql.DB) {
 }
 
 func NewAsuransiGorm() (*gorm.DB, *sql.DB) {
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		fmt.Println("ini errornya ", errEnv)
+		panic("Failed to load env file")
+	}
 	time.LoadLocation("Asia/Jakarta")
-	dsn := "root@tcp(localhost:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta"
+	dsn := os.Getenv("WANDA_ASURANSI")
 	// dsn := "root2:root2@tcp(192.168.12.171:3306)/wanda_asuransi?parseTime=true&loc=Asia%2FJakarta"
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{

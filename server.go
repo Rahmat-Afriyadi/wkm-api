@@ -58,6 +58,7 @@ var (
 )
 
 func main() {
+
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
@@ -90,6 +91,7 @@ func main() {
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)
 
 	app.Post("/approval/update", middleware.DeserializeUser, approvalController.Update)
+	app.Get("/mokita/token", middleware.DeserializeUser, approvalController.MokitaToken)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
