@@ -55,6 +55,10 @@ var (
 	produkRepository repository.ProdukRepository = repository.NewProdukRepository(connGormAsuransi)
 	produkService    service.ProdukService       = service.NewProdukService(produkRepository)
 	produkController controller.ProdukController = controller.NewProdukController(produkService)
+
+	otrRepository repository.OtrRepository = repository.NewOtrRepository(connGormAsuransi)
+	otrService    service.OtrService       = service.NewOtrService(otrRepository)
+	otrController controller.OtrController = controller.NewOtrController(otrService)
 )
 
 func main() {
@@ -92,6 +96,7 @@ func main() {
 
 	app.Post("/approval/update", middleware.DeserializeUser, approvalController.Update)
 	app.Get("/mokita/token", middleware.DeserializeUser, approvalController.MokitaToken)
+	app.Post("/mokita/update/token", middleware.DeserializeUser, approvalController.MokitaUpdateToken)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)

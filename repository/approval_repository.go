@@ -10,6 +10,7 @@ import (
 type ApprovalRepository interface {
 	Update(data entity.DetailApproval)
 	MokitaToken() entity.MstToken
+	MokitaUpdateToken(token string)
 }
 
 type approvalRepository struct {
@@ -28,8 +29,16 @@ func (lR *approvalRepository) MokitaToken() entity.MstToken {
 	return token
 }
 
+func (lR *approvalRepository) MokitaUpdateToken(token string) {
+	var data entity.MstToken
+	lR.conn.Where("nm_user = ? ", "MOKITA").First(&data)
+	fmt.Println("ini data yaa ", data)
+	data.Token = token
+	lR.conn.Save(&data)
+	// data.Token = token
+}
+
 func (lR *approvalRepository) Update(data entity.DetailApproval) {
-	fmt.Println("iini data update ", data.Status, data.StatusApprove)
 	transaksi := entity.Transaksi{ID: data.IdTransaksi}
 	lR.conn.Find(&transaksi)
 	if transaksi.AppTransId == "" {

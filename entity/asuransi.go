@@ -30,7 +30,7 @@ type MasterAsuransi struct {
 	JnsSource         string  `form:"jenis_source" json:"jenis_source" gorm:"column:jenis_source"`
 	IdTransaksi       string  `form:"id_transaksi" json:"id_transaksi" gorm:"->"`
 	TglUpdate         *string `gorm:"column:tgl_update"`
-	TglVerifikasi     string  `gorm:"column:tgl_verifikasi"`
+	TglVerifikasi     string  `form:"tgl_verifikasi" json:"tgl_verifikasi" gorm:"column:tgl_verifikasi"`
 }
 
 func (MasterAsuransi) TableName() string {

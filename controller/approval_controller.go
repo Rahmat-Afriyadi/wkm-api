@@ -11,6 +11,7 @@ import (
 type ApprovalController interface {
 	Update(ctx *fiber.Ctx) error
 	MokitaToken(ctx *fiber.Ctx) error
+	MokitaUpdateToken(ctx *fiber.Ctx) error
 }
 
 type approvalController struct {
@@ -37,5 +38,16 @@ func (tr *approvalController) Update(ctx *fiber.Ctx) error {
 func (tr *approvalController) MokitaToken(ctx *fiber.Ctx) error {
 	tr.approvalService.MokitaToken()
 	return ctx.JSON(tr.approvalService.MokitaToken())
+
+}
+func (tr *approvalController) MokitaUpdateToken(ctx *fiber.Ctx) error {
+	var body map[string]interface{}
+	err := ctx.BodyParser(&body)
+	if err != nil {
+		fmt.Println("error body parser ", err)
+	}
+
+	tr.approvalService.MokitaUpdateToken(body["token"].(string))
+	return ctx.JSON(map[string]interface{}{"message": "Berhasil update token"})
 
 }
