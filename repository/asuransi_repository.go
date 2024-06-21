@@ -96,7 +96,7 @@ func (lR *asuransiRepository) MasterData(search string, dataSource string, sts s
 	filter := entity.MasterAsuransi{JnsSource: dataSource}
 	query := lR.connG.Where("no_msn like ? or nm_customer11 like ? or nm_dlr like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 
-	if ap != "" {
+	if ap != "undefined" && ap != "" {
 		filter.AlasanPending = &ap
 	}
 
@@ -131,7 +131,7 @@ func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, 
 	filter := entity.MasterAsuransi{JnsSource: dataSource}
 	query := lR.connG.Where("no_msn like ? or nm_customer11 like ? or nm_dlr like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 
-	if ap != "" {
+	if ap != "undefined" && ap != "" {
 		filter.AlasanPending = &ap
 	}
 
