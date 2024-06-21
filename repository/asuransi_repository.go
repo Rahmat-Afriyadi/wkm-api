@@ -14,8 +14,8 @@ import (
 )
 
 type AsuransiRepository interface {
-	MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi
-	MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string) int64
+	MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, ap string, limit int, pageParams int) []entity.MasterAsuransi
+	MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, ap string) int64
 	FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi
 	UpdateAmbilAsuransi(no_msn string, kd_user string)
 	UpdateAsuransi(data entity.MasterAsuransi) entity.MasterAsuransi
@@ -82,7 +82,7 @@ func (lR *asuransiRepository) ListApprovalTransaksiCount(username string, tgl1 s
 	return int64(len(datas))
 }
 
-func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi {
+func (lR *asuransiRepository) MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, ap string, limit int, pageParams int) []entity.MasterAsuransi {
 	if search == "undefined" {
 		search = ""
 	}
@@ -96,13 +96,16 @@ func (lR *asuransiRepository) MasterData(search string, dataSource string, sts s
 	filter := entity.MasterAsuransi{JnsSource: dataSource}
 	query := lR.connG.Where("no_msn like ? or nm_customer11 like ? or nm_dlr like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 
+	if ap != "" {
+		filter.AlasanPending = &ap
+	}
+
 	if sts != "all" && sts != "pre" {
 		filter.Status = strings.ToUpper(sts)
 	}
 	if tgl1 != "" && tgl2 != "" {
+		fmt.Println("masuk sini gk ", tgl1, tgl2)
 		query.Where("tgl_verifikasi >= ? and tgl_verifikasi <= ?", tgl1, tgl2)
-	} else if tgl1 != "" {
-		query.Where("tgl_verifikasi = ? ", tgl1)
 	}
 	if sts == "pre" {
 		query.Where("sts_asuransi = ? or sts_asuransi is null", "")
@@ -114,7 +117,7 @@ func (lR *asuransiRepository) MasterData(search string, dataSource string, sts s
 	return datas
 }
 
-func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string) int64 {
+func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, ap string) int64 {
 	if search == "undefined" {
 		search = ""
 	}
@@ -128,13 +131,15 @@ func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, 
 	filter := entity.MasterAsuransi{JnsSource: dataSource}
 	query := lR.connG.Where("no_msn like ? or nm_customer11 like ? or nm_dlr like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 
+	if ap != "" {
+		filter.AlasanPending = &ap
+	}
+
 	if sts != "all" && sts != "pre" {
 		filter.Status = strings.ToUpper(sts)
 	}
 	if tgl1 != "" && tgl2 != "" {
-		query.Where("tgl_verifikasi >= ? and tgl_verifikasi <= ?", tgl1, tgl2)
-	} else if tgl1 != "" {
-		query.Where("tgl_verifikasi = ? ", tgl1)
+		query.Where("tgl_verifikasi > ? and tgl_verifikasi < ?", tgl1, tgl2)
 	}
 	if sts == "pre" {
 		query.Where("sts_asuransi = ? or sts_asuransi is null", "")

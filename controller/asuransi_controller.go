@@ -102,11 +102,12 @@ func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
 	tgl1 := ctx.Query("tgl1")
 	tgl2 := ctx.Query("tgl2")
+	ap := ctx.Query("ap")
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	return ctx.JSON(tr.asuransiService.MasterData(search, dataSource, sts, details.Username, tgl1, tgl2, limit, pageParams))
+	return ctx.JSON(tr.asuransiService.MasterData(search, dataSource, sts, details.Username, tgl1, tgl2, ap, limit, pageParams))
 }
 
 func (tr *asuransiController) RekapByStatusKdUser(ctx *fiber.Ctx) error {
@@ -121,9 +122,10 @@ func (tr *asuransiController) MasterDataCount(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
 	tgl1 := ctx.Query("tgl1")
 	tgl2 := ctx.Query("tgl2")
+	ap := ctx.Query("ap")
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	return ctx.JSON(tr.asuransiService.MasterDataCount(search, dataSource, sts, details.Username, tgl1, tgl2))
+	return ctx.JSON(tr.asuransiService.MasterDataCount(search, dataSource, sts, details.Username, tgl1, tgl2, ap))
 }
 
 func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {

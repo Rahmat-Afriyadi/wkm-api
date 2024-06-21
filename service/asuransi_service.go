@@ -9,8 +9,8 @@ import (
 )
 
 type AsuransiService interface {
-	MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi
-	MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string) int64
+	MasterData(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, ap string, limit int, pageParams int) []entity.MasterAsuransi
+	MasterDataCount(search string, dataSource string, sts string, username string, tgl1 string, tgl2 string, ap string) int64
 	RekapByStatusKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 	FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi
 	UpdateAsuransi(data entity.MasterAsuransi) entity.MasterAsuransi
@@ -45,12 +45,12 @@ func (s *asuransiService) ListApprovalTransaksi(username string, tgl1 string, tg
 func (s *asuransiService) ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string) int64 {
 	return s.trR.ListApprovalTransaksiCount(username, tgl1, tgl2, search)
 }
-func (s *asuransiService) MasterData(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.MasterAsuransi {
-	return s.trR.MasterData(search, dataSource, sts, usename, tgl1, tgl2, limit, pageParams)
+func (s *asuransiService) MasterData(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string, ap string, limit int, pageParams int) []entity.MasterAsuransi {
+	return s.trR.MasterData(search, dataSource, sts, usename, tgl1, tgl2, ap, limit, pageParams)
 }
 
-func (s *asuransiService) MasterDataCount(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string) int64 {
-	return s.trR.MasterDataCount(search, dataSource, sts, usename, tgl1, tgl2)
+func (s *asuransiService) MasterDataCount(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string, ap string) int64 {
+	return s.trR.MasterDataCount(search, dataSource, sts, usename, tgl1, tgl2, ap)
 }
 
 func (s *asuransiService) DetailApprovalTransaksi(idTrx string) entity.DetailApproval {
