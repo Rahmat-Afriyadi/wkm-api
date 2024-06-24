@@ -3,6 +3,7 @@ package service
 import (
 	"wkm/entity"
 	"wkm/repository"
+	"wkm/request"
 )
 
 type OtrService interface {
@@ -10,6 +11,7 @@ type OtrService interface {
 	OtrNaList() []entity.Otr
 	OtrMstProduk(search string) []entity.MstMtr
 	OtrMstNa(search string) []entity.OtrNa
+	CreateOtr(data request.CreateOtr)
 }
 
 type otrService struct {
@@ -35,4 +37,7 @@ func (s *otrService) OtrMstProduk(search string) []entity.MstMtr {
 }
 func (s *otrService) OtrMstNa(search string) []entity.OtrNa {
 	return s.trR.OtrMstNa(search)
+}
+func (s *otrService) CreateOtr(data request.CreateOtr) {
+	s.trR.CreateOtr(data)
 }

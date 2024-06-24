@@ -99,6 +99,7 @@ func main() {
 	app.Post("/mokita/update/token", middleware.DeserializeUser, approvalController.MokitaUpdateToken)
 	app.Get("/otr/mst-produk", middleware.DeserializeUser, otrController.OtrMstProduk)
 	app.Get("/otr/otr-na", middleware.DeserializeUser, otrController.OtrMstNa)
+	app.Post("/otr/create-otr", middleware.DeserializeUser, otrController.CreateOtr)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)

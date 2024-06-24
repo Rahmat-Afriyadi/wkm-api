@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"wkm/entity"
+	"wkm/request"
 
 	"gorm.io/gorm"
 )
@@ -12,6 +13,7 @@ type OtrRepository interface {
 	OtrNaList() []entity.Otr
 	OtrMstProduk(search string) []entity.MstMtr
 	OtrMstNa(search string) []entity.OtrNa
+	CreateOtr(data request.CreateOtr)
 }
 
 type otrRepository struct {
@@ -30,6 +32,23 @@ func (lR *otrRepository) DetailOtrNa(motorprice_kode string, tahun uint16) entit
 	return otr
 }
 
+func (lR *otrRepository) CreateOtr(data request.CreateOtr) {
+	otr := entity.Otr{
+		MotorPriceKode: data.MotorpriceKode,
+		ProductKode:    data.ProductKode,
+		ProductNama:    data.ProductNama,
+		Otr:            data.Otr,
+		Tahun:          data.Tahun,
+		WrnKode:        data.WrnKode,
+	}
+	result := lR.conn.Create(&otr)
+	if result.Error != nil {
+		fmt.Println("ini errornya yaa ", result.Error)
+	} else {
+		lR.conn.Where("tahun = ? and motorprice_kode = ?", data.Tahun, data.MotorpriceKode).Delete(&entity.MstOtrNa{})
+	}
+}
+
 func (lR *otrRepository) OtrNaList() []entity.Otr {
 	var otr []entity.Otr
 	lR.conn.Table("otr_na").Group("motorprice_kode, tahun").Find(&otr)
@@ -44,6 +63,5 @@ func (lR *otrRepository) OtrMstProduk(search string) []entity.MstMtr {
 func (lR *otrRepository) OtrMstNa(search string) []entity.OtrNa {
 	var otr []entity.OtrNa
 	lR.conn.Raw("select a.*, m.nm_mtr from (select motorprice_kode, tahun from otr_na group by motorprice_kode, tahun) a inner join mst_mtr m  on m.kd_mdl = a.motorprice_kode where a.motorprice_kode like ? or a.tahun like ? or m.nm_mtr like ? limit 15 ", "%"+search+"%", "%"+search+"%", "%"+search+"%").Find(&otr)
-	fmt.Println("ini data ", otr)
 	return otr
 }

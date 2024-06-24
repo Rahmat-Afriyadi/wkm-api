@@ -73,7 +73,6 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 						NamaCustomer:  v[1],
 					})
 				}
-				fmt.Println("ini data yaa ", datas)
 				tr.tr3Service.UpdateJenisBayar(datas)
 			}(&wg)
 		}

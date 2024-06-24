@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"wkm/entity"
 
 	"gorm.io/gorm"
@@ -32,7 +31,6 @@ func (lR *approvalRepository) MokitaToken() entity.MstToken {
 func (lR *approvalRepository) MokitaUpdateToken(token string) {
 	var data entity.MstToken
 	lR.conn.Where("nm_user = ? ", "MOKITA").First(&data)
-	fmt.Println("ini data yaa ", data)
 	data.Token = token
 	lR.conn.Save(&data)
 	// data.Token = token

@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
+	"wkm/request"
 	"wkm/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,6 +14,7 @@ type OtrController interface {
 	OtrNaList(ctx *fiber.Ctx) error
 	OtrMstProduk(ctx *fiber.Ctx) error
 	OtrMstNa(ctx *fiber.Ctx) error
+	CreateOtr(ctx *fiber.Ctx) error
 }
 
 type otrController struct {
@@ -26,6 +29,15 @@ func NewOtrController(aS service.OtrService) OtrController {
 
 func (tr *otrController) OtrNaList(ctx *fiber.Ctx) error {
 	return ctx.JSON(tr.otrService.OtrNaList())
+}
+func (tr *otrController) CreateOtr(ctx *fiber.Ctx) error {
+	var body request.CreateOtr
+	err := ctx.BodyParser(&body)
+	if err != nil {
+		fmt.Println("error body parser ", err)
+	}
+	tr.otrService.CreateOtr(body)
+	return ctx.JSON(map[string]string{"message": "Berhasil create"})
 }
 
 func (tr *otrController) OtrMstProduk(ctx *fiber.Ctx) error {
