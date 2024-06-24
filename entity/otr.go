@@ -23,3 +23,19 @@ func (b *Otr) BeforeCreate(tx *gorm.DB) (err error) {
 	b.ID = uuid.New().String()
 	return
 }
+
+type OtrNa struct {
+	ID             string `form:"id" json:"id" gorm:"type:uuid;primary_key;column:id"`
+	MotorPriceKode string `form:"motorprice_kode" json:"motorprice_kode" gorm:"column:motorprice_kode;index:idx_model,unique"`
+	ProductNama    string `form:"nm_mtr" json:"nm_mtr" gorm:"column:nm_mtr"`
+	Tahun          uint16 `form:"tahun" json:"tahun" gorm:"column:tahun;index:idx_model,unique"`
+}
+
+// func (OtrNa) TableName() string {
+// 	return "otr"
+// }
+
+func (b *OtrNa) BeforeCreate(tx *gorm.DB) (err error) {
+	b.ID = uuid.New().String()
+	return
+}

@@ -97,6 +97,8 @@ func main() {
 	app.Post("/approval/update", middleware.DeserializeUser, approvalController.Update)
 	app.Get("/mokita/token", middleware.DeserializeUser, approvalController.MokitaToken)
 	app.Post("/mokita/update/token", middleware.DeserializeUser, approvalController.MokitaUpdateToken)
+	app.Get("/otr/mst-produk", middleware.DeserializeUser, otrController.OtrMstProduk)
+	app.Get("/otr/otr-na", middleware.DeserializeUser, otrController.OtrMstNa)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
@@ -119,6 +121,7 @@ func main() {
 	app.Get("/kodepos/master-data", middleware.DeserializeUser, kodeposController.MasterData)
 	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
+
 	// a := asuransiRepository.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
 	// fmt.Println("ini data yaa guys yaa ", a)
 	// app.Use(jwtware.New(jwtware.Config{

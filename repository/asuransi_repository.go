@@ -154,8 +154,7 @@ func (lR *asuransiRepository) MasterDataCount(search string, dataSource string, 
 func (lR *asuransiRepository) FindAsuransiByNoMsn(no_msn string) entity.MasterAsuransi {
 	data := entity.MasterAsuransi{NoMsn: no_msn}
 	transaksi := entity.Transaksi{}
-	lR.connG.Joins("inner join kota k on asuransi.subdistrict = k.subdistrict_code").Select("asuransi.*, k.province province_name, k.city city_name, k.subdistrict subdistrict_name").Find(&data)
-	fmt.Println("ini data yaa ", data)
+	lR.connG.Joins("left join kota k on asuransi.subdistrict = k.subdistrict_code and asuransi.city = k.city_code and asuransi.province = k.province_code").Select("asuransi.*, k.province province_name, k.city city_name, k.subdistrict subdistrict_name").Find(&data)
 	if data.AppTransId != "" {
 		lR.connG.Where("app_trans_id = ?", data.AppTransId).First(&transaksi)
 		if transaksi.ID != "" {
