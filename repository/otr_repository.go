@@ -45,7 +45,9 @@ func (lR *otrRepository) CreateOtr(data request.CreateOtr) {
 	if result.Error != nil {
 		fmt.Println("ini errornya yaa ", result.Error)
 	} else {
-		lR.conn.Where("tahun = ? and motorprice_kode = ?", data.Tahun, data.MotorpriceKode).Delete(&entity.MstOtrNa{})
+		if data.CreateFrom == "otrna" {
+			lR.conn.Where("tahun = ? and motorprice_kode = ?", data.Tahun, data.MotorpriceKode).Delete(&entity.MstOtrNa{})
+		}
 	}
 }
 

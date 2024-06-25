@@ -161,7 +161,7 @@ func (tr *asuransiController) RekapByStatus(ctx *fiber.Ctx) error {
 func (tr *asuransiController) RekapByStatusLt(ctx *fiber.Ctx) error {
 	tgl1 := ctx.Query("tgl1")
 	tgl2 := ctx.Query("tgl2")
-	result := tr.asuransiService.RekapByStatus("", tgl1, tgl2)
+	result := tr.asuransiService.RekapByStatusAll("", tgl1, tgl2)
 	return ctx.JSON(result)
 }
 

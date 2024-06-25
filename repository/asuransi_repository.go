@@ -25,6 +25,7 @@ type AsuransiRepository interface {
 	MasterAlasanPending() []entity.MasterAlasanPending
 	MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat
 	RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi
+	RekapByStatusAll(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi
 	MasterDataRekapTele(tgl1 string, tgl2 string) []entity.MasterRekapTele
 	RekapByStatusJenisSource(tglStart string, tglEnd string) []map[string]interface{}
 	RekapByStatusKdUser(tglStart string, tglEnd string) []map[string]interface{}
@@ -346,6 +347,13 @@ func (lR *asuransiRepository) RekapByStatus(u string, tgl1 string, tgl2 string) 
 		query.Where("kd_user = ?", u)
 	}
 	query.Table("asuransi").Group("kd_user").Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RekapByStatusAll(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi {
+	var result entity.MasterStatusAsuransi
+	query := lR.connG.Select("count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ? and tgl_verifikasi <= ?", tgl1, tgl2)
+	query.Table("asuransi").Find(&result)
 	return result
 }
 

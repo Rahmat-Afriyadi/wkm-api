@@ -19,6 +19,7 @@ type AsuransiService interface {
 	UpdateAmbilAsuransi(no_msn string, kd_user string)
 	MasterDataRekapTele(tgl1 string, tgl2 string) []entity.MasterRekapTele
 	RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi
+	RekapByStatusAll(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi
 	ExportReport(u string, tgl string)
 	MasterAlasanPending() []entity.MasterAlasanPending
 	MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat
@@ -95,6 +96,10 @@ func (s *asuransiService) UpdateAmbilAsuransi(no_msn string, kd_user string) {
 
 func (s *asuransiService) RekapByStatus(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi {
 	return s.trR.RekapByStatus(u, tgl1, tgl2)
+}
+
+func (s *asuransiService) RekapByStatusAll(u string, tgl1 string, tgl2 string) entity.MasterStatusAsuransi {
+	return s.trR.RekapByStatusAll(u, tgl1, tgl2)
 }
 
 func (s *asuransiService) MasterAlasanPending() []entity.MasterAlasanPending {
