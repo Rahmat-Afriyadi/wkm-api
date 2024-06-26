@@ -58,7 +58,6 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 				}
 				// rows := xlsx.GetRows(xlsx.GetSheetName(1))
 				rows := xlsx.GetRows("Lap. Pembayaran Renewal All")
-				fmt.Println("ini rows nya yaa ", rows)
 				var datas []repository.ParamsUpdateJenisBayar
 				if len(rows) < 1 {
 					return
@@ -73,6 +72,7 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 						NamaCustomer:  v[1],
 					})
 				}
+				fmt.Println("ini data ", datas)
 				tr.tr3Service.UpdateJenisBayar(datas)
 			}(&wg)
 		}
