@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
+	"time"
 	"wkm/config"
 	"wkm/middleware"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/robfig/cron/v3"
 )
 
 var (
@@ -59,6 +62,10 @@ var (
 	otrRepository repository.OtrRepository = repository.NewOtrRepository(connGormAsuransi)
 	otrService    service.OtrService       = service.NewOtrService(otrRepository)
 	otrController controller.OtrController = controller.NewOtrController(otrService)
+
+	mstMtrRepository repository.MstMtrRepository = repository.NewMstMtrRepository(connGormAsuransi)
+	mstMtrService    service.MstMtrService       = service.NewMstMtrService(mstMtrRepository)
+	mstMtrController controller.MstMtrController = controller.NewMstMtrController(mstMtrService)
 )
 
 func main() {
@@ -66,6 +73,21 @@ func main() {
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
+
+	jakartaTime, _ := time.LoadLocation("Asia/Jakarta")
+	scheduler := cron.New(cron.WithLocation(jakartaTime))
+
+	defer scheduler.Stop()
+	// "menit jam hari"
+	_, err := scheduler.AddFunc("15 18 * * *", func() {
+		fmt.Println("running task ", time.Now().Format("2006-01-02 15:04:05"))
+		otrRepository.ListApi()
+	})
+	if err != nil {
+		fmt.Println("cron error ", err)
+	}
+
+	scheduler.Start()
 
 	app := fiber.New(fiber.Config{})
 
@@ -97,9 +119,20 @@ func main() {
 	app.Post("/approval/update", middleware.DeserializeUser, approvalController.Update)
 	app.Get("/mokita/token", middleware.DeserializeUser, approvalController.MokitaToken)
 	app.Post("/mokita/update/token", middleware.DeserializeUser, approvalController.MokitaUpdateToken)
+
 	app.Get("/otr/mst-produk", middleware.DeserializeUser, otrController.OtrMstProduk)
 	app.Get("/otr/otr-na", middleware.DeserializeUser, otrController.OtrMstNa)
+	app.Get("/otr/master-data", middleware.DeserializeUser, otrController.MasterData)
+	app.Get("/otr/master-data-count", middleware.DeserializeUser, otrController.MasterDataCount)
+	app.Get("/otr/detail-otr/:id", middleware.DeserializeUser, otrController.DetailOtr)
 	app.Post("/otr/create-otr", middleware.DeserializeUser, otrController.CreateOtr)
+	app.Post("/otr/update-otr", middleware.DeserializeUser, otrController.UpdateOtr)
+
+	app.Get("/mst-mtr/master-data", middleware.DeserializeUser, mstMtrController.MasterData)
+	app.Get("/mst-mtr/master-data-count", middleware.DeserializeUser, mstMtrController.MasterDataCount)
+	app.Get("/mst-mtr/detail-mst-mtr/:id", middleware.DeserializeUser, mstMtrController.DetailMstMtr)
+	app.Post("/mst-mtr/create-mst-mtr", middleware.DeserializeUser, mstMtrController.CreateMstMtr)
+	app.Post("/mst-mtr/update-mst-mtr", middleware.DeserializeUser, mstMtrController.UpdateMstMtr)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
@@ -121,7 +154,10 @@ func main() {
 
 	app.Get("/kodepos/master-data", middleware.DeserializeUser, kodeposController.MasterData)
 	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
+
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
+	app.Get("/produk/master-data-count", middleware.DeserializeUser, produkController.MasterDataCount)
+	app.Get("/produk/detail-produk/:id", middleware.DeserializeUser, produkController.DetailMstMtr)
 
 	// a := asuransiRepository.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
 	// fmt.Println("ini data yaa guys yaa ", a)

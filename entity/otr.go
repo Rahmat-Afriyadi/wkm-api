@@ -10,10 +10,11 @@ import (
 type Otr struct {
 	ID             string    `form:"id" json:"id" gorm:"type:uuid;primary_key;column:id"`
 	MotorPriceKode string    `form:"motorprice_kode" json:"motorprice_kode" gorm:"column:motorprice_kode;unique_index:idx_model,unique"`
-	ProductKode    string    `form:"product_kode" json:"product_kode" gorm:"column:product_kode"`
+	ProductKode    string    `form:"product_kode" json:"product_kode" gorm:"column:product_kode;unique_index:idx_model,unique"`
 	ProductNama    string    `form:"product_nama" json:"product_nama" gorm:"column:product_nama"`
 	WrnKode        string    `form:"wrn_kode" json:"wrn_kode" gorm:"column:wrn_kode"`
 	Otr            uint64    `form:"otr" json:"otr" gorm:"column:otr"`
+	OtrApi         string    `form:"On_The_Road" json:"On_The_Road" gorm:"-"`
 	Tahun          uint16    `form:"tahun" json:"tahun" gorm:"column:tahun;unique_index:idx_model,unique"`
 	CreatedAt      time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt      time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
@@ -48,3 +49,8 @@ type OtrNa struct {
 // func (OtrNa) TableName() string {
 // 	return "otr"
 // }
+
+type ResponseOtr struct {
+	Status int8  `json:"id"`
+	Data   []Otr `json:"data"`
+}

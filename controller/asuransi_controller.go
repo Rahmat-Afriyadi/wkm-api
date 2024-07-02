@@ -56,6 +56,7 @@ func (tr *asuransiController) ListApprovalTransaksi(ctx *fiber.Ctx) error {
 	tgl2 := ctx.Query("tgl2")
 	search := ctx.Query("search")
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	stsPembelian, _ := strconv.Atoi(ctx.Query("sb"))
 	userParams := ""
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
@@ -63,19 +64,20 @@ func (tr *asuransiController) ListApprovalTransaksi(ctx *fiber.Ctx) error {
 		userParams = details.Username
 	}
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
-	return ctx.JSON(tr.asuransiService.ListApprovalTransaksi(userParams, tgl1, tgl2, search, pageParams, limit))
+	return ctx.JSON(tr.asuransiService.ListApprovalTransaksi(userParams, tgl1, tgl2, search, stsPembelian, pageParams, limit))
 }
 func (tr *asuransiController) ListApprovalTransaksiCount(ctx *fiber.Ctx) error {
 	tgl1 := ctx.Query("tgl1")
 	tgl2 := ctx.Query("tgl2")
 	search := ctx.Query("search")
+	stsPembelian, _ := strconv.Atoi(ctx.Query("sb"))
 	userParams := ""
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	if details.RoleId == 1 {
 		userParams = details.Username
 	}
-	return ctx.JSON(tr.asuransiService.ListApprovalTransaksiCount(userParams, tgl1, tgl2, search))
+	return ctx.JSON(tr.asuransiService.ListApprovalTransaksiCount(userParams, tgl1, tgl2, search, stsPembelian))
 }
 
 func (tr *asuransiController) MasterDataRekapTele(ctx *fiber.Ctx) error {
@@ -96,6 +98,12 @@ func (tr *asuransiController) MasterAlasanTdkBerminat(ctx *fiber.Ctx) error {
 	return ctx.JSON(tr.asuransiService.MasterAlasanTdkBerminat())
 }
 
+func (tr *asuransiController) RekapByStatusKdUser(ctx *fiber.Ctx) error {
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	return ctx.JSON(tr.asuransiService.RekapByStatusKdUser(tgl1, tgl2))
+}
+
 func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
 	dataSource := ctx.Query("dataSource")
 	sts := ctx.Params("status")
@@ -108,12 +116,6 @@ func (tr *asuransiController) MasterData(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	return ctx.JSON(tr.asuransiService.MasterData(search, dataSource, sts, details.Username, tgl1, tgl2, ap, limit, pageParams))
-}
-
-func (tr *asuransiController) RekapByStatusKdUser(ctx *fiber.Ctx) error {
-	tgl1 := ctx.Query("tgl1")
-	tgl2 := ctx.Query("tgl2")
-	return ctx.JSON(tr.asuransiService.RekapByStatusKdUser(tgl1, tgl2))
 }
 
 func (tr *asuransiController) MasterDataCount(ctx *fiber.Ctx) error {

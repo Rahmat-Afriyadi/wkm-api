@@ -12,6 +12,10 @@ type OtrService interface {
 	OtrMstProduk(search string) []entity.MstMtr
 	OtrMstNa(search string) []entity.OtrNa
 	CreateOtr(data request.CreateOtr)
+	MasterData(search string, limit int, pageParams int) []entity.Otr
+	MasterDataCount(search string) int64
+	DetailOtr(id string) entity.Otr
+	Update(body entity.Otr) error
 }
 
 type otrService struct {
@@ -22,6 +26,19 @@ func NewOtrService(tR repository.OtrRepository) OtrService {
 	return &otrService{
 		trR: tR,
 	}
+}
+
+func (s *otrService) Update(body entity.Otr) error {
+	return s.trR.Update(body)
+}
+func (s *otrService) DetailOtr(id string) entity.Otr {
+	return s.trR.DetailOtr(id)
+}
+func (s *otrService) MasterData(search string, limit int, pageParams int) []entity.Otr {
+	return s.trR.MasterData(search, limit, pageParams)
+}
+func (s *otrService) MasterDataCount(search string) int64 {
+	return s.trR.MasterDataCount(search)
 }
 
 func (s *otrService) DetailOtrNa(search string, tahun uint16) entity.Otr {
