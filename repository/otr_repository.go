@@ -53,12 +53,12 @@ func (lR *otrRepository) DetailOtrNa(motorprice_kode string, tahun uint16) entit
 
 func (lR *otrRepository) CreateOtr(data request.CreateOtr) {
 	otr := entity.Otr{
-		MotorPriceKode: data.MotorpriceKode,
-		ProductKode:    data.ProductKode,
-		ProductNama:    data.ProductNama,
-		Otr:            data.Otr,
-		Tahun:          data.Tahun,
-		WrnKode:        data.WrnKode,
+		KdMdl:       data.MotorpriceKode,
+		ProductKode: data.ProductKode,
+		ProductNama: data.ProductNama,
+		Otr:         data.Otr,
+		Tahun:       data.Tahun,
+		WrnKode:     data.WrnKode,
 	}
 	result := lR.conn.Create(&otr)
 	if result.Error != nil {
@@ -73,7 +73,7 @@ func (lR *otrRepository) CreateOtr(data request.CreateOtr) {
 func (lR *otrRepository) Update(data entity.Otr) error {
 	record := entity.Otr{ID: data.ID}
 	lR.conn.Find(&record)
-	if record.MotorPriceKode == "" {
+	if record.KdMdl == "" {
 		return errors.New("data tidak ditemukan")
 	}
 	data.CreatedAt = record.CreatedAt
@@ -89,7 +89,7 @@ func (lR *otrRepository) Update(data entity.Otr) error {
 func (lR *otrRepository) MasterData(search string, limit int, pageParams int) []entity.Otr {
 	otr := []entity.Otr{}
 	query := lR.conn.Where("motorprice_kode like ? or product_nama like ?  or product_kode like ? ", "%"+search+"%", "%"+search+"%", "%"+search+"%")
-	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&otr)
+	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Preload("MstMtr").Find(&otr)
 	return otr
 }
 
@@ -113,7 +113,7 @@ func (lR *otrRepository) OtrMstProduk(search string) []entity.MstMtr {
 }
 func (lR *otrRepository) OtrMstNa(search string) []entity.OtrNa {
 	var otr []entity.OtrNa
-	lR.conn.Raw("select a.*, m.nm_mtr from (select motorprice_kode, tahun from otr_na group by motorprice_kode, tahun) a inner join mst_mtr m  on m.kd_mdl = a.motorprice_kode where a.motorprice_kode like ? or a.tahun like ? or m.nm_mtr like ? limit 15 ", "%"+search+"%", "%"+search+"%", "%"+search+"%").Find(&otr)
+	lR.conn.Raw("select a.*, m.nm_mtr from (select motorprice_kode, tahun from otr_na group by motorprice_kode, tahun) a left join mst_mtr m  on m.kd_mdl = a.motorprice_kode where a.motorprice_kode like ? or a.tahun like ? or m.nm_mtr like ? limit 15 ", "%"+search+"%", "%"+search+"%", "%"+search+"%").Find(&otr)
 	return otr
 }
 
@@ -152,10 +152,13 @@ func (lR *otrRepository) ListApi() {
 	tahun := time.Now().Year()
 	json.Unmarshal(body, &responseObject)
 	for _, data := range responseObject.Data {
-		var otr entity.Otr
-		lR.conn.Where("motorprice_kode = ? and tahun = ?", data.MotorPriceKode, tahun).First(&otr)
 		parts := strings.Split(data.OtrApi, ".")
 		num, err := strconv.ParseUint(parts[0], 10, 64)
+		if num == 0 {
+			continue
+		}
+		var otr entity.Otr
+		lR.conn.Where("motorprice_kode = ? and tahun = ?", data.KdMdl, tahun).First(&otr)
 		if err != nil {
 			fmt.Println("Error converting string to int:", err)
 			return

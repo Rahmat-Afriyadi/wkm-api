@@ -66,6 +66,10 @@ var (
 	mstMtrRepository repository.MstMtrRepository = repository.NewMstMtrRepository(connGormAsuransi)
 	mstMtrService    service.MstMtrService       = service.NewMstMtrService(mstMtrRepository)
 	mstMtrController controller.MstMtrController = controller.NewMstMtrController(mstMtrService)
+
+	merkRepository repository.MerkRepository = repository.NewMerkRepository(connGormAsuransi)
+	merkService    service.MerkService       = service.NewMerkService(merkRepository)
+	merkController controller.MerkController = controller.NewMerkController(merkService)
 )
 
 func main() {
@@ -158,6 +162,8 @@ func main() {
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
 	app.Get("/produk/master-data-count", middleware.DeserializeUser, produkController.MasterDataCount)
 	app.Get("/produk/detail-produk/:id", middleware.DeserializeUser, produkController.DetailMstMtr)
+
+	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 
 	// a := asuransiRepository.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
 	// fmt.Println("ini data yaa guys yaa ", a)
