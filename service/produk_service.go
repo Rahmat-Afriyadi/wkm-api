@@ -8,7 +8,9 @@ import (
 type ProdukService interface {
 	MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.MasterProduk
 	MasterDataCount(search string, jenis_asuransi int) int64
-	DetailMstMtr(id string) entity.MasterProduk
+	Detail(id string) entity.MasterProduk
+	Update(body entity.MasterProduk) error
+	Create(body entity.MasterProduk) error
 }
 
 type produkService struct {
@@ -29,6 +31,14 @@ func (lR *produkService) MasterDataCount(search string, jenis_asuransi int) int6
 	return lR.trR.MasterDataCount(search, jenis_asuransi)
 }
 
-func (s *produkService) DetailMstMtr(id string) entity.MasterProduk {
-	return s.trR.DetailMstMtr(id)
+func (s *produkService) Detail(id string) entity.MasterProduk {
+	return s.trR.DetailProduk(id)
+}
+
+func (s *produkService) Update(body entity.MasterProduk) error {
+	return s.trR.Update(body)
+}
+
+func (s *produkService) Create(body entity.MasterProduk) error {
+	return s.trR.Create(body)
 }

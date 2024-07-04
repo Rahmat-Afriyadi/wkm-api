@@ -162,6 +162,8 @@ func main() {
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)
 	app.Get("/produk/master-data-count", middleware.DeserializeUser, produkController.MasterDataCount)
 	app.Get("/produk/detail-produk/:id", middleware.DeserializeUser, produkController.DetailMstMtr)
+	app.Post("/produk/create-produk", middleware.DeserializeUser, produkController.Create)
+	app.Post("/produk/update-produk", middleware.DeserializeUser, produkController.Update)
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 

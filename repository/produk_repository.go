@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"wkm/entity"
 	"wkm/utils"
@@ -11,7 +12,9 @@ import (
 type ProdukRepository interface {
 	MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.MasterProduk
 	MasterDataCount(search string, jenis_asuransi int) int64
-	DetailMstMtr(id string) entity.MasterProduk
+	DetailProduk(id string) entity.MasterProduk
+	Create(data entity.MasterProduk) error
+	Update(data entity.MasterProduk) error
 }
 
 type produkRepository struct {
@@ -21,6 +24,32 @@ type produkRepository struct {
 func NewProdukRepository(conn *gorm.DB) ProdukRepository {
 	return &produkRepository{
 		conn: conn,
+	}
+}
+
+func (lR *produkRepository) Create(data entity.MasterProduk) error {
+	result := lR.conn.Create(&data)
+	if result.Error != nil {
+		fmt.Println("ini error ", result.Error)
+		return result.Error
+	} else {
+		return nil
+	}
+
+}
+
+func (lR *produkRepository) Update(data entity.MasterProduk) error {
+	record := entity.MasterProduk{KdProduk: data.KdProduk}
+	lR.conn.Find(&record)
+	if record.NmProduk == "" {
+		return errors.New("data tidak ditemukan")
+	}
+	result := lR.conn.Save(&data)
+	if result.Error != nil {
+		fmt.Println("ini error ", result.Error)
+		return result.Error
+	} else {
+		return nil
 	}
 }
 
@@ -44,9 +73,9 @@ func (lR *produkRepository) MasterDataCount(search string, jenis_asuransi int) i
 	return int64(len(datas))
 }
 
-func (lR *produkRepository) DetailMstMtr(id string) entity.MasterProduk {
-	mstMtr := entity.MasterProduk{KdProduk: id}
-	lR.conn.Find(&mstMtr)
-	fmt.Println("ini datanya yaa ", mstMtr)
-	return mstMtr
+func (lR *produkRepository) DetailProduk(id string) entity.MasterProduk {
+	produk := entity.MasterProduk{KdProduk: id}
+	lR.conn.Find(&produk)
+	fmt.Println("ini datanya yaa ", produk)
+	return produk
 }
