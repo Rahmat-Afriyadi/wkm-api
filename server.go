@@ -101,7 +101,7 @@ func main() {
 	app.Static("/uploads", "./uploads")
 
 	app.Use(logger.New(logger.Config{
-		Format:     "${time} | ${status} | ${method} | ${path} | ${ip} | ${queryParams} |${latency} | ${body}\n\n",
+		Format:     "${time} | ${status} | ${method} | ${path} | ${ip} | ${queryParams} |${latency} \n\n",
 		TimeFormat: "2006-01-02 15:04:05",
 		TimeZone:   "Indonesia/Jakarta",
 		Done: func(c *fiber.Ctx, logString []byte) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"time"
 	"wkm/entity"
 	"wkm/service"
 
@@ -54,6 +55,15 @@ func (tr *produkController) Update(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
+
+	file, _ := ctx.FormFile("files")
+	fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), file.Filename)
+	filepath := filepath.Join("./uploads", fileName)
+	if err := ctx.SaveFile(file, filepath); err != nil {
+		fmt.Println("ini error file ", err.Error())
+	}
+	body.Logo = "/uploads/" + fileName
+
 	err = tr.produkService.Update(body)
 	if err != nil {
 		return ctx.JSON(map[string]interface{}{"message": err.Error()})
@@ -80,6 +90,15 @@ func (tr *produkController) Create(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
+
+	file, _ := ctx.FormFile("files")
+	fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), file.Filename)
+	filepath := filepath.Join("./uploads", fileName)
+	if err := ctx.SaveFile(file, filepath); err != nil {
+		fmt.Println("ini error file ", err.Error())
+	}
+	body.Logo = "/uploads/" + fileName
+
 	err = tr.produkService.Create(body)
 	if err != nil {
 		return ctx.JSON(map[string]string{"message": err.Error()})
