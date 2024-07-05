@@ -40,6 +40,8 @@ func (lR *produkRepository) Create(data entity.MasterProduk) error {
 
 func (lR *produkRepository) Update(data entity.MasterProduk) error {
 	record := entity.MasterProduk{KdProduk: data.KdProduk}
+
+	fmt.Println("ini data pertanggunan ", data.NilaiPertanggungan)
 	lR.conn.Find(&record)
 	if record.NmProduk == "" {
 		return errors.New("data tidak ditemukan")

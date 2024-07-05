@@ -10,14 +10,14 @@ import (
 )
 
 type MasterVendor struct {
-	KdVendor  string    `json:"kd_vendor" gorm:"primary_key;column:id_vendor"`
-	NmVendor  string    `json:"nm_vendor" gorm:"column:nm_vendor"`
-	Deskripsi string    `json:"deskripsi" gorm:"column:deskripsi"`
-	Admin     uint64    `json:"admin" gorm:"column:admin"`
-	Dealer    float64   `json:"dealer" gorm:"column:dealer"`
-	Wkm       float64   `json:"wkm" gorm:"column:wkm"`
-	CreatedAt time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	KdVendor  string     `json:"kd_vendor" gorm:"primary_key;column:id_vendor"`
+	NmVendor  string     `json:"nm_vendor" gorm:"column:nm_vendor"`
+	Deskripsi string     `json:"deskripsi" gorm:"column:deskripsi"`
+	Admin     uint64     `json:"admin" gorm:"column:admin"`
+	Dealer    float64    `json:"dealer" gorm:"column:dealer"`
+	Wkm       float64    `json:"wkm" gorm:"column:wkm"`
+	CreatedAt *time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt *time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }
 
 func (MasterVendor) TableName() string {

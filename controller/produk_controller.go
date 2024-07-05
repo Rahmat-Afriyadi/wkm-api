@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"wkm/entity"
 	"wkm/service"
@@ -15,6 +16,7 @@ type ProdukController interface {
 	DetailMstMtr(ctx *fiber.Ctx) error
 	Create(ctx *fiber.Ctx) error
 	Update(ctx *fiber.Ctx) error
+	UploadLogo(ctx *fiber.Ctx) error
 }
 
 type produkController struct {
@@ -58,6 +60,20 @@ func (tr *produkController) Update(ctx *fiber.Ctx) error {
 	}
 	return ctx.JSON(map[string]string{"message": "Berhasil Update"})
 }
+
+func (tr *produkController) UploadLogo(ctx *fiber.Ctx) error {
+	file, err := ctx.FormFile("files")
+	fileName := filepath.Base(file.Filename)
+	filepath := filepath.Join("./uploads", fileName)
+	if err := ctx.SaveFile(file, filepath); err != nil {
+		fmt.Println("ini error file ", err.Error())
+	}
+	if err != nil {
+		return ctx.JSON(map[string]string{"message": err.Error()})
+	}
+	return ctx.JSON(map[string]string{"message": "Berhasil Update"})
+}
+
 func (tr *produkController) Create(ctx *fiber.Ctx) error {
 	var body entity.MasterProduk
 	err := ctx.BodyParser(&body)

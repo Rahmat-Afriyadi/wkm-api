@@ -70,6 +70,10 @@ var (
 	merkRepository repository.MerkRepository = repository.NewMerkRepository(connGormAsuransi)
 	merkService    service.MerkService       = service.NewMerkService(merkRepository)
 	merkController controller.MerkController = controller.NewMerkController(merkService)
+
+	vendorRepository repository.VendorRepository = repository.NewVendorRepository(connGormAsuransi)
+	vendorService    service.VendorService       = service.NewVendorService(vendorRepository)
+	vendorController controller.VendorController = controller.NewVendorController(vendorService)
 )
 
 func main() {
@@ -94,6 +98,7 @@ func main() {
 	scheduler.Start()
 
 	app := fiber.New(fiber.Config{})
+	app.Static("/uploads", "./uploads")
 
 	app.Use(logger.New(logger.Config{
 		Format:     "${time} | ${status} | ${method} | ${path} | ${ip} | ${queryParams} |${latency} | ${body}\n\n",
@@ -164,6 +169,13 @@ func main() {
 	app.Get("/produk/detail-produk/:id", middleware.DeserializeUser, produkController.DetailMstMtr)
 	app.Post("/produk/create-produk", middleware.DeserializeUser, produkController.Create)
 	app.Post("/produk/update-produk", middleware.DeserializeUser, produkController.Update)
+	app.Post("/produk/upload-logo", middleware.DeserializeUser, produkController.UploadLogo)
+
+	app.Get("/vendor/master-data", middleware.DeserializeUser, vendorController.MasterData)
+	app.Get("/vendor/master-data-count", middleware.DeserializeUser, vendorController.MasterDataCount)
+	app.Get("/vendor/detail-vendor/:id", middleware.DeserializeUser, vendorController.DetailMstMtr)
+	app.Post("/vendor/create-vendor", middleware.DeserializeUser, vendorController.Create)
+	app.Post("/vendor/update-vendor", middleware.DeserializeUser, vendorController.Update)
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 
