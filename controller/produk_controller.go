@@ -65,7 +65,6 @@ func (tr *produkController) Update(ctx *fiber.Ctx) error {
 		}
 		body.Logo = "/uploads/" + fileName
 	}
-
 	err = tr.produkService.Update(body)
 	if err != nil {
 		return ctx.JSON(map[string]interface{}{"message": err.Error()})
