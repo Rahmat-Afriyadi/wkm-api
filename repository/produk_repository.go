@@ -78,6 +78,5 @@ func (lR *produkRepository) MasterDataCount(search string, jenis_asuransi int) i
 func (lR *produkRepository) DetailProduk(id string) entity.MasterProduk {
 	produk := entity.MasterProduk{KdProduk: id}
 	lR.conn.Find(&produk)
-	fmt.Println("ini datanya yaa ", produk)
 	return produk
 }

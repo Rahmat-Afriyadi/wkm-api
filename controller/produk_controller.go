@@ -57,12 +57,14 @@ func (tr *produkController) Update(ctx *fiber.Ctx) error {
 	}
 
 	file, _ := ctx.FormFile("files")
-	fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), file.Filename)
-	filepath := filepath.Join("./uploads", fileName)
-	if err := ctx.SaveFile(file, filepath); err != nil {
-		fmt.Println("ini error file ", err.Error())
+	if file != nil {
+		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), file.Filename)
+		filepath := filepath.Join("./uploads", fileName)
+		if err := ctx.SaveFile(file, filepath); err != nil {
+			fmt.Println("ini error file ", err.Error())
+		}
+		body.Logo = "/uploads/" + fileName
 	}
-	body.Logo = "/uploads/" + fileName
 
 	err = tr.produkService.Update(body)
 	if err != nil {
@@ -92,12 +94,14 @@ func (tr *produkController) Create(ctx *fiber.Ctx) error {
 	}
 
 	file, _ := ctx.FormFile("files")
-	fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), file.Filename)
-	filepath := filepath.Join("./uploads", fileName)
-	if err := ctx.SaveFile(file, filepath); err != nil {
-		fmt.Println("ini error file ", err.Error())
+	if file != nil {
+		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), file.Filename)
+		filepath := filepath.Join("./uploads", fileName)
+		if err := ctx.SaveFile(file, filepath); err != nil {
+			fmt.Println("ini error file ", err.Error())
+		}
+		body.Logo = "/uploads/" + fileName
 	}
-	body.Logo = "/uploads/" + fileName
 
 	err = tr.produkService.Create(body)
 	if err != nil {
