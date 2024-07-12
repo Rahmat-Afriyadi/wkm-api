@@ -76,7 +76,6 @@ func (lR *otrRepository) Update(data entity.Otr) error {
 	if record.KdMdl == "" {
 		return errors.New("data tidak ditemukan")
 	}
-	data.CreatedAt = record.CreatedAt
 	result := lR.conn.Save(&data)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)

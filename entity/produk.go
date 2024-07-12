@@ -21,6 +21,9 @@ type MasterProduk struct {
 	IsWanda            bool         `form:"is_wanda" json:"is_wanda" gorm:"column:is_wanda"`
 	IsActive           bool         `form:"is_active" json:"is_active" gorm:"column:is_active"`
 	JnsAsuransi        string       `form:"jns_asuransi" json:"jns_asuransi" gorm:"column:jns_asuransi"`
+	Manfaat            []Manfaat    `form:"manfaat" json:"manfaat" gorm:"foreignKey:IdProduk"`
+	Syarat             []Syarat     `form:"syarat" json:"syarat" gorm:"foreignKey:IdProduk"`
+	Paket              []Paket      `form:"paket" json:"paket" gorm:"foreignKey:IdProduk"`
 	Logo               string       `json:"logo" gorm:"column:logo"`
 	VendorId           string       `form:"vendor_id" json:"vendor_id" gorm:"column:vendor_id"`
 	Vendor             MasterVendor `json:"vendor" gorm:"->;references:KdVendor;foreignKey:VendorId"`

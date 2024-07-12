@@ -30,14 +30,6 @@ func (b *Otr) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
-func (u *Otr) BeforeUpdate(tx *gorm.DB) (err error) {
-	minDate, _ := time.Parse("2006-01-2", "1970-01-01")
-	if u.CreatedAt.Before(minDate) {
-		u.CreatedAt = nil
-	}
-	return
-}
-
 type MstOtrNa struct {
 	ID             string `form:"id" json:"id" gorm:"type:uuid;primary_key;column:id"`
 	MotorPriceKode string `form:"motorprice_kode" json:"motorprice_kode" gorm:"column:motorprice_kode;"`

@@ -179,6 +179,9 @@ func main() {
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 
+	// produk := produkRepository.DetailProduk("PRODUK-001")
+	// fmt.Println("ini produk yaa ", produk.Manfaats[0])
+
 	// a := asuransiRepository.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
 	// fmt.Println("ini data yaa guys yaa ", a)
 	// app.Use(jwtware.New(jwtware.Config{

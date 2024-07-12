@@ -41,12 +41,19 @@ func (lR *produkRepository) Create(data entity.MasterProduk) error {
 func (lR *produkRepository) Update(data entity.MasterProduk) error {
 	record := entity.MasterProduk{KdProduk: data.KdProduk}
 
-	fmt.Println("ini data pertanggunan ", data.NilaiPertanggungan)
 	lR.conn.Find(&record)
 	if record.NmProduk == "" {
 		return errors.New("data tidak ditemukan")
 	}
-	result := lR.conn.Save(&data)
+	lR.conn.Where("id_produk", data.KdProduk).Delete(&entity.Manfaat{})
+	lR.conn.Where("id_produk", data.KdProduk).Delete(&entity.Syarat{})
+	lR.conn.Where("id_produk", data.KdProduk).Delete(&entity.Paket{})
+	// result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&produk)
+	// if result.Error != nil {
+	// 	fmt.Println("ini error yaa ", result.Error)
+	// }
+	fmt.Println("ini data yaa untuk update", data)
+	result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&data)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)
 		return result.Error
@@ -77,6 +84,11 @@ func (lR *produkRepository) MasterDataCount(search string, jenis_asuransi int) i
 
 func (lR *produkRepository) DetailProduk(id string) entity.MasterProduk {
 	produk := entity.MasterProduk{KdProduk: id}
-	lR.conn.Find(&produk)
+	lR.conn.Preload("Manfaat").Preload("Syarat").Preload("Paket").Find(&produk)
+	// produk.Manfaats[5].Manfaat = "ini coba update yaa SEkali lagi yaa"
+	// result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&produk)
+	// if result.Error != nil {
+	// 	fmt.Println("ini error yaa ", result.Error)
+	// }
 	return produk
 }
