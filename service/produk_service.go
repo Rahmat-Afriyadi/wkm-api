@@ -11,6 +11,9 @@ type ProdukService interface {
 	Detail(id string) entity.MasterProduk
 	Update(body entity.MasterProduk) error
 	Create(body entity.MasterProduk) error
+	DeleteManfaat(id string) error
+	DeleteSyarat(id string) error
+	DeletePaket(id string) error
 }
 
 type produkService struct {
@@ -41,4 +44,14 @@ func (s *produkService) Update(body entity.MasterProduk) error {
 
 func (s *produkService) Create(body entity.MasterProduk) error {
 	return s.trR.Create(body)
+}
+
+func (s *produkService) DeleteManfaat(id string) error {
+	return s.trR.DeleteManfaat(id)
+}
+func (s *produkService) DeleteSyarat(id string) error {
+	return s.trR.DeleteSyarat(id)
+}
+func (s *produkService) DeletePaket(id string) error {
+	return s.trR.DeletePaket(id)
 }

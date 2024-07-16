@@ -170,6 +170,9 @@ func main() {
 	app.Post("/produk/create-produk", middleware.DeserializeUser, produkController.Create)
 	app.Post("/produk/update-produk", middleware.DeserializeUser, produkController.Update)
 	app.Post("/produk/upload-logo", middleware.DeserializeUser, produkController.UploadLogo)
+	app.Delete("/produk/delete-manfaat/:id", middleware.DeserializeUser, produkController.DeleteManfaat)
+	app.Delete("/produk/delete-syarat/:id", middleware.DeserializeUser, produkController.DeleteSyarat)
+	app.Delete("/produk/delete-paket/:id", middleware.DeserializeUser, produkController.DeletePaket)
 
 	app.Get("/vendor/master-data", middleware.DeserializeUser, vendorController.MasterData)
 	app.Get("/vendor/master-data-count", middleware.DeserializeUser, vendorController.MasterDataCount)

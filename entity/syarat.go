@@ -20,10 +20,16 @@ func (Syarat) TableName() string {
 }
 
 func (u *Syarat) BeforeCreate(tx *gorm.DB) (err error) {
+	if u.IdSyarat != "" {
+		return
+	}
 	lastTransaksi := Syarat{}
 	tx.Last(&lastTransaksi)
-	u.IdSyarat = GenerateIdSyarat(lastTransaksi)
-
+	if lastTransaksi.IdSyarat != "" {
+		u.IdSyarat = GenerateIdSyarat(lastTransaksi)
+	} else {
+		u.IdSyarat = "SYARAT-001"
+	}
 	return
 }
 

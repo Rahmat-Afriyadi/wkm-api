@@ -20,10 +20,16 @@ func (Paket) TableName() string {
 }
 
 func (u *Paket) BeforeCreate(tx *gorm.DB) (err error) {
+	if u.IdPaket != "" {
+		return
+	}
 	lastTransaksi := Paket{}
 	tx.Last(&lastTransaksi)
-	u.IdPaket = GenerateIdPaket(lastTransaksi)
-
+	if lastTransaksi.IdPaket != "" {
+		u.IdPaket = GenerateIdPaket(lastTransaksi)
+	} else {
+		u.IdPaket = "PAKET-001"
+	}
 	return
 }
 

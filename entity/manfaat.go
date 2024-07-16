@@ -25,8 +25,11 @@ func (u *Manfaat) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	lastTransaksi := Manfaat{}
 	tx.Last(&lastTransaksi)
-	u.IdManfaat = GenerateIdManfaat(lastTransaksi)
-
+	if lastTransaksi.IdManfaat != "" {
+		u.IdManfaat = GenerateIdManfaat(lastTransaksi)
+	} else {
+		u.IdManfaat = "MANFAAT-001"
+	}
 	return
 }
 

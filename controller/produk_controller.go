@@ -18,6 +18,9 @@ type ProdukController interface {
 	Create(ctx *fiber.Ctx) error
 	Update(ctx *fiber.Ctx) error
 	UploadLogo(ctx *fiber.Ctx) error
+	DeleteManfaat(ctx *fiber.Ctx) error
+	DeleteSyarat(ctx *fiber.Ctx) error
+	DeletePaket(ctx *fiber.Ctx) error
 }
 
 type produkController struct {
@@ -50,7 +53,6 @@ func (tr *produkController) DetailMstMtr(ctx *fiber.Ctx) error {
 }
 
 func (tr *produkController) Update(ctx *fiber.Ctx) error {
-	fmt.Println("kesini dulu")
 	var body entity.MasterProduk
 	err := ctx.BodyParser(&body)
 	if err != nil {
@@ -114,6 +116,32 @@ func (tr *produkController) Create(ctx *fiber.Ctx) error {
 	}
 
 	err = tr.produkService.Create(body)
+	if err != nil {
+		return ctx.JSON(map[string]string{"message": err.Error()})
+	}
+	return ctx.JSON(map[string]string{"message": "Berhasil create"})
+}
+
+func (tr *produkController) DeleteManfaat(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+	err := tr.produkService.DeleteManfaat(id)
+	if err != nil {
+		return ctx.JSON(map[string]string{"message": err.Error()})
+	}
+	return ctx.JSON(map[string]string{"message": "Berhasil create"})
+}
+
+func (tr *produkController) DeleteSyarat(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+	err := tr.produkService.DeleteSyarat(id)
+	if err != nil {
+		return ctx.JSON(map[string]string{"message": err.Error()})
+	}
+	return ctx.JSON(map[string]string{"message": "Berhasil create"})
+}
+func (tr *produkController) DeletePaket(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+	err := tr.produkService.DeletePaket(id)
 	if err != nil {
 		return ctx.JSON(map[string]string{"message": err.Error()})
 	}

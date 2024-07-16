@@ -15,6 +15,9 @@ type ProdukRepository interface {
 	DetailProduk(id string) entity.MasterProduk
 	Create(data entity.MasterProduk) error
 	Update(data entity.MasterProduk) error
+	DeleteManfaat(id string) error
+	DeleteSyarat(id string) error
+	DeletePaket(id string) error
 }
 
 type produkRepository struct {
@@ -45,14 +48,47 @@ func (lR *produkRepository) Update(data entity.MasterProduk) error {
 	if record.NmProduk == "" {
 		return errors.New("data tidak ditemukan")
 	}
-	lR.conn.Where("id_produk", data.KdProduk).Delete(&entity.Manfaat{})
-	lR.conn.Where("id_produk", data.KdProduk).Delete(&entity.Syarat{})
-	lR.conn.Where("id_produk", data.KdProduk).Delete(&entity.Paket{})
 	// result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&produk)
 	// if result.Error != nil {
 	// 	fmt.Println("ini error yaa ", result.Error)
 	// }
-	fmt.Println("ini data yaa untuk update", data)
+	lastManfaat := entity.Manfaat{}
+	lR.conn.Last(&lastManfaat)
+	if lastManfaat.IdManfaat == "" {
+		lastManfaat.IdManfaat = "MANFAAT-001"
+	}
+	for i, v := range data.Manfaat {
+		if v.IdManfaat == "" {
+			lastManfaat.IdManfaat = entity.GenerateIdManfaat(lastManfaat)
+			data.Manfaat[i].IdManfaat = lastManfaat.IdManfaat
+		}
+	}
+
+	lastSyarat := entity.Syarat{}
+	lR.conn.Last(&lastSyarat)
+	if lastSyarat.IdSyarat == "" {
+		lastSyarat.IdSyarat = "SYARAT-001"
+	}
+	for i, v := range data.Syarat {
+		if v.IdSyarat == "" {
+			lastSyarat.IdSyarat = entity.GenerateIdSyarat(lastSyarat)
+			data.Syarat[i].IdSyarat = lastSyarat.IdSyarat
+		}
+	}
+
+	lastPaket := entity.Paket{}
+	lR.conn.Last(&lastPaket)
+	if lastPaket.IdPaket == "" {
+		lastPaket.IdPaket = "PAKET-001"
+	}
+	for i, v := range data.Paket {
+		if v.IdPaket == "" {
+			lastPaket.IdPaket = entity.GenerateIdPaket(lastPaket)
+			data.Paket[i].IdPaket = lastPaket.IdPaket
+		}
+	}
+
+	fmt.Println("ini data semua yaa ", data)
 	result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&data)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)
@@ -91,4 +127,26 @@ func (lR *produkRepository) DetailProduk(id string) entity.MasterProduk {
 	// 	fmt.Println("ini error yaa ", result.Error)
 	// }
 	return produk
+}
+
+func (lR *produkRepository) DeleteManfaat(id string) error {
+	result := lR.conn.Where("id_manfaat", id).Delete(&entity.Manfaat{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+func (lR *produkRepository) DeleteSyarat(id string) error {
+	result := lR.conn.Where("id_syarat", id).Delete(&entity.Syarat{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+func (lR *produkRepository) DeletePaket(id string) error {
+	result := lR.conn.Where("id_paket", id).Delete(&entity.Paket{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
