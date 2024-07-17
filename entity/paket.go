@@ -12,6 +12,7 @@ type Paket struct {
 	IdPaket  string `form:"id_paket" json:"id_paket" gorm:"primary_key;column:id_paket"`
 	IdProduk string `form:"id_produk" json:"id_produk" gorm:"column:id_produk"`
 	Paket    string `form:"paket" json:"paket" gorm:"column:nm_paket"`
+	Harga    uint64 `form:"harga_paket" json:"harga_paket" gorm:"column:harga_paket"`
 	// Produk   MasterProduk `json:"produk" gorm:"->;references:KdProduk;foreignKey:IdProduk"`
 }
 
@@ -32,14 +33,6 @@ func (u *Paket) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
-
-// func (u *Paket) BeforeUpdate(tx *gorm.DB) (err error) {
-// 	minDate, _ := time.Parse("2006-01-2", "1970-01-01")
-// 	if u.CreatedAt.Before(minDate) {
-// 		u.CreatedAt = nil
-// 	}
-// 	return
-// }
 
 func GenerateIdPaket(paket Paket) string {
 

@@ -43,15 +43,14 @@ func (lR *produkRepository) Create(data entity.MasterProduk) error {
 
 func (lR *produkRepository) Update(data entity.MasterProduk) error {
 	record := entity.MasterProduk{KdProduk: data.KdProduk}
+	fmt.Println("ini record ", record.Logo, data.KdProduk)
 
 	lR.conn.Find(&record)
 	if record.NmProduk == "" {
 		return errors.New("data tidak ditemukan")
 	}
-	// result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&produk)
-	// if result.Error != nil {
-	// 	fmt.Println("ini error yaa ", result.Error)
-	// }
+
+	fmt.Println("ini log yaa ", record.Logo)
 	lastManfaat := entity.Manfaat{}
 	lR.conn.Last(&lastManfaat)
 	if lastManfaat.IdManfaat == "" {
@@ -87,8 +86,9 @@ func (lR *produkRepository) Update(data entity.MasterProduk) error {
 			data.Paket[i].IdPaket = lastPaket.IdPaket
 		}
 	}
-
-	fmt.Println("ini data semua yaa ", data)
+	if data.Logo == "" {
+		data.Logo = record.Logo
+	}
 	result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&data)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)
