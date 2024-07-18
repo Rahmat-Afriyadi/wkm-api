@@ -13,8 +13,9 @@ type ProdukRepository interface {
 	MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.MasterProduk
 	MasterDataCount(search string, jenis_asuransi int) int64
 	DetailProduk(id string) entity.MasterProduk
-	Create(data entity.MasterProduk) error
+	Create(data entity.MasterProduk) (entity.MasterProduk, error)
 	Update(data entity.MasterProduk) error
+	UploadLogo(data entity.MasterProduk) error
 	DeleteManfaat(id string) error
 	DeleteSyarat(id string) error
 	DeletePaket(id string) error
@@ -30,8 +31,64 @@ func NewProdukRepository(conn *gorm.DB) ProdukRepository {
 	}
 }
 
-func (lR *produkRepository) Create(data entity.MasterProduk) error {
+func (lR *produkRepository) Create(data entity.MasterProduk) (entity.MasterProduk, error) {
+
+	lastManfaat := entity.Manfaat{}
+	lR.conn.Last(&lastManfaat)
+	if lastManfaat.IdManfaat == "" {
+		lastManfaat.IdManfaat = "MANFAAT-001"
+	}
+	for i, v := range data.Manfaat {
+		if v.IdManfaat == "" {
+			lastManfaat.IdManfaat = entity.GenerateIdManfaat(lastManfaat)
+			data.Manfaat[i].IdManfaat = lastManfaat.IdManfaat
+		}
+	}
+
+	lastSyarat := entity.Syarat{}
+	lR.conn.Last(&lastSyarat)
+	if lastSyarat.IdSyarat == "" {
+		lastSyarat.IdSyarat = "SYARAT-001"
+	}
+	for i, v := range data.Syarat {
+		if v.IdSyarat == "" {
+			lastSyarat.IdSyarat = entity.GenerateIdSyarat(lastSyarat)
+			data.Syarat[i].IdSyarat = lastSyarat.IdSyarat
+		}
+	}
+
+	lastPaket := entity.Paket{}
+	lR.conn.Last(&lastPaket)
+	if lastPaket.IdPaket == "" {
+		lastPaket.IdPaket = "PAKET-001"
+	}
+	for i, v := range data.Paket {
+		if v.IdPaket == "" {
+			lastPaket.IdPaket = entity.GenerateIdPaket(lastPaket)
+			data.Paket[i].IdPaket = lastPaket.IdPaket
+		}
+	}
+
 	result := lR.conn.Create(&data)
+	if result.Error != nil {
+		fmt.Println("ini error ", result.Error)
+		return entity.MasterProduk{}, result.Error
+	} else {
+		return data, nil
+	}
+
+}
+
+func (lR *produkRepository) UploadLogo(data entity.MasterProduk) error {
+	record := entity.MasterProduk{KdProduk: data.KdProduk}
+
+	lR.conn.Find(&record)
+	if record.NmProduk == "" {
+		return errors.New("data tidak ditemukan")
+	}
+	record.Logo = data.Logo
+	fmt.Println("harus kesini lah yaa ", record)
+	result := lR.conn.Save(&record)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)
 		return result.Error
@@ -43,14 +100,12 @@ func (lR *produkRepository) Create(data entity.MasterProduk) error {
 
 func (lR *produkRepository) Update(data entity.MasterProduk) error {
 	record := entity.MasterProduk{KdProduk: data.KdProduk}
-	fmt.Println("ini record ", record.Logo, data.KdProduk)
 
 	lR.conn.Find(&record)
 	if record.NmProduk == "" {
 		return errors.New("data tidak ditemukan")
 	}
 
-	fmt.Println("ini log yaa ", record.Logo)
 	lastManfaat := entity.Manfaat{}
 	lR.conn.Last(&lastManfaat)
 	if lastManfaat.IdManfaat == "" {
@@ -121,11 +176,6 @@ func (lR *produkRepository) MasterDataCount(search string, jenis_asuransi int) i
 func (lR *produkRepository) DetailProduk(id string) entity.MasterProduk {
 	produk := entity.MasterProduk{KdProduk: id}
 	lR.conn.Preload("Manfaat").Preload("Syarat").Preload("Paket").Find(&produk)
-	// produk.Manfaats[5].Manfaat = "ini coba update yaa SEkali lagi yaa"
-	// result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&produk)
-	// if result.Error != nil {
-	// 	fmt.Println("ini error yaa ", result.Error)
-	// }
 	return produk
 }
 

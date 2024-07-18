@@ -10,7 +10,8 @@ type ProdukService interface {
 	MasterDataCount(search string, jenis_asuransi int) int64
 	Detail(id string) entity.MasterProduk
 	Update(body entity.MasterProduk) error
-	Create(body entity.MasterProduk) error
+	UploadLogo(body entity.MasterProduk) error
+	Create(body entity.MasterProduk) (entity.MasterProduk, error)
 	DeleteManfaat(id string) error
 	DeleteSyarat(id string) error
 	DeletePaket(id string) error
@@ -42,7 +43,11 @@ func (s *produkService) Update(body entity.MasterProduk) error {
 	return s.trR.Update(body)
 }
 
-func (s *produkService) Create(body entity.MasterProduk) error {
+func (s *produkService) UploadLogo(body entity.MasterProduk) error {
+	return s.trR.UploadLogo(body)
+}
+
+func (s *produkService) Create(body entity.MasterProduk) (entity.MasterProduk, error) {
 	return s.trR.Create(body)
 }
 

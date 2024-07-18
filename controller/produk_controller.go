@@ -71,6 +71,7 @@ func (tr *produkController) UploadLogo(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
+	fmt.Println("ini body", body)
 
 	file, _ := ctx.FormFile("files")
 	if file != nil {
@@ -81,8 +82,8 @@ func (tr *produkController) UploadLogo(ctx *fiber.Ctx) error {
 		}
 		body.Logo = "/uploads/" + fileName
 	}
-	fmt.Println("ini body upload yaa ", body.Logo)
-	err = tr.produkService.Update(body)
+	fmt.Println("kesini gk yaa dia ", body)
+	err = tr.produkService.UploadLogo(body)
 	if err != nil {
 		return ctx.JSON(map[string]interface{}{"message": err.Error()})
 	}
@@ -96,21 +97,11 @@ func (tr *produkController) Create(ctx *fiber.Ctx) error {
 		fmt.Println("error body parser ", err)
 	}
 
-	file, _ := ctx.FormFile("files")
-	if file != nil {
-		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), file.Filename)
-		filepath := filepath.Join("./uploads", fileName)
-		if err := ctx.SaveFile(file, filepath); err != nil {
-			fmt.Println("ini error file ", err.Error())
-		}
-		body.Logo = "/uploads/" + fileName
-	}
-
-	err = tr.produkService.Create(body)
+	data, err := tr.produkService.Create(body)
 	if err != nil {
 		return ctx.JSON(map[string]string{"message": err.Error()})
 	}
-	return ctx.JSON(map[string]string{"message": "Berhasil create"})
+	return ctx.JSON(map[string]string{"message": "Berhasil create", "id_produk": data.KdProduk})
 }
 
 func (tr *produkController) DeleteManfaat(ctx *fiber.Ctx) error {

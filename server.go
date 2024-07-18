@@ -182,17 +182,5 @@ func main() {
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 
-	// produk := produkRepository.DetailProduk("PRODUK-001")
-	// fmt.Println("ini produk yaa ", produk.Manfaats[0])
-
-	// a := asuransiRepository.RincianByAlasanPendingKdUser("2024-05-01", "2024-05-30")
-	// fmt.Println("ini data yaa guys yaa ", a)
-	// app.Use(jwtware.New(jwtware.Config{
-	// 	SigningKey: jwtware.SigningKey{Key: []byte("DE6ED21B4E643161949DFCE42DABC")},
-	// 	ErrorHandler: func(c *fiber.Ctx, err error) error {
-	// 		return c.Status(401).JSON(fiber.Map{"error_description": "Token has Expired"})
-	// 	},
-	// }))
-
 	app.Listen(":3001")
 }

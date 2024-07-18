@@ -322,8 +322,7 @@ func (lR *asuransiRepository) UpdateAsuransi(dataUpdate entity.MasterAsuransi) e
 	today := time.Now().Format("2006-01-02")
 	dataUpdate.TglUpdate = &today
 	dataUpdate.TglVerifikasi = time.Now().Format("2006-01-02")
-	result := lR.connG.Save(&dataUpdate)
-	fmt.Println("ini update error ", result.Error)
+	lR.connG.Save(&dataUpdate)
 	return dataUpdate
 }
 
@@ -388,7 +387,6 @@ func (lR *asuransiRepository) MasterAlasanTdkBerminat() []entity.MasterAlasanTdk
 
 func (lR *asuransiRepository) RekapByAlasanPending(tgl1 string, tgl2 string) []map[string]interface{} {
 	result := []map[string]interface{}{}
-	fmt.Println("ini tgl ", tgl1, tgl2)
 	lR.connG.Raw("select case when ap.name is null then 'Tidak Ada Alasan' else ap.name end as alasan, a.total from (select alasan_pending, count(*) total from asuransi where sts_asuransi = 'P' and jenis_source = 'W' and tgl_verifikasi >= ? and tgl_verifikasi <= ? group by alasan_pending) a left join mst_alasan_pending ap on ap.id = a.alasan_pending", tgl1, tgl2).Find(&result)
 	return result
 }
@@ -407,7 +405,6 @@ func (lR *asuransiRepository) RincianByAlasanPendingKdUser(tgl1 string, tgl2 str
 		queryKoloms += fmt.Sprintf(", count(case when alasan_pending = %d then 1 end) as '%d' ", v.Id, v.Id)
 	}
 	query := "select kd_user, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'P' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by kd_user "
-	fmt.Println("ini query yaa ", query)
 	lR.connG.Raw(query, tgl1, tgl2).Find(&result)
 	return result
 }
@@ -420,7 +417,6 @@ func (lR *asuransiRepository) RincianByAlasanTidakMinatKdUser(tgl1 string, tgl2 
 		queryKoloms += fmt.Sprintf(", count(case when alasan_tdk_berminat = %d then 1 end) as '%d' ", v.Id, v.Id)
 	}
 	query := "select kd_user, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'T' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by kd_user "
-	fmt.Println("ini query yaa ", query)
 	lR.connG.Raw(query, tgl1, tgl2).Find(&result)
 	return result
 }

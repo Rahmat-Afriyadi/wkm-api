@@ -45,7 +45,6 @@ func (tr *asuransiController) ExportReportAsuransi(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(400).JSON(err)
 	}
-	fmt.Println("ini request ", request)
 	tr.asuransiService.ExportReport(request.AwalTanggal, request.AkhirTAnggal)
 	return ctx.Download("./file-report-asuransi.xlsx")
 
@@ -139,7 +138,6 @@ func (tr *asuransiController) FindAsuransiByNoMsn(ctx *fiber.Ctx) error {
 func (tr *asuransiController) UpdateAsuransi(ctx *fiber.Ctx) error {
 	var asuransi entity.MasterAsuransi
 	err := ctx.BodyParser(&asuransi)
-	fmt.Println("ini body ", asuransi)
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	asuransi.KdUser = details.Username
@@ -173,7 +171,6 @@ func (tr *asuransiController) UpdateAsuransiBerminat(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
-	fmt.Println("ini body ", body["no_msn"])
 	tr.asuransiService.UpdateAsuransiBerminat(body["no_msn"].(string))
 	return ctx.JSON("Hallo guys")
 
@@ -185,7 +182,6 @@ func (tr *asuransiController) UpdateAsuransiBatalBayar(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
-	fmt.Println("ini body ", body["no_msn"])
 	tr.asuransiService.UpdateAsuransiBatalBayar(body["no_msn"].(string))
 	return ctx.JSON("Hallo guys")
 
@@ -194,7 +190,6 @@ func (tr *asuransiController) UpdateAsuransiBatalBayar(ctx *fiber.Ctx) error {
 func (tr *asuransiController) UpdateAmbilAsuransi(ctx *fiber.Ctx) error {
 	var asuransi entity.MasterAsuransi
 	err := ctx.BodyParser(&asuransi)
-	fmt.Println("ini body ", asuransi)
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	asuransi.KdUser = details.Username

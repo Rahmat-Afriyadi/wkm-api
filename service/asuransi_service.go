@@ -296,7 +296,6 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	}
 	for _, v := range rincianPending {
 		user := s.uR.FindByUsername(v["kd_user"].(string))
-		fmt.Println("ini user id nya yaa ", user)
 		if user.ID == 0 {
 			continue
 		}
