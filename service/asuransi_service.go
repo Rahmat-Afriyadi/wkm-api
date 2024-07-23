@@ -26,6 +26,7 @@ type AsuransiService interface {
 	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
 	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval
 	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64
+	AsuransiMstProduk(search string) []entity.MasterProduk
 }
 
 type asuransiService struct {
@@ -108,6 +109,10 @@ func (s *asuransiService) MasterAlasanPending() []entity.MasterAlasanPending {
 
 func (s *asuransiService) MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat {
 	return s.trR.MasterAlasanTdkBerminat()
+}
+
+func (s *asuransiService) AsuransiMstProduk(search string) []entity.MasterProduk {
+	return s.trR.AsuransiMstProduk(search)
 }
 
 func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {

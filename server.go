@@ -145,6 +145,7 @@ func main() {
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
+	app.Get("/asuransi/master-produk", middleware.DeserializeUser, asuransiController.AsuransiMstProduk)
 	app.Get("/asuransi/master-approval", middleware.DeserializeUser, asuransiController.ListApprovalTransaksi)
 	app.Get("/asuransi/master-approval-count", middleware.DeserializeUser, asuransiController.ListApprovalTransaksiCount)
 	app.Get("/asuransi/detail-approval/:idTrx", middleware.DeserializeUser, asuransiController.DetailApprovalTransaksi)

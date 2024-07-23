@@ -38,6 +38,7 @@ type AsuransiRepository interface {
 	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
 	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval
 	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64
+	AsuransiMstProduk(search string) []entity.MasterProduk
 }
 
 type asuransiRepository struct {
@@ -431,4 +432,10 @@ func (lR *asuransiRepository) RekapByAlasanTdkBerminatKdUser(tgl1 string, tgl2 s
 	result := []map[string]interface{}{}
 	lR.connG.Raw("select a.kd_user, case when ap.name is null then 'Tidak Ada Alasan' else ap.name end as alasan, a.total from (select kd_user, alasan_tdk_berminat, count(*) total from asuransi where sts_asuransi = 'T' and jenis_source = 'W' and tgl_verifikasi >= ? and tgl_verifikasi <= ? group by alasan_tdk_berminat, kd_user) a left join mst_alasan_tdk_berminat ap on ap.id = a.alasan_tdk_berminat", tgl1, tgl2).Find(&result)
 	return result
+}
+
+func (lR *asuransiRepository) AsuransiMstProduk(search string) []entity.MasterProduk {
+	produk := []entity.MasterProduk{}
+	lR.connG.Where("nm_produk like ? ", "%"+search+"%").Limit(15).Find(&produk)
+	return produk
 }

@@ -28,6 +28,7 @@ type AsuransiController interface {
 	DetailApprovalTransaksi(ctx *fiber.Ctx) error
 	ListApprovalTransaksi(ctx *fiber.Ctx) error
 	ListApprovalTransaksiCount(ctx *fiber.Ctx) error
+	AsuransiMstProduk(ctx *fiber.Ctx) error
 }
 
 type asuransiController struct {
@@ -65,6 +66,12 @@ func (tr *asuransiController) ListApprovalTransaksi(ctx *fiber.Ctx) error {
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
 	return ctx.JSON(tr.asuransiService.ListApprovalTransaksi(userParams, tgl1, tgl2, search, stsPembelian, pageParams, limit))
 }
+
+func (tr *asuransiController) AsuransiMstProduk(ctx *fiber.Ctx) error {
+	search := ctx.Query("search")
+	return ctx.JSON(tr.asuransiService.AsuransiMstProduk(search))
+}
+
 func (tr *asuransiController) ListApprovalTransaksiCount(ctx *fiber.Ctx) error {
 	tgl1 := ctx.Query("tgl1")
 	tgl2 := ctx.Query("tgl2")
