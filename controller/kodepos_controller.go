@@ -8,6 +8,7 @@ import (
 
 type KodeposController interface {
 	MasterData(ctx *fiber.Ctx) error
+	MasterData1(ctx *fiber.Ctx) error
 }
 
 type kodeposController struct {
@@ -22,5 +23,9 @@ func NewKodeposController(aS service.KodeposService) KodeposController {
 
 func (tr *kodeposController) MasterData(ctx *fiber.Ctx) error {
 	return ctx.JSON(tr.kodeposService.MasterData(ctx.Query("search")))
+
+}
+func (tr *kodeposController) MasterData1(ctx *fiber.Ctx) error {
+	return ctx.JSON(tr.kodeposService.MasterData1(ctx.Query("search")))
 
 }

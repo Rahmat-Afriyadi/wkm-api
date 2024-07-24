@@ -163,6 +163,7 @@ func main() {
 	app.Get("/asuransi/:no_msn", middleware.DeserializeUser, asuransiController.FindAsuransiByNoMsn)
 
 	app.Get("/kodepos/master-data", middleware.DeserializeUser, kodeposController.MasterData)
+	app.Get("/kodepos/master-data-1", middleware.DeserializeUser, kodeposController.MasterData1)
 	app.Get("/dealer/master-data", middleware.DeserializeUser, dlrController.MasterData)
 
 	app.Get("/produk/master-data", middleware.DeserializeUser, produkController.MasterData)

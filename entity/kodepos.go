@@ -13,3 +13,15 @@ type MasterKodepos struct {
 func (MasterKodepos) TableName() string {
 	return "kota"
 }
+
+type MasterKodepos1 struct {
+	KdPos     string `json:"kd_pos" gorm:"column:kd_pos"`
+	Kodepos   string `json:"kodepos" gorm:"column:kodepos"`
+	Kelurahan string `json:"kelurahan" gorm:"column:kelurahan"`
+	Kecamatan string `json:"kecamatan" gorm:"column:kecamatan"`
+	Kota      string `json:"kota" gorm:"column:kota"`
+}
+
+func (MasterKodepos1) TableName() string {
+	return "kodepos"
+}
