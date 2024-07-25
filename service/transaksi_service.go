@@ -7,8 +7,8 @@ import (
 )
 
 type TransaksiService interface {
-	MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.Transaksi
-	MasterDataCount(search string, jenis_asuransi int) int64
+	MasterData(search string, limit int, pageParams int) []entity.Transaksi
+	MasterDataCount(search string) int64
 	Detail(id string) entity.Transaksi
 	Update(body entity.Transaksi) error
 	UploadDokumen(body entity.Transaksi) error
@@ -28,12 +28,12 @@ func NewTransaksiService(tR repository.TransaksiRepository) TransaksiService {
 	}
 }
 
-func (s *transaksiService) MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.Transaksi {
-	return s.trR.MasterData(search, jenis_asuransi, limit, pageParams)
+func (s *transaksiService) MasterData(search string, limit int, pageParams int) []entity.Transaksi {
+	return s.trR.MasterData(search, limit, pageParams)
 }
 
-func (lR *transaksiService) MasterDataCount(search string, jenis_asuransi int) int64 {
-	return lR.trR.MasterDataCount(search, jenis_asuransi)
+func (lR *transaksiService) MasterDataCount(search string) int64 {
+	return lR.trR.MasterDataCount(search)
 }
 
 func (s *transaksiService) Detail(id string) entity.Transaksi {

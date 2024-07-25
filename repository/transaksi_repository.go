@@ -15,8 +15,8 @@ import (
 )
 
 type TransaksiRepository interface {
-	MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.Transaksi
-	MasterDataCount(search string, jenis_asuransi int) int64
+	MasterData(search string, limit int, pageParams int) []entity.Transaksi
+	MasterDataCount(search string) int64
 	DetailTransaksi(id string) entity.Transaksi
 	Create(data request.TransaksiCreateRequest) (entity.Transaksi, error)
 	Update(data entity.Transaksi) error
@@ -57,6 +57,12 @@ func (lR *transaksiRepository) GenerateAppTransIdDealer(transaksi entity.Transak
 }
 
 func (lR *transaksiRepository) Create(data request.TransaksiCreateRequest) (entity.Transaksi, error) {
+	existTransaksi := entity.Transaksi{}
+	lR.conn.Where("nik = ? and id_produk = ?", data.Nik, data.IdProduk).Where("sts_pembelian = ? or sts_pembelian = ?", "1", "2").First(&existTransaksi)
+	if existTransaksi.ID == "" {
+		return entity.Transaksi{}, errors.New("Transaksi telah ada")
+	}
+	fmt.Println("ini yang udah ada ", existTransaksi)
 	konsumen := entity.Konsumen{Nik: data.Nik}
 	lR.conn.Find(&konsumen)
 	konsumen.Nama = data.NmKonsumen
@@ -101,10 +107,6 @@ func (lR *transaksiRepository) Create(data request.TransaksiCreateRequest) (enti
 		return entity.Transaksi{}, resultTrx.Error
 	}
 	return newTransaksi, nil
-	// lR.conn.Last(&lastManfaat)
-	// if lastManfaat.IdManfaat == "" {
-	// 	lastManfaat.IdManfaat = "MANFAAT-001"
-	// }
 
 }
 
@@ -142,29 +144,23 @@ func (lR *transaksiRepository) Update(data entity.Transaksi) error {
 	}
 }
 
-func (lR *transaksiRepository) MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.Transaksi {
+func (lR *transaksiRepository) MasterData(search string, limit int, pageParams int) []entity.Transaksi {
 	datas := []entity.Transaksi{}
-	query := lR.conn.Where("nm_transaksi like ? or deskripsi like ?", "%"+search+"%", "%"+search+"%")
-	if jenis_asuransi != 0 {
-		lR.conn.Where("jns_asuransi = ?", jenis_asuransi)
-	}
-	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
+	query := lR.conn.Where("nik like ? or no_msn like ? or id_transaksi like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
+	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Preload("Produk").Preload("Konsumen").Find(&datas)
 	return datas
 }
 
-func (lR *transaksiRepository) MasterDataCount(search string, jenis_asuransi int) int64 {
+func (lR *transaksiRepository) MasterDataCount(search string) int64 {
 	var datas []entity.Transaksi
-	query := lR.conn.Where("nm_transaksi like ? or deskripsi like ?", "%"+search+"%", "%"+search+"%")
-	if jenis_asuransi != 0 {
-		lR.conn.Where("jns_asuransi = ?", jenis_asuransi)
-	}
+	query := lR.conn.Where("nik like ? or no_msn like ? or id_transaksi like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	query.Select("id_transaksi").Find(&datas)
 	return int64(len(datas))
 }
 
 func (lR *transaksiRepository) DetailTransaksi(id string) entity.Transaksi {
 	transaksi := entity.Transaksi{ID: id}
-	lR.conn.Preload("Manfaat").Preload("Syarat").Preload("Paket").Find(&transaksi)
+	lR.conn.Preload("MasterProduk").Preload("Konsumen").Find(&transaksi)
 	return transaksi
 }
 

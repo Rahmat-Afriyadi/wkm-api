@@ -33,16 +33,14 @@ func NewTransaksiController(aS service.TransaksiService) TransaksiController {
 
 func (tr *transaksiController) MasterData(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
-	jenis_asuransi, _ := strconv.Atoi(ctx.Query("jenis_asuransi"))
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
-	return ctx.JSON(tr.transaksiService.MasterData(search, jenis_asuransi, limit, pageParams))
+	return ctx.JSON(tr.transaksiService.MasterData(search, limit, pageParams))
 }
 
 func (tr *transaksiController) MasterDataCount(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
-	jenis_asuransi, _ := strconv.Atoi(ctx.Query("jenis_asuransi"))
-	return ctx.JSON(tr.transaksiService.MasterDataCount(search, jenis_asuransi))
+	return ctx.JSON(tr.transaksiService.MasterDataCount(search))
 }
 
 func (tr *transaksiController) DetailMstMtr(ctx *fiber.Ctx) error {
@@ -64,7 +62,6 @@ func (tr *transaksiController) Update(ctx *fiber.Ctx) error {
 }
 
 func (tr *transaksiController) UploadDokumen(ctx *fiber.Ctx) error {
-	fmt.Println("kesini sih guys")
 	var body entity.Transaksi
 	err := ctx.BodyParser(&body)
 	if err != nil {
@@ -72,7 +69,6 @@ func (tr *transaksiController) UploadDokumen(ctx *fiber.Ctx) error {
 	}
 
 	ktp, _ := ctx.FormFile("ktp")
-	fmt.Println("ini ktp yaa ", ktp)
 	if ktp != nil {
 		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), ktp.Filename)
 		filepath := filepath.Join("./uploads", fileName)
