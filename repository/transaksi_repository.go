@@ -1,8 +1,12 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 	"wkm/entity"
 	"wkm/request"
 	"wkm/utils"
@@ -11,15 +15,16 @@ import (
 )
 
 type TransaksiRepository interface {
-	MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.MasterProduk
+	MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.Transaksi
 	MasterDataCount(search string, jenis_asuransi int) int64
-	DetailTransaksi(id string) entity.MasterProduk
+	DetailTransaksi(id string) entity.Transaksi
 	Create(data request.TransaksiCreateRequest) (entity.Transaksi, error)
-	Update(data entity.MasterProduk) error
-	UploadLogo(data entity.MasterProduk) error
+	Update(data entity.Transaksi) error
+	UploadDokumen(data entity.Transaksi) error
 	DeleteManfaat(id string) error
 	DeleteSyarat(id string) error
 	DeletePaket(id string) error
+	GenerateAppTransIdDealer(transaksi entity.Transaksi) string
 }
 
 type transaksiRepository struct {
@@ -31,11 +36,71 @@ func NewTransaksiRepository(conn *gorm.DB) TransaksiRepository {
 		conn: conn,
 	}
 }
+func (lR *transaksiRepository) GenerateAppTransIdDealer(transaksi entity.Transaksi) string {
+
+	splitId := strings.Split(transaksi.AppTransId, "-")
+	i, err := strconv.Atoi(splitId[1])
+	if err != nil {
+		fmt.Println("ini error parse string to int ", err)
+	}
+	i += 1
+	idProduk := ""
+	if i > 99 {
+		idProduk = fmt.Sprintf("%s%d", splitId[0]+"-", i)
+	} else if i > 9 {
+		idProduk = fmt.Sprintf("%s%d", splitId[0]+"-0", i)
+	} else {
+		idProduk = fmt.Sprintf("%s%d", splitId[0]+"-00", i)
+	}
+	return idProduk
+
+}
 
 func (lR *transaksiRepository) Create(data request.TransaksiCreateRequest) (entity.Transaksi, error) {
+	konsumen := entity.Konsumen{Nik: data.Nik}
+	lR.conn.Find(&konsumen)
+	konsumen.Nama = data.NmKonsumen
+	konsumen.NoHp = data.NoHp
+	konsumen.Email = data.Email
+	konsumen.Alamat = data.Alamat
+	konsumen.Kota1 = data.Kota
+	konsumen.Kecamatan = data.Kecamatan
+	konsumen.Kelurahan = data.Kelurahan
+	konsumen.Kodepos = data.Kodepos
+	konsumen.TglLahir = sql.NullString{String: data.TglLahir}
+	lR.conn.Save(&konsumen)
 
-	lastManfaat := entity.Transaksi{}
-	return lastManfaat, nil
+	lastDealer := entity.Transaksi{}
+	lR.conn.Where("payment_channel = ?", "DEALER").Last(&lastDealer)
+
+	newTransaksi := entity.Transaksi{
+		IdProduk:       data.IdProduk,
+		NoMsn:          data.NoMsn,
+		NoRgk:          data.NoRgk,
+		Nik:            konsumen.Nik,
+		NoPlat:         data.NoPlat,
+		StsPembelian:   "1",
+		Invoice:        "",
+		PaymentId:      "",
+		PaymentChannel: "DEALER",
+		MotorPriceKode: data.KdMdl,
+		Otr:            data.Otr,
+		Amount:         data.Amount,
+		Warna:          data.Warna,
+		ReferralId:     "",
+		ThnMtr:         data.Tahun,
+		TglBeli:        time.Now().Format("2006-01-02"),
+	}
+	if lastDealer.ID == "" {
+		newTransaksi.AppTransId = "DEALER-001"
+	} else {
+		newTransaksi.AppTransId = lR.GenerateAppTransIdDealer(lastDealer)
+	}
+	resultTrx := lR.conn.Create(&newTransaksi)
+	if resultTrx.Error != nil {
+		return entity.Transaksi{}, resultTrx.Error
+	}
+	return newTransaksi, nil
 	// lR.conn.Last(&lastManfaat)
 	// if lastManfaat.IdManfaat == "" {
 	// 	lastManfaat.IdManfaat = "MANFAAT-001"
@@ -43,15 +108,14 @@ func (lR *transaksiRepository) Create(data request.TransaksiCreateRequest) (enti
 
 }
 
-func (lR *transaksiRepository) UploadLogo(data entity.MasterProduk) error {
-	record := entity.MasterProduk{KdProduk: data.KdProduk}
+func (lR *transaksiRepository) UploadDokumen(data entity.Transaksi) error {
+	record := entity.Transaksi{ID: data.ID}
 
 	lR.conn.Find(&record)
-	if record.NmProduk == "" {
+	if record.NoMsn == "" {
 		return errors.New("data tidak ditemukan")
 	}
-	record.Logo = data.Logo
-	fmt.Println("harus kesini lah yaa ", record)
+	record.Ktp = data.Ktp
 	result := lR.conn.Save(&record)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)
@@ -62,51 +126,12 @@ func (lR *transaksiRepository) UploadLogo(data entity.MasterProduk) error {
 
 }
 
-func (lR *transaksiRepository) Update(data entity.MasterProduk) error {
-	record := entity.MasterProduk{KdProduk: data.KdProduk}
+func (lR *transaksiRepository) Update(data entity.Transaksi) error {
+	record := entity.Transaksi{ID: data.ID}
 
 	lR.conn.Find(&record)
-	if record.NmProduk == "" {
+	if record.NoMsn == "" {
 		return errors.New("data tidak ditemukan")
-	}
-
-	lastManfaat := entity.Manfaat{}
-	lR.conn.Last(&lastManfaat)
-	if lastManfaat.IdManfaat == "" {
-		lastManfaat.IdManfaat = "MANFAAT-001"
-	}
-	for i, v := range data.Manfaat {
-		if v.IdManfaat == "" {
-			lastManfaat.IdManfaat = entity.GenerateIdManfaat(lastManfaat)
-			data.Manfaat[i].IdManfaat = lastManfaat.IdManfaat
-		}
-	}
-
-	lastSyarat := entity.Syarat{}
-	lR.conn.Last(&lastSyarat)
-	if lastSyarat.IdSyarat == "" {
-		lastSyarat.IdSyarat = "SYARAT-001"
-	}
-	for i, v := range data.Syarat {
-		if v.IdSyarat == "" {
-			lastSyarat.IdSyarat = entity.GenerateIdSyarat(lastSyarat)
-			data.Syarat[i].IdSyarat = lastSyarat.IdSyarat
-		}
-	}
-
-	lastPaket := entity.Paket{}
-	lR.conn.Last(&lastPaket)
-	if lastPaket.IdPaket == "" {
-		lastPaket.IdPaket = "PAKET-001"
-	}
-	for i, v := range data.Paket {
-		if v.IdPaket == "" {
-			lastPaket.IdPaket = entity.GenerateIdPaket(lastPaket)
-			data.Paket[i].IdPaket = lastPaket.IdPaket
-		}
-	}
-	if data.Logo == "" {
-		data.Logo = record.Logo
 	}
 	result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&data)
 	if result.Error != nil {
@@ -117,8 +142,8 @@ func (lR *transaksiRepository) Update(data entity.MasterProduk) error {
 	}
 }
 
-func (lR *transaksiRepository) MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.MasterProduk {
-	datas := []entity.MasterProduk{}
+func (lR *transaksiRepository) MasterData(search string, jenis_asuransi int, limit int, pageParams int) []entity.Transaksi {
+	datas := []entity.Transaksi{}
 	query := lR.conn.Where("nm_transaksi like ? or deskripsi like ?", "%"+search+"%", "%"+search+"%")
 	if jenis_asuransi != 0 {
 		lR.conn.Where("jns_asuransi = ?", jenis_asuransi)
@@ -128,7 +153,7 @@ func (lR *transaksiRepository) MasterData(search string, jenis_asuransi int, lim
 }
 
 func (lR *transaksiRepository) MasterDataCount(search string, jenis_asuransi int) int64 {
-	var datas []entity.MasterProduk
+	var datas []entity.Transaksi
 	query := lR.conn.Where("nm_transaksi like ? or deskripsi like ?", "%"+search+"%", "%"+search+"%")
 	if jenis_asuransi != 0 {
 		lR.conn.Where("jns_asuransi = ?", jenis_asuransi)
@@ -137,8 +162,8 @@ func (lR *transaksiRepository) MasterDataCount(search string, jenis_asuransi int
 	return int64(len(datas))
 }
 
-func (lR *transaksiRepository) DetailTransaksi(id string) entity.MasterProduk {
-	transaksi := entity.MasterProduk{KdProduk: id}
+func (lR *transaksiRepository) DetailTransaksi(id string) entity.Transaksi {
+	transaksi := entity.Transaksi{ID: id}
 	lR.conn.Preload("Manfaat").Preload("Syarat").Preload("Paket").Find(&transaksi)
 	return transaksi
 }

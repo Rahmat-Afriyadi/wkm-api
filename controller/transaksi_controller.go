@@ -18,10 +18,7 @@ type TransaksiController interface {
 	DetailMstMtr(ctx *fiber.Ctx) error
 	Create(ctx *fiber.Ctx) error
 	Update(ctx *fiber.Ctx) error
-	UploadLogo(ctx *fiber.Ctx) error
-	DeleteManfaat(ctx *fiber.Ctx) error
-	DeleteSyarat(ctx *fiber.Ctx) error
-	DeletePaket(ctx *fiber.Ctx) error
+	UploadDokumen(ctx *fiber.Ctx) error
 }
 
 type transaksiController struct {
@@ -54,7 +51,7 @@ func (tr *transaksiController) DetailMstMtr(ctx *fiber.Ctx) error {
 }
 
 func (tr *transaksiController) Update(ctx *fiber.Ctx) error {
-	var body entity.MasterProduk
+	var body entity.Transaksi
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		fmt.Println("error body parser ", err)
@@ -66,25 +63,35 @@ func (tr *transaksiController) Update(ctx *fiber.Ctx) error {
 	return ctx.JSON(map[string]string{"message": "Berhasil Update"})
 }
 
-func (tr *transaksiController) UploadLogo(ctx *fiber.Ctx) error {
-	var body entity.MasterProduk
+func (tr *transaksiController) UploadDokumen(ctx *fiber.Ctx) error {
+	fmt.Println("kesini sih guys")
+	var body entity.Transaksi
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
-	fmt.Println("ini body", body)
 
-	file, _ := ctx.FormFile("files")
-	if file != nil {
-		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), file.Filename)
+	ktp, _ := ctx.FormFile("ktp")
+	fmt.Println("ini ktp yaa ", ktp)
+	if ktp != nil {
+		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), ktp.Filename)
 		filepath := filepath.Join("./uploads", fileName)
-		if err := ctx.SaveFile(file, filepath); err != nil {
+		if err := ctx.SaveFile(ktp, filepath); err != nil {
 			fmt.Println("ini error file ", err.Error())
 		}
-		body.Logo = "/uploads/" + fileName
+		body.Ktp = "/uploads/" + fileName
 	}
-	fmt.Println("kesini gk yaa dia ", body)
-	err = tr.transaksiService.UploadLogo(body)
+
+	stnk, _ := ctx.FormFile("stnk")
+	if stnk != nil {
+		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), stnk.Filename)
+		filepath := filepath.Join("./uploads", fileName)
+		if err := ctx.SaveFile(stnk, filepath); err != nil {
+			fmt.Println("ini error file ", err.Error())
+		}
+		body.Stnk = "/uploads/" + fileName
+	}
+	err = tr.transaksiService.UploadDokumen(body)
 	if err != nil {
 		return ctx.JSON(map[string]interface{}{"message": err.Error()})
 	}
@@ -103,30 +110,4 @@ func (tr *transaksiController) Create(ctx *fiber.Ctx) error {
 		return ctx.JSON(map[string]string{"message": err.Error()})
 	}
 	return ctx.JSON(map[string]string{"message": "Berhasil create", "id_transaksi": data.ID})
-}
-
-func (tr *transaksiController) DeleteManfaat(ctx *fiber.Ctx) error {
-	id := ctx.Params("id")
-	err := tr.transaksiService.DeleteManfaat(id)
-	if err != nil {
-		return ctx.JSON(map[string]string{"message": err.Error()})
-	}
-	return ctx.JSON(map[string]string{"message": "Berhasil create"})
-}
-
-func (tr *transaksiController) DeleteSyarat(ctx *fiber.Ctx) error {
-	id := ctx.Params("id")
-	err := tr.transaksiService.DeleteSyarat(id)
-	if err != nil {
-		return ctx.JSON(map[string]string{"message": err.Error()})
-	}
-	return ctx.JSON(map[string]string{"message": "Berhasil create"})
-}
-func (tr *transaksiController) DeletePaket(ctx *fiber.Ctx) error {
-	id := ctx.Params("id")
-	err := tr.transaksiService.DeletePaket(id)
-	if err != nil {
-		return ctx.JSON(map[string]string{"message": err.Error()})
-	}
-	return ctx.JSON(map[string]string{"message": "Berhasil create"})
 }

@@ -74,6 +74,10 @@ var (
 	vendorRepository repository.VendorRepository = repository.NewVendorRepository(connGormAsuransi)
 	vendorService    service.VendorService       = service.NewVendorService(vendorRepository)
 	vendorController controller.VendorController = controller.NewVendorController(vendorService)
+
+	transaksiRepository repository.TransaksiRepository = repository.NewTransaksiRepository(connGormAsuransi)
+	transaksiService    service.TransaksiService       = service.NewTransaksiService(transaksiRepository)
+	transaksiController controller.TransaksiController = controller.NewTransaksiController(transaksiService)
 )
 
 func main() {
@@ -175,6 +179,13 @@ func main() {
 	app.Delete("/produk/delete-manfaat/:id", middleware.DeserializeUser, produkController.DeleteManfaat)
 	app.Delete("/produk/delete-syarat/:id", middleware.DeserializeUser, produkController.DeleteSyarat)
 	app.Delete("/produk/delete-paket/:id", middleware.DeserializeUser, produkController.DeletePaket)
+
+	app.Get("/transaksi/master-data", middleware.DeserializeUser, transaksiController.MasterData)
+	app.Get("/transaksi/master-data-count", middleware.DeserializeUser, transaksiController.MasterDataCount)
+	app.Get("/transaksi/detail-transaksi/:id", middleware.DeserializeUser, transaksiController.DetailMstMtr)
+	app.Post("/transaksi/create-transaksi", middleware.DeserializeUser, transaksiController.Create)
+	app.Post("/transaksi/update-transaksi", middleware.DeserializeUser, transaksiController.Update)
+	app.Post("/transaksi/upload-dokumen", middleware.DeserializeUser, transaksiController.UploadDokumen)
 
 	app.Get("/vendor/master-data", middleware.DeserializeUser, vendorController.MasterData)
 	app.Get("/vendor/master-data-count", middleware.DeserializeUser, vendorController.MasterDataCount)

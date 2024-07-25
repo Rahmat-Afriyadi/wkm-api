@@ -237,11 +237,9 @@ func (lR *asuransiRepository) UpdateAsuransiBerminat(no_msn string) {
 				IdProduk:     data.JnsBrg,
 				Nik:          data.Nik,
 				TglBeli:      time.Now().Format("2006-01-02"),
-				Updated:      time.Now(),
 				AppTransId:   data.AppTransId,
 				NoMsn:        data.NoMsn,
-				Created:      time.Now(),
-				Amount:       int(data.Harga),
+				Amount:       float64(data.Harga),
 				StsPembelian: "1",
 			}
 			result := lR.connG.Create(&transaksi)
