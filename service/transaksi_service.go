@@ -10,12 +10,9 @@ type TransaksiService interface {
 	MasterData(search string, limit int, pageParams int) []entity.Transaksi
 	MasterDataCount(search string) int64
 	Detail(id string) entity.Transaksi
-	Update(body entity.Transaksi) error
+	Update(body request.TransaksiRequest) error
 	UploadDokumen(body entity.Transaksi) error
-	Create(request.TransaksiCreateRequest) (entity.Transaksi, error)
-	DeleteManfaat(id string) error
-	DeleteSyarat(id string) error
-	DeletePaket(id string) error
+	Create(request.TransaksiRequest) (entity.Transaksi, error)
 }
 
 type transaksiService struct {
@@ -40,7 +37,7 @@ func (s *transaksiService) Detail(id string) entity.Transaksi {
 	return s.trR.DetailTransaksi(id)
 }
 
-func (s *transaksiService) Update(body entity.Transaksi) error {
+func (s *transaksiService) Update(body request.TransaksiRequest) error {
 	return s.trR.Update(body)
 }
 
@@ -48,16 +45,6 @@ func (s *transaksiService) UploadDokumen(body entity.Transaksi) error {
 	return s.trR.UploadDokumen(body)
 }
 
-func (s *transaksiService) Create(body request.TransaksiCreateRequest) (entity.Transaksi, error) {
+func (s *transaksiService) Create(body request.TransaksiRequest) (entity.Transaksi, error) {
 	return s.trR.Create(body)
-}
-
-func (s *transaksiService) DeleteManfaat(id string) error {
-	return s.trR.DeleteManfaat(id)
-}
-func (s *transaksiService) DeleteSyarat(id string) error {
-	return s.trR.DeleteSyarat(id)
-}
-func (s *transaksiService) DeletePaket(id string) error {
-	return s.trR.DeletePaket(id)
 }

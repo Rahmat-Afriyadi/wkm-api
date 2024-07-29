@@ -49,7 +49,7 @@ func (tr *transaksiController) DetailMstMtr(ctx *fiber.Ctx) error {
 }
 
 func (tr *transaksiController) Update(ctx *fiber.Ctx) error {
-	var body entity.Transaksi
+	var body request.TransaksiRequest
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		fmt.Println("error body parser ", err)
@@ -67,9 +67,9 @@ func (tr *transaksiController) UploadDokumen(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
-
 	ktp, _ := ctx.FormFile("ktp")
 	if ktp != nil {
+		fmt.Println("ini file name yaa ", ktp.Filename)
 		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), ktp.Filename)
 		filepath := filepath.Join("./uploads", fileName)
 		if err := ctx.SaveFile(ktp, filepath); err != nil {
@@ -95,7 +95,7 @@ func (tr *transaksiController) UploadDokumen(ctx *fiber.Ctx) error {
 }
 
 func (tr *transaksiController) Create(ctx *fiber.Ctx) error {
-	var body request.TransaksiCreateRequest
+	var body request.TransaksiRequest
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		fmt.Println("error body parser ", err)

@@ -18,12 +18,9 @@ type TransaksiRepository interface {
 	MasterData(search string, limit int, pageParams int) []entity.Transaksi
 	MasterDataCount(search string) int64
 	DetailTransaksi(id string) entity.Transaksi
-	Create(data request.TransaksiCreateRequest) (entity.Transaksi, error)
-	Update(data entity.Transaksi) error
+	Create(data request.TransaksiRequest) (entity.Transaksi, error)
+	Update(data request.TransaksiRequest) error
 	UploadDokumen(data entity.Transaksi) error
-	DeleteManfaat(id string) error
-	DeleteSyarat(id string) error
-	DeletePaket(id string) error
 	GenerateAppTransIdDealer(transaksi entity.Transaksi) string
 }
 
@@ -56,13 +53,12 @@ func (lR *transaksiRepository) GenerateAppTransIdDealer(transaksi entity.Transak
 
 }
 
-func (lR *transaksiRepository) Create(data request.TransaksiCreateRequest) (entity.Transaksi, error) {
+func (lR *transaksiRepository) Create(data request.TransaksiRequest) (entity.Transaksi, error) {
 	existTransaksi := entity.Transaksi{}
 	lR.conn.Where("nik = ? and id_produk = ?", data.Nik, data.IdProduk).Where("sts_pembelian = ? or sts_pembelian = ?", "1", "2").First(&existTransaksi)
-	if existTransaksi.ID == "" {
+	if existTransaksi.ID != "" {
 		return entity.Transaksi{}, errors.New("Transaksi telah ada")
 	}
-	fmt.Println("ini yang udah ada ", existTransaksi)
 	konsumen := entity.Konsumen{Nik: data.Nik}
 	lR.conn.Find(&konsumen)
 	konsumen.Nama = data.NmKonsumen
@@ -112,12 +108,12 @@ func (lR *transaksiRepository) Create(data request.TransaksiCreateRequest) (enti
 
 func (lR *transaksiRepository) UploadDokumen(data entity.Transaksi) error {
 	record := entity.Transaksi{ID: data.ID}
-
 	lR.conn.Find(&record)
 	if record.NoMsn == "" {
 		return errors.New("data tidak ditemukan")
 	}
 	record.Ktp = data.Ktp
+	record.Stnk = data.Stnk
 	result := lR.conn.Save(&record)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)
@@ -128,14 +124,41 @@ func (lR *transaksiRepository) UploadDokumen(data entity.Transaksi) error {
 
 }
 
-func (lR *transaksiRepository) Update(data entity.Transaksi) error {
-	record := entity.Transaksi{ID: data.ID}
+func (lR *transaksiRepository) Update(data request.TransaksiRequest) error {
 
-	lR.conn.Find(&record)
-	if record.NoMsn == "" {
-		return errors.New("data tidak ditemukan")
-	}
-	result := lR.conn.Session(&gorm.Session{FullSaveAssociations: true}).Save(&data)
+	konsumen := entity.Konsumen{Nik: data.Nik}
+	lR.conn.Find(&konsumen)
+	konsumen.Nama = data.NmKonsumen
+	konsumen.NoHp = data.NoHp
+	konsumen.Email = data.Email
+	konsumen.Alamat = data.Alamat
+	konsumen.Kota1 = data.Kota
+	konsumen.Kecamatan = data.Kecamatan
+	konsumen.Kelurahan = data.Kelurahan
+	konsumen.Kodepos = data.Kodepos
+	konsumen.TglLahir = sql.NullString{String: data.TglLahir}
+	lR.conn.Save(&konsumen)
+
+	transaksi := entity.Transaksi{ID: data.IdTransaksi}
+	lR.conn.Find(&transaksi)
+	transaksi.IdProduk = data.IdProduk
+	transaksi.NoMsn = data.NoMsn
+	transaksi.NoRgk = data.NoRgk
+	transaksi.Nik = konsumen.Nik
+	transaksi.NoPlat = data.NoPlat
+	transaksi.StsPembelian = "1"
+	transaksi.Invoice = ""
+	transaksi.PaymentId = ""
+	transaksi.PaymentChannel = "DEALER"
+	transaksi.MotorPriceKode = data.KdMdl
+	transaksi.Otr = data.Otr
+	transaksi.Amount = data.Amount
+	transaksi.Warna = data.Warna
+	transaksi.ReferralId = ""
+	transaksi.ThnMtr = data.Tahun
+	transaksi.TglBeli = time.Now().Format("2006-01-02")
+
+	result := lR.conn.Save(&transaksi)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)
 		return result.Error
@@ -160,28 +183,6 @@ func (lR *transaksiRepository) MasterDataCount(search string) int64 {
 
 func (lR *transaksiRepository) DetailTransaksi(id string) entity.Transaksi {
 	transaksi := entity.Transaksi{ID: id}
-	lR.conn.Preload("MasterProduk").Preload("Konsumen").Find(&transaksi)
+	lR.conn.Preload("MasterProduk").Preload("Konsumen").Preload("MstMtr").Find(&transaksi)
 	return transaksi
-}
-
-func (lR *transaksiRepository) DeleteManfaat(id string) error {
-	result := lR.conn.Where("id_manfaat", id).Delete(&entity.Manfaat{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-func (lR *transaksiRepository) DeleteSyarat(id string) error {
-	result := lR.conn.Where("id_syarat", id).Delete(&entity.Syarat{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-func (lR *transaksiRepository) DeletePaket(id string) error {
-	result := lR.conn.Where("id_paket", id).Delete(&entity.Paket{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
 }

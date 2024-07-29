@@ -24,6 +24,7 @@ type Transaksi struct {
 	PaymentId      string       `form:"payment_id" json:"payment_id" gorm:"column:payment_id"`
 	PaymentChannel string       `form:"payment_channel" json:"payment_channel" gorm:"column:payment_channel"`
 	MotorPriceKode string       `form:"motorprice_kode" json:"motorprice_kode" gorm:"column:motorprice_kode"`
+	MstMtr         MstMtr       `json:"mst_mtr" gorm:"->;references:KdMdl;foreignKey:MotorPriceKode"`
 	Otr            int          `form:"otr" json:"otr" gorm:"column:otr"`
 	Amount         float64      `form:"amount" json:"amount" gorm:"column:amount"`
 	Warna          string       `form:"warna" json:"warna" gorm:"column:warna"`
