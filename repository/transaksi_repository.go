@@ -170,7 +170,7 @@ func (lR *transaksiRepository) Update(data request.TransaksiRequest) error {
 func (lR *transaksiRepository) MasterData(search string, limit int, pageParams int) []entity.Transaksi {
 	datas := []entity.Transaksi{}
 	query := lR.conn.Where("nik like ? or no_msn like ? or id_transaksi like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
-	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Preload("Produk").Preload("Konsumen").Find(&datas)
+	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Preload("MasterProduk").Preload("Konsumen").Find(&datas)
 	return datas
 }
 

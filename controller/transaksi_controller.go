@@ -69,7 +69,6 @@ func (tr *transaksiController) UploadDokumen(ctx *fiber.Ctx) error {
 	}
 	ktp, _ := ctx.FormFile("ktp")
 	if ktp != nil {
-		fmt.Println("ini file name yaa ", ktp.Filename)
 		fileName := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), ktp.Filename)
 		filepath := filepath.Join("./uploads", fileName)
 		if err := ctx.SaveFile(ktp, filepath); err != nil {
