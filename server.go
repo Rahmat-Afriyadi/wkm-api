@@ -117,6 +117,10 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
+	app.Get("/", func(c *fiber.Ctx) error {
+		panic("something went wrong")
+	})
+
 	auth := app.Group("/auth")
 	auth.Post("/login", authController.SignInUserAsuransi)
 	auth.Post("/refresh-token", authController.RefreshAccessTokenAsuransi)
