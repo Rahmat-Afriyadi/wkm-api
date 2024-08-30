@@ -384,18 +384,16 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 	rekapSourceInfo := s.trR.RekapByStatusJenisSource(tgl1, tgl2)
 	rekapKdUser := s.trR.RekapByStatusKdUser(tgl1, tgl2)
 	rekapBulanAlasanPending := s.trR.RekapBulanAlasanPending(tgl1, tgl2)
-	// rekapByAlasanPending := s.trR.RekapByAlasanPending(tgl1, tgl2)
-	// rincianPending := s.trR.RincianByAlasanPendingKdUser(tgl1, tgl2)
-	// rincianTdkBerminat := s.trR.RincianByAlasanTidakMinatKdUser(tgl1, tgl2)
+	rincianBulanAlasanPending := s.trR.RincianBulanAlasanPending(tgl1, tgl2)
+	rekapBulanAlasanTdkBerminat := s.trR.RekapBulanAlasanTdkBerminat(tgl1, tgl2)
+	rincianBulanAlasanTdkBerminat := s.trR.RincianBulanAlasanTdkBerminat(tgl1, tgl2)
 	masterPending := s.trR.MasterAlasanPending()
-	// masterAlasanTdkBerminat := s.trR.MasterAlasanTdkBerminat()
+	masterAlasanTdkBerminat := s.trR.MasterAlasanTdkBerminat()
 
 	xlsx := excelize.NewFile()
 	startRow := 4
 	rekapSheet := "Rekap"
-	tdkBerminatSheet := "Tidak Berminat"
 	xlsx.SetSheetName(xlsx.GetSheetName(1), rekapSheet)
-	xlsx.NewSheet(tdkBerminatSheet)
 	xlsx.SetColWidth(rekapSheet, "A", "G", 14)
 	xlsx.SetCellValue(rekapSheet, "A3", "Source Info")
 	xlsx.SetCellValue(rekapSheet, "B3", "Bulan")
@@ -487,6 +485,102 @@ func (s *asuransiService) ExportReport(tgl1 string, tgl2 string) {
 		for d := startDate; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 1, 0) {
 			xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[startCol], startRow), value[bulan[d.Month()]])
 			startCol += 1
+		}
+		startRow += 1
+	}
+
+	startRow += 1
+	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", startRow), "Id User")
+	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", startRow), "Nama")
+	xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", startRow), "Bulan")
+	startCol = 3
+	for _, value := range masterPending {
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[startCol], startRow), value.Nama)
+		startCol += 1
+	}
+	startRow += 1
+	startMergeRekap = startRow
+	for index, value := range rincianBulanAlasanPending {
+		user := s.uR.FindByUsername(value["kd_user"].(string))
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("A%d", startRow), user.ID)
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("B%d", startRow), user.Name)
+		xlsx.SetCellValue(pendingSheet, fmt.Sprintf("C%d", startRow), bulan[value["bulan"].(int64)])
+		startCol = 3
+		for _, vj := range masterPending {
+			xlsx.SetCellValue(pendingSheet, fmt.Sprintf("%s%d", listCol[startCol], startRow), value[fmt.Sprintf("%d", vj.Id)])
+			startCol += 1
+		}
+		if index > 0 {
+			if value["kd_user"] != rincianBulanAlasanPending[index-1]["kd_user"] {
+				xlsx.MergeCell(pendingSheet, fmt.Sprintf("A%d", startMergeRekap), fmt.Sprintf("A%d", startRow-1))
+				xlsx.MergeCell(pendingSheet, fmt.Sprintf("B%d", startMergeRekap), fmt.Sprintf("B%d", startRow-1))
+				startMergeRekap = startRow
+			}
+		}
+		if index+1 == len(rincianBulanAlasanPending) {
+			xlsx.MergeCell(pendingSheet, fmt.Sprintf("A%d", startMergeRekap), fmt.Sprintf("A%d", startRow))
+			xlsx.MergeCell(pendingSheet, fmt.Sprintf("B%d", startMergeRekap), fmt.Sprintf("B%d", startRow))
+			startMergeRekap = startRow + 1
+		}
+		startRow += 1
+
+	}
+
+	tdkBerminatSheet := "Tidak Berminat"
+	xlsx.NewSheet(tdkBerminatSheet)
+	startRow = 4
+	startMergeRekap = startRow
+
+	xlsx.SetCellValue(tdkBerminatSheet, "A3", "Alasan")
+	startCol = 1
+	for d := startDate; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 1, 0) {
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s3", listCol[startCol]), bulan[d.Month()])
+		startCol += 1
+	}
+	for _, value := range rekapBulanAlasanTdkBerminat {
+		startCol = 1
+		kodeAlasanTdkBerminat, _ := strconv.Atoi(value["alasan_tdk_berminat"].(string))
+		alasanTdkBerminat := filterTdkBerminatByKode(masterAlasanTdkBerminat, kodeAlasanTdkBerminat)
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", startRow), alasanTdkBerminat.Nama)
+		for d := startDate; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 1, 0) {
+			xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[startCol], startRow), value[bulan[d.Month()]])
+			startCol += 1
+		}
+		startRow += 1
+	}
+
+	startRow += 1
+	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", startRow), "Id User")
+	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("B%d", startRow), "Nama")
+	xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("C%d", startRow), "Bulan")
+	startCol = 3
+	for _, value := range masterAlasanTdkBerminat {
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[startCol], startRow), value.Nama)
+		startCol += 1
+	}
+	startRow += 1
+	startMergeRekap = startRow
+	for index, value := range rincianBulanAlasanTdkBerminat {
+		user := s.uR.FindByUsername(value["kd_user"].(string))
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("A%d", startRow), user.ID)
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("B%d", startRow), user.Name)
+		xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("C%d", startRow), bulan[value["bulan"].(int64)])
+		startCol = 3
+		for _, vj := range masterAlasanTdkBerminat {
+			xlsx.SetCellValue(tdkBerminatSheet, fmt.Sprintf("%s%d", listCol[startCol], startRow), value[fmt.Sprintf("%d", vj.Id)])
+			startCol += 1
+		}
+		if index > 0 {
+			if value["kd_user"] != rincianBulanAlasanTdkBerminat[index-1]["kd_user"] {
+				xlsx.MergeCell(tdkBerminatSheet, fmt.Sprintf("A%d", startMergeRekap), fmt.Sprintf("A%d", startRow-1))
+				xlsx.MergeCell(tdkBerminatSheet, fmt.Sprintf("B%d", startMergeRekap), fmt.Sprintf("B%d", startRow-1))
+				startMergeRekap = startRow
+			}
+		}
+		if index+1 == len(rincianBulanAlasanTdkBerminat) {
+			xlsx.MergeCell(tdkBerminatSheet, fmt.Sprintf("A%d", startMergeRekap), fmt.Sprintf("A%d", startRow))
+			xlsx.MergeCell(tdkBerminatSheet, fmt.Sprintf("B%d", startMergeRekap), fmt.Sprintf("B%d", startRow))
+			startMergeRekap = startRow + 1
 		}
 		startRow += 1
 

@@ -36,6 +36,9 @@ type AsuransiRepository interface {
 	RekapByAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapBulanAlasanPending(tgl1 string, tgl2 string) []map[string]interface{}
+	RincianBulanAlasanPending(tgl1 string, tgl2 string) []map[string]interface{}
+	RekapBulanAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
+	RincianBulanAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
 	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
 	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval
 	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64
@@ -408,6 +411,47 @@ func (lR *asuransiRepository) RekapBulanAlasanPending(tgl1 string, tgl2 string) 
 	}
 	query := "select alasan_pending, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'P' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by alasan_pending "
 	result := []map[string]interface{}{}
+	lR.connG.Raw(query, tgl1, tgl2).Order("kd_user").Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RincianBulanAlasanPending(tgl1 string, tgl2 string) []map[string]interface{} {
+
+	result := []map[string]interface{}{}
+	a := lR.MasterAlasanPending()
+	queryKoloms := ", count(case when alasan_pending = '' then 1 end) as kosong"
+	for _, v := range a {
+		queryKoloms += fmt.Sprintf(", count(case when alasan_pending = %d then 1 end) as '%d' ", v.Id, v.Id)
+	}
+	query := "select kd_user, month(tgl_verifikasi) as bulan, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'P' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by kd_user, month(tgl_verifikasi) order by kd_user"
+	lR.connG.Raw(query, tgl1, tgl2).Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RekapBulanAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{} {
+
+	bulan := []string{"", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"}
+	startDate, _ := time.Parse("2006-01-02", tgl1)
+	endDate, _ := time.Parse("2006-01-02", tgl2)
+	queryKoloms := ", count(case when alasan_tdk_berminat = '' then 1 end) as kosong"
+	for d := startDate; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 1, 0) {
+		queryKoloms += fmt.Sprintf(", count(case when month(tgl_verifikasi) = %d then 1 end) as '%s' ", d.Month(), bulan[d.Month()])
+	}
+	query := "select alasan_tdk_berminat, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'T' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by alasan_tdk_berminat "
+	result := []map[string]interface{}{}
+	lR.connG.Raw(query, tgl1, tgl2).Order("kd_user").Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RincianBulanAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{} {
+
+	result := []map[string]interface{}{}
+	a := lR.MasterAlasanTdkBerminat()
+	queryKoloms := ", count(case when alasan_tdk_berminat = '' then 1 end) as kosong"
+	for _, v := range a {
+		queryKoloms += fmt.Sprintf(", count(case when alasan_tdk_berminat = %d then 1 end) as '%d' ", v.Id, v.Id)
+	}
+	query := "select kd_user, month(tgl_verifikasi) as bulan, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'T' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by kd_user, month(tgl_verifikasi) order by kd_user"
 	lR.connG.Raw(query, tgl1, tgl2).Find(&result)
 	return result
 }
