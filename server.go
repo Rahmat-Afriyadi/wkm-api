@@ -199,5 +199,8 @@ func main() {
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 
+	asuransiRepository.RekapBulanAlasanPending("2024-01-01", "2024-12-31")
+	asuransiService.ExportReport("2024-01-01", "2024-12-31")
+
 	app.Listen(":3001")
 }

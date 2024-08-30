@@ -35,6 +35,7 @@ type AsuransiRepository interface {
 	RincianByAlasanTidakMinatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapByAlasanTdkBerminatKdUser(tgl1 string, tgl2 string) []map[string]interface{}
+	RekapBulanAlasanPending(tgl1 string, tgl2 string) []map[string]interface{}
 	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
 	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval
 	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64
@@ -363,12 +364,12 @@ func (lR *asuransiRepository) RekapByStatusAll(u string, tgl1 string, tgl2 strin
 
 func (lR *asuransiRepository) RekapByStatusJenisSource(tglStart string, tglEnd string) []map[string]interface{} {
 	var result []map[string]interface{}
-	lR.connG.Select("jenis_source, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ?", tglStart).Where("tgl_verifikasi <= ?", tglEnd).Table("asuransi").Group("jenis_source").Find(&result)
+	lR.connG.Select("jenis_source,month(tgl_verifikasi) as bulan, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ?", tglStart).Where("tgl_verifikasi <= ?", tglEnd).Table("asuransi").Group("jenis_source, month(tgl_verifikasi)").Order("jenis_source").Find(&result)
 	return result
 }
 func (lR *asuransiRepository) RekapByStatusKdUser(tglStart string, tglEnd string) []map[string]interface{} {
 	result := []map[string]interface{}{}
-	lR.connG.Select("kd_user, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ?", tglStart).Where("tgl_verifikasi <= ?", tglEnd).Where("kd_user is not null and kd_user != ''").Table("asuransi").Group("kd_user").Find(&result)
+	lR.connG.Select("kd_user, month(tgl_verifikasi) as bulan, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ?", tglStart).Where("tgl_verifikasi <= ?", tglEnd).Where("kd_user is not null and kd_user != ''").Table("asuransi").Group("kd_user, month(tgl_verifikasi)").Order("kd_user").Find(&result)
 	return result
 }
 
@@ -393,6 +394,21 @@ func (lR *asuransiRepository) RekapByAlasanPending(tgl1 string, tgl2 string) []m
 func (lR *asuransiRepository) RekapByAlasanPendingKdUser(tgl1 string, tgl2 string) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	lR.connG.Raw("select a.kd_user, case when ap.name is null then 'Tidak Ada Alasan' else ap.name end as alasan, a.total from (select kd_user, alasan_pending, count(*) total from asuransi where sts_asuransi = 'P' and jenis_source = 'W' and tgl_verifikasi >= ? and tgl_verifikasi <= ? group by alasan_pending, kd_user) a left join mst_alasan_pending ap on ap.id = a.alasan_pending", tgl1, tgl2).Find(&result)
+	return result
+}
+
+func (lR *asuransiRepository) RekapBulanAlasanPending(tgl1 string, tgl2 string) []map[string]interface{} {
+
+	bulan := []string{"", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"}
+	startDate, _ := time.Parse("2006-01-02", tgl1)
+	endDate, _ := time.Parse("2006-01-02", tgl2)
+	queryKoloms := ", count(case when alasan_pending = '' then 1 end) as kosong"
+	for d := startDate; d.Before(endDate) || d.Equal(endDate); d = d.AddDate(0, 1, 0) {
+		queryKoloms += fmt.Sprintf(", count(case when month(tgl_verifikasi) = %d then 1 end) as '%s' ", d.Month(), bulan[d.Month()])
+	}
+	query := "select alasan_pending, count(*) as total" + queryKoloms + "from asuransi where kd_user != '' and kd_user is not null and sts_asuransi = 'P' and tgl_verifikasi >= ? and tgl_verifikasi <=? group by alasan_pending "
+	result := []map[string]interface{}{}
+	lR.connG.Raw(query, tgl1, tgl2).Find(&result)
 	return result
 }
 
