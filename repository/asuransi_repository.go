@@ -39,6 +39,9 @@ type AsuransiRepository interface {
 	RincianBulanAlasanPending(tgl1 string, tgl2 string) []map[string]interface{}
 	RekapBulanAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
 	RincianBulanAlasanTdkBerminat(tgl1 string, tgl2 string) []map[string]interface{}
+	RekapByStatusTeleBulan(u string, tgl1 string, tgl2 string) []map[string]interface{}
+	RekapTeleReport(username string, tgl1 string, tgl2 string) []map[string]interface{}
+
 	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
 	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval
 	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64
@@ -126,6 +129,12 @@ func (lR *asuransiRepository) MasterData(search string, dataSource string, sts s
 		filter.KdUser = username
 	}
 	query.Where(&filter).Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Order("tgl_update desc").Find(&datas)
+	return datas
+}
+
+func (lR *asuransiRepository) RekapTeleReport(username string, tgl1 string, tgl2 string) []map[string]interface{} {
+	datas := []map[string]interface{}{}
+	lR.connG.Table("asuransi").Where("kd_user = ? and tgl_verifikasi > ? and tgl_verifikasi < ?", username, tgl1, tgl2).Select("no_msn, nm_customer11, nm_dlr, sts_asuransi, tgl_verifikasi").Order("sts_asuransi").Find(&datas)
 	return datas
 }
 
@@ -355,6 +364,15 @@ func (lR *asuransiRepository) RekapByStatus(u string, tgl1 string, tgl2 string) 
 		query.Where("kd_user = ?", u)
 	}
 	query.Table("asuransi").Group("kd_user").Find(&result)
+	return result
+}
+func (lR *asuransiRepository) RekapByStatusTeleBulan(u string, tgl1 string, tgl2 string) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	query := lR.connG.Select("kd_user, month(tgl_verifikasi) bulan, count(*) as total, count(case when sts_asuransi = 'P' then 1 end) as p, count(case when sts_asuransi = 'T' then 1 end) as t, count(case when sts_asuransi = 'O' then 1 end) as o").Where("tgl_verifikasi >= ? and tgl_verifikasi <= ?", tgl1, tgl2)
+	if u != "" {
+		query.Where("kd_user = ?", u)
+	}
+	query.Table("asuransi").Group("kd_user, month(tgl_verifikasi)").Find(&result)
 	return result
 }
 

@@ -152,6 +152,7 @@ func main() {
 	app.Post("/mst-mtr/update-mst-mtr", middleware.DeserializeUser, mstMtrController.UpdateMstMtr)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
+	app.Post("/asuransi/export-report-asuransi-telesales", middleware.DeserializeUser, asuransiController.ExportReportAsuransiTele)
 	app.Get("/asuransi/master-data/:status", middleware.DeserializeUser, asuransiController.MasterData)
 	app.Get("/asuransi/master-produk", middleware.DeserializeUser, asuransiController.AsuransiMstProduk)
 	app.Get("/asuransi/master-approval", middleware.DeserializeUser, asuransiController.ListApprovalTransaksi)

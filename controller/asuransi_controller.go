@@ -25,6 +25,7 @@ type AsuransiController interface {
 	MasterAlasanPending(ctx *fiber.Ctx) error
 	MasterAlasanTdkBerminat(ctx *fiber.Ctx) error
 	ExportReportAsuransi(ctx *fiber.Ctx) error
+	ExportReportAsuransiTele(ctx *fiber.Ctx) error
 	DetailApprovalTransaksi(ctx *fiber.Ctx) error
 	ListApprovalTransaksi(ctx *fiber.Ctx) error
 	ListApprovalTransaksiCount(ctx *fiber.Ctx) error
@@ -47,6 +48,17 @@ func (tr *asuransiController) ExportReportAsuransi(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(err)
 	}
 	tr.asuransiService.ExportReport(request.AwalTanggal, request.AkhirTAnggal)
+	return ctx.Download("./file-report-asuransi.xlsx")
+
+}
+func (tr *asuransiController) ExportReportAsuransiTele(ctx *fiber.Ctx) error {
+	var request request.ReportAsuransi
+	if err := ctx.BodyParser(&request); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	tr.asuransiService.ExportReportTs(details.Username, request.AwalTanggal, request.AkhirTAnggal)
 	return ctx.Download("./file-report-asuransi.xlsx")
 
 }
