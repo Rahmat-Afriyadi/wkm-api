@@ -11,6 +11,7 @@ import (
 
 type Tr3Service interface {
 	DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBlast
+	SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa
 	UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar)
 }
 
@@ -24,6 +25,10 @@ func NewTr3Service(tR repository.Tr3Repository) Tr3Service {
 	}
 }
 
+func (s *tr3Service) SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa {
+	return s.trR.SearchNoMsnByWa(t)
+
+}
 func (s *tr3Service) DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBlast {
 	datas := s.trR.DataWABlast(t)
 

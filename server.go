@@ -129,6 +129,7 @@ func main() {
 	auth.Get("/generate-password", authController.GeneratePassword)
 
 	app.Post("/export-data-wa-blast", middleware.DeserializeUser, tr3Controller.ExportDataWaBlast)
+	app.Post("/search-no-msn-by-wa", tr3Controller.SearchNoMsnByWa)
 	app.Post("/edit-jenis-bayar", middleware.DeserializeUser, tr3Controller.EditJenisBayar)
 	app.Get("/leas/master-data", middleware.DeserializeUser, leasController.MasterData)
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)

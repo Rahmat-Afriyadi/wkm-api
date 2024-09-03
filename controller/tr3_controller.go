@@ -13,6 +13,7 @@ import (
 
 type Tr3Controller interface {
 	ExportDataWaBlast(ctx *fiber.Ctx) error
+	SearchNoMsnByWa(ctx *fiber.Ctx) error
 	EditJenisBayar(ctx *fiber.Ctx) error
 }
 
@@ -33,6 +34,16 @@ func (tr *tr3Controller) ExportDataWaBlast(ctx *fiber.Ctx) error {
 	}
 	_ = tr.tr3Service.DataWABlast(request)
 	return ctx.Download("./file1.xlsx")
+
+}
+
+func (tr *tr3Controller) SearchNoMsnByWa(ctx *fiber.Ctx) error {
+	var request request.SearchNoMsnByWaRequest
+	if err := ctx.BodyParser(&request); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	data := tr.tr3Service.SearchNoMsnByWa(request)
+	return ctx.JSON(data)
 
 }
 

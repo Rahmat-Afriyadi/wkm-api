@@ -8,3 +8,9 @@ type DataWaBlast struct {
 	NoWa             string
 	TglAkhirTenor    string
 }
+
+type SearchNoMsnByWa struct {
+	NoMsn      string
+	NmCustomer string
+	NoWa       string
+}
