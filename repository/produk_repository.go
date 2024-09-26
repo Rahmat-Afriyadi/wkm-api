@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"wkm/entity"
 	"wkm/utils"
 
@@ -157,8 +158,9 @@ func (lR *produkRepository) MasterData(search string, jenis_asuransi int, limit 
 	datas := []entity.MasterProduk{}
 	query := lR.conn.Where("nm_produk like ? or deskripsi like ?", "%"+search+"%", "%"+search+"%")
 	if jenis_asuransi != 0 {
-		lR.conn.Where("jns_asuransi = ?", jenis_asuransi)
+		query.Where("jns_asuransi = ?", strconv.Itoa(jenis_asuransi))
 	}
+	fmt.Println("ini jenis asuransi yaa ", jenis_asuransi)
 	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
 	return datas
 }

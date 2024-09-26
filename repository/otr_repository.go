@@ -162,6 +162,8 @@ func (lR *otrRepository) ListApi() {
 			fmt.Println("Error converting string to int:", err)
 			return
 		}
+		now := time.Now()
+		otr.UpdatedAt = &now
 		if otr.ID != "" {
 			otr.Otr = num
 			lR.conn.Save(&otr)
