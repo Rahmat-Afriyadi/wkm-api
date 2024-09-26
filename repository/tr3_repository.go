@@ -134,7 +134,7 @@ func (tr *tr3Repository) SearchNoMsnByWa(request request.SearchNoMsnByWaRequest)
 func (tr *tr3Repository) UpdateJenisBayar(data []ParamsUpdateJenisBayar, payment_type string) {
 	ctx := context.Background()
 	for _, v := range data {
-		_, err := tr.conn.ExecContext(ctx, "UPDATE tr_wms_faktur3 set sts_jenis_bayar=? where no_tanda_terima=? and nm_customer11=?", payment_type, v.NoTandaTerima, v.NamaCustomer)
+		_, err := tr.conn.ExecContext(ctx, "UPDATE tr_wms_faktur3 set sts_jenis_bayar=? where no_tanda_terima=?", payment_type, v.NoTandaTerima)
 		if err != nil {
 			fmt.Println("errornya disin yaa ", err)
 			continue
