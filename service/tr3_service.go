@@ -12,7 +12,7 @@ import (
 type Tr3Service interface {
 	DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBlast
 	SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa
-	UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar)
+	UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, payment_type string)
 }
 
 type tr3Service struct {
@@ -63,6 +63,6 @@ func (s *tr3Service) DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBl
 	return datas
 }
 
-func (s *tr3Service) UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar) {
-	s.trR.UpdateJenisBayar(data)
+func (s *tr3Service) UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, payment_type string) {
+	s.trR.UpdateJenisBayar(data, payment_type)
 }

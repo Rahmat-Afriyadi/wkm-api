@@ -11,6 +11,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type EditJenisBayarRequest struct {
+	PaymentType string `form:"payment_type"`
+}
+
 type Tr3Controller interface {
 	ExportDataWaBlast(ctx *fiber.Ctx) error
 	SearchNoMsnByWa(ctx *fiber.Ctx) error
@@ -54,6 +58,12 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 	if err != nil { /* handle error */
 		fmt.Println("error form file ", err)
 	}
+	var data EditJenisBayarRequest
+	if err := ctx.BodyParser(&data); err != nil {
+		fmt.Println("ini data ", data, err.Error())
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	for _, fileHeaders := range form.File {
 		for _, fileHeader := range fileHeaders {
 			wg.Add(1)
@@ -83,7 +93,7 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 						NamaCustomer:  v[1],
 					})
 				}
-				tr.tr3Service.UpdateJenisBayar(datas)
+				tr.tr3Service.UpdateJenisBayar(datas, data.PaymentType)
 			}(&wg)
 		}
 	}
