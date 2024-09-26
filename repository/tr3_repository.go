@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 	"wkm/entity"
 	"wkm/request"
 )
@@ -17,7 +19,7 @@ type ParamsUpdateJenisBayar struct {
 type Tr3Repository interface {
 	DataWABlast(request request.DataWaBlastRequest) []entity.DataWaBlast
 	SearchNoMsnByWa(request request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa
-	UpdateJenisBayar(data []ParamsUpdateJenisBayar, payment_type string)
+	UpdateJenisBayar(data []ParamsUpdateJenisBayar, payment_type string, username string)
 }
 
 type tr3Repository struct {
@@ -131,10 +133,29 @@ func (tr *tr3Repository) SearchNoMsnByWa(request request.SearchNoMsnByWaRequest)
 	return datas
 }
 
-func (tr *tr3Repository) UpdateJenisBayar(data []ParamsUpdateJenisBayar, payment_type string) {
+func Log(content string) {
+	fileName := "log.txt"
+
+	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(content + "\n")
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+}
+
+func (tr *tr3Repository) UpdateJenisBayar(data []ParamsUpdateJenisBayar, payment_type string, username string) {
 	ctx := context.Background()
+	now := time.Now()
 	for _, v := range data {
 		_, err := tr.conn.ExecContext(ctx, "UPDATE tr_wms_faktur3 set sts_jenis_bayar=? where no_tanda_terima=?", payment_type, v.NoTandaTerima)
+		Log(now.Format("2006-01-02") + " " + v.NoTandaTerima + " " + v.NamaCustomer + " " + payment_type + " " + username)
 		if err != nil {
 			fmt.Println("errornya disin yaa ", err)
 			continue

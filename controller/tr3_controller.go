@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"sync"
+	"wkm/entity"
 	"wkm/repository"
 	"wkm/request"
 	"wkm/service"
@@ -64,6 +65,9 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+
 	for _, fileHeaders := range form.File {
 		for _, fileHeader := range fileHeaders {
 			wg.Add(1)
@@ -93,7 +97,7 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 						NamaCustomer:  v[1],
 					})
 				}
-				tr.tr3Service.UpdateJenisBayar(datas, data.PaymentType)
+				tr.tr3Service.UpdateJenisBayar(datas, data.PaymentType, details.Username)
 			}(&wg)
 		}
 	}
