@@ -13,6 +13,7 @@ type Tr3Service interface {
 	DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBlast
 	SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa
 	UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, payment_type string, username string)
+	WillBayar(data request.SearchWBRequest) (entity.Faktur3, error)
 }
 
 type tr3Service struct {
@@ -30,6 +31,7 @@ func (s *tr3Service) SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.
 
 }
 func (s *tr3Service) DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBlast {
+	s.trR.UpdateTglAkhirTenor()
 	datas := s.trR.DataWABlast(t)
 
 	xlsx := excelize.NewFile()
@@ -65,4 +67,8 @@ func (s *tr3Service) DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBl
 
 func (s *tr3Service) UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, payment_type string, username string) {
 	s.trR.UpdateJenisBayar(data, payment_type, username)
+}
+
+func (s *tr3Service) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
+	return s.trR.WillBayar(data)
 }

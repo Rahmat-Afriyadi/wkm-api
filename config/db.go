@@ -32,25 +32,41 @@ import (
 
 // }
 
-func GetConnection() *sql.DB {
+func GetConnection() (*gorm.DB, *sql.DB) {
 	errEnv := godotenv.Load()
 	if errEnv != nil {
 		fmt.Println("ini errornya ", errEnv)
 		panic("Failed to load env file")
 	}
 
-	db, err := sql.Open("mysql", os.Getenv("DB_WKM"))
+	dsn := os.Getenv("DB_WKM")
+	// dsn := "root:@tcp(localhost:3306)/users?parseTime=true&loc=Asia%2FJakarta"
+	// dsn := "root2:root2@tcp(192.168.70.30:3306)/users?parseTime=true"
 	// db, err := sql.Open("mysql", "root2:root2@tcp(192.168.70.30:3306)/db_wkm?parseTime=true")
+	time.LoadLocation("Asia/Jakarta")
+	instance, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		SkipDefaultTransaction:                   true,
+		DisableForeignKeyConstraintWhenMigrating: true,
+		NamingStrategy: schema.NamingStrategy{
+			NoLowerCase:         true,
+			IdentifierMaxLength: 30,
+		},
+		PrepareStmt:     true,
+		CreateBatchSize: 50,
+	})
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error db users ", err)
+		panic(err)
 	}
+
+	db, _ := instance.DB()
 
 	db.SetMaxIdleConns(5)
 	db.SetMaxOpenConns(20)
 	db.SetConnMaxIdleTime(5 * time.Minute)
 	db.SetConnMaxLifetime(60 * time.Minute)
 
-	return db
+	return instance, db
 }
 
 func GetConnectionUser() (*gorm.DB, *sql.DB) {

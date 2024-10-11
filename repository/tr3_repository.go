@@ -3,12 +3,15 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 	"wkm/entity"
 	"wkm/request"
+
+	"gorm.io/gorm"
 )
 
 type ParamsUpdateJenisBayar struct {
@@ -20,15 +23,19 @@ type Tr3Repository interface {
 	DataWABlast(request request.DataWaBlastRequest) []entity.DataWaBlast
 	SearchNoMsnByWa(request request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa
 	UpdateJenisBayar(data []ParamsUpdateJenisBayar, payment_type string, username string)
+	UpdateTglAkhirTenor()
+	WillBayar(data request.SearchWBRequest) (entity.Faktur3, error)
 }
 
 type tr3Repository struct {
-	conn *sql.DB
+	conn     *sql.DB
+	connGorm *gorm.DB
 }
 
-func NewTr3nRepository(conn *sql.DB) Tr3Repository {
+func NewTr3nRepository(conn *sql.DB, connGorm *gorm.DB) Tr3Repository {
 	return &tr3Repository{
-		conn: conn,
+		conn:     conn,
+		connGorm: connGorm,
 	}
 }
 
@@ -162,4 +169,40 @@ func (tr *tr3Repository) UpdateJenisBayar(data []ParamsUpdateJenisBayar, payment
 		}
 
 	}
+}
+
+func (tr *tr3Repository) UpdateTglAkhirTenor() {
+	ctx := context.Background()
+	data := []string{"tr_wms_faktur2", "tr_wms_faktur3", "tr_wms_faktur4"}
+	for _, v := range data {
+		tr.conn.ExecContext(ctx, "update "+v+" set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')")
+		_, err := tr.conn.ExecContext(ctx, "update "+v+" set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')")
+		if err != nil {
+			fmt.Println("errornya disin yaa ", err)
+			continue
+		}
+
+	}
+}
+
+func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
+	var faktur entity.Faktur3
+	result := tr.connGorm.Raw("select no_msn, no_tanda_terima, no_kartu, sts_jenis_bayar, sts_kartu from tr_wms_faktur3 where (replace(no_kartu, ' ','') = ?) or no_msn = ? or no_tanda_terima = ?", data.Kode, data.Kode, data.Kode).Scan(&faktur)
+	if result.Error != nil {
+		return entity.Faktur3{}, result.Error
+	}
+	if faktur.NoKartu == "" {
+		return entity.Faktur3{}, errors.New("datanya gk ada tau")
+	}
+	stockCard := entity.StockCard{NoKartu: faktur.NoKartu}
+	tr.connGorm.Find(&stockCard)
+	if stockCard.StsKartu == "1" {
+		return entity.Faktur3{}, errors.New("kartu belum di barcode bawa")
+	} else if stockCard.StsKartu == "3" {
+		return entity.Faktur3{}, errors.New("kartunya sudah dibayar")
+	} else if stockCard.StsKartu == "4" {
+		return entity.Faktur3{}, errors.New("kartunya sudah di clear")
+	}
+
+	return faktur, nil
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 	"wkm/config"
@@ -19,11 +18,11 @@ import (
 )
 
 var (
-	conn                                  *sql.DB = config.GetConnection()
-	connUser, sqlConnUser                         = config.GetConnectionUser()
-	connGormAsuransi, sqlConnGormAsuransi         = config.NewAsuransiGorm()
+	gormDBWkm, conn                       = config.GetConnection()
+	connUser, sqlConnUser                 = config.GetConnectionUser()
+	connGormAsuransi, sqlConnGormAsuransi = config.NewAsuransiGorm()
 
-	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn)
+	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn, gormDBWkm)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
 	tr3Controller controller.Tr3Controller = controller.NewTr3Controller(tr3Service)
 
@@ -78,6 +77,10 @@ var (
 	transaksiRepository repository.TransaksiRepository = repository.NewTransaksiRepository(connGormAsuransi)
 	transaksiService    service.TransaksiService       = service.NewTransaksiService(transaksiRepository)
 	transaksiController controller.TransaksiController = controller.NewTransaksiController(transaksiService)
+
+	tglMerahRepository repository.TglMerahRepository = repository.NewTglMerahRepository(gormDBWkm)
+	tglMerahService    service.TglMerahService       = service.NewTglMerahService(tglMerahRepository)
+	tglMerahController controller.TglMerahController = controller.NewTglMerahController(tglMerahService)
 )
 
 func main() {
@@ -198,6 +201,13 @@ func main() {
 	app.Get("/vendor/detail-vendor/:id", middleware.DeserializeUser, vendorController.DetailMstMtr)
 	app.Post("/vendor/create-vendor", middleware.DeserializeUser, vendorController.Create)
 	app.Post("/vendor/update-vendor", middleware.DeserializeUser, vendorController.Update)
+
+	app.Post("/tgl-merah/master-data", middleware.DeserializeUser, tglMerahController.MasterData)
+	app.Post("/tgl-merah/master-data-count", middleware.DeserializeUser, tglMerahController.MasterDataCount)
+	app.Post("/tgl-merah/upload-excel", middleware.DeserializeUser, tglMerahController.UploadDokumen)
+
+	app.Post("/faktur-3/input-bayar", middleware.DeserializeUser, tr3Controller.UpdateInputBayar)
+	app.Post("/faktur-3/search/will-bayar", middleware.DeserializeUser, tr3Controller.WillBayar)
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 

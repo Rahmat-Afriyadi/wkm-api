@@ -20,6 +20,8 @@ type Tr3Controller interface {
 	ExportDataWaBlast(ctx *fiber.Ctx) error
 	SearchNoMsnByWa(ctx *fiber.Ctx) error
 	EditJenisBayar(ctx *fiber.Ctx) error
+	UpdateInputBayar(ctx *fiber.Ctx) error
+	WillBayar(ctx *fiber.Ctx) error
 }
 
 type tr3Controller struct {
@@ -61,7 +63,6 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 	}
 	var data EditJenisBayarRequest
 	if err := ctx.BodyParser(&data); err != nil {
-		fmt.Println("ini data ", data, err.Error())
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -107,4 +108,24 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(400).JSON(map[string]string{"message": "Periksa kembali format file anda"})
 
+}
+
+func (tr *tr3Controller) UpdateInputBayar(ctx *fiber.Ctx) error {
+	var body request.InputBayarRequest
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	return ctx.JSON(body)
+}
+
+func (tr *tr3Controller) WillBayar(ctx *fiber.Ctx) error {
+	var body request.SearchWBRequest
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	faktur3, err := tr.tr3Service.WillBayar(body)
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error()})
+	}
+	return ctx.JSON(faktur3)
 }
