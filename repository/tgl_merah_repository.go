@@ -17,6 +17,7 @@ type TglMerahRepository interface {
 	Update(data request.TglMerahRequest) error
 	UploadDokumen(data entity.TglMerah) error
 	BulkCreate(data []entity.TglMerah) error
+	Delete(id uint64) error
 }
 
 type tglMerahRepository struct {
@@ -31,8 +32,24 @@ func NewTglMerahRepository(conn *gorm.DB) TglMerahRepository {
 
 func (lR *tglMerahRepository) Create(data request.TglMerahRequest) (entity.TglMerah, error) {
 
-	newTglMerah := entity.TglMerah{}
+	newTglMerah := entity.TglMerah{
+		TglAwal:   data.TglAwal,
+		TglAkhir:  data.TglAkhir,
+		KdUser:    data.KdUser,
+		Deskripsi: data.Deskripsi,
+	}
+	lR.conn.Save(&newTglMerah)
 	return newTglMerah, nil
+
+}
+
+func (lR *tglMerahRepository) Delete(id uint64) error {
+
+	result := lR.conn.Where("id", id).Delete(&entity.TglMerah{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 
 }
 
@@ -42,27 +59,36 @@ func (lR *tglMerahRepository) UploadDokumen(data entity.TglMerah) error {
 }
 
 func (lR *tglMerahRepository) Update(data request.TglMerahRequest) error {
-
+	tglMerah := entity.TglMerah{ID: data.Id}
+	lR.conn.Find(&tglMerah)
+	if tglMerah.ID == 0 {
+		return errors.New("data tersebut tidak ditemukan")
+	}
+	tglMerah.TglAwal = data.TglAwal
+	tglMerah.TglAkhir = data.TglAkhir
+	tglMerah.Deskripsi = data.Deskripsi
+	tglMerah.KdUser = data.KdUser
+	lR.conn.Save(&tglMerah)
 	return nil
 }
 
 func (lR *tglMerahRepository) MasterData(search string, limit int, pageParams int) []entity.TglMerah {
 	datas := []entity.TglMerah{}
-	query := lR.conn.Where("nik like ? or no_msn like ? or id_tglMerah like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
-	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Preload("MasterProduk").Preload("Konsumen").Find(&datas)
+	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
+	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
 	return datas
 }
 
 func (lR *tglMerahRepository) MasterDataCount(search string) int64 {
 	var datas []entity.TglMerah
-	query := lR.conn.Where("nik like ? or no_msn like ? or id_tglMerah like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
-	query.Select("id_tglMerah").Find(&datas)
+	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
+	query.Select("id").Find(&datas)
 	return int64(len(datas))
 }
 
 func (lR *tglMerahRepository) DetailTglMerah(id uint64) entity.TglMerah {
 	tglMerah := entity.TglMerah{ID: id}
-	lR.conn.Preload("MasterProduk").Preload("Konsumen").Preload("MstMtr").Find(&tglMerah)
+	lR.conn.Find(&tglMerah)
 	return tglMerah
 }
 

@@ -19,6 +19,7 @@ type TransaksiRepository interface {
 	MasterDataCount(search string) int64
 	DetailTransaksi(id string) entity.Transaksi
 	Create(data request.TransaksiRequest) (entity.Transaksi, error)
+	CreateImport(data request.TransaksiRequest) (entity.Transaksi, error)
 	Update(data request.TransaksiRequest) error
 	UploadDokumen(data entity.Transaksi) error
 	GenerateAppTransIdDealer(transaksi entity.Transaksi) string
@@ -58,6 +59,58 @@ func (lR *transaksiRepository) Create(data request.TransaksiRequest) (entity.Tra
 	lR.conn.Where("nik = ? and id_produk = ?", data.Nik, data.IdProduk).Where("sts_pembelian = ? or sts_pembelian = ?", "1", "2").First(&existTransaksi)
 	if existTransaksi.ID != "" {
 		return entity.Transaksi{}, errors.New("Transaksi telah ada")
+	}
+	konsumen := entity.Konsumen{Nik: data.Nik}
+	lR.conn.Find(&konsumen)
+	konsumen.Nama = data.NmKonsumen
+	konsumen.NoHp = data.NoHp
+	konsumen.Email = data.Email
+	konsumen.Alamat = data.Alamat
+	konsumen.Kota1 = data.Kota
+	konsumen.Kecamatan = data.Kecamatan
+	konsumen.Kelurahan = data.Kelurahan
+	konsumen.Kodepos = data.Kodepos
+	konsumen.TglLahir = sql.NullString{String: data.TglLahir}
+	lR.conn.Save(&konsumen)
+
+	lastDealer := entity.Transaksi{}
+	lR.conn.Where("payment_channel = ?", "DEALER").Last(&lastDealer)
+
+	newTransaksi := entity.Transaksi{
+		IdProduk:       data.IdProduk,
+		NoMsn:          data.NoMsn,
+		NoRgk:          data.NoRgk,
+		Nik:            konsumen.Nik,
+		NoPlat:         data.NoPlat,
+		StsPembelian:   "1",
+		Invoice:        "",
+		PaymentId:      "",
+		PaymentChannel: "DEALER",
+		MotorPriceKode: data.KdMdl,
+		Otr:            data.Otr,
+		Amount:         data.Amount,
+		Warna:          data.Warna,
+		ReferralId:     "",
+		ThnMtr:         data.Tahun,
+		TglBeli:        time.Now().Format("2006-01-02"),
+	}
+	if lastDealer.ID == "" {
+		newTransaksi.AppTransId = "DEALER-001"
+	} else {
+		newTransaksi.AppTransId = lR.GenerateAppTransIdDealer(lastDealer)
+	}
+	resultTrx := lR.conn.Create(&newTransaksi)
+	if resultTrx.Error != nil {
+		return entity.Transaksi{}, resultTrx.Error
+	}
+	return newTransaksi, nil
+
+}
+func (lR *transaksiRepository) CreateImport(data request.TransaksiRequest) (entity.Transaksi, error) {
+	existTransaksi := entity.Transaksi{}
+	lR.conn.Where("nik = ? and id_produk = ?", data.Nik, data.IdProduk).Where("sts_pembelian = ? or sts_pembelian = ?", "1", "2").First(&existTransaksi)
+	if existTransaksi.ID != "" {
+		return entity.Transaksi{}, errors.New("transaksi telah ada")
 	}
 	konsumen := entity.Konsumen{Nik: data.Nik}
 	lR.conn.Find(&konsumen)

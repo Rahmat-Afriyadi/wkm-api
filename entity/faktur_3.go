@@ -1,17 +1,18 @@
 package entity
 
 type Faktur3 struct {
-	NoMsn         string `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
-	NoTandaTerima string `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
-	NmCustomer    string `form:"nm_customer11" json:"nm_customer11" gorm:"column:nm_customer11"`
-	NoKartu       string `form:"no_kartu" json:"no_kartu" gorm:"column:no_kartu"`
-	StsJnsBayar   string `form:"sts_jenis_bayar" json:"sts_jenis_bayar" gorm:"column:sts_jenis_bayar"`
-	StsKartu      string `form:"sts_kartu" json:"sts_kartu" gorm:"column:sts_kartu"`
-	ALamatBantuan string `form:"alamat_bantuan" json:"alamat_bantuan" gorm:"column:alamat_bantuan"`
-	StsKirim      string `form:"sts_kirim" json:"sts_kirim" gorm:"column:sts_kirim"`
-	KdCard        string `form:"kd_card" json:"kd_card" gorm:"column:kd_card"`
-	KdKurir       string `form:"kode_kurir" json:"kode_kurir" gorm:"column:kode_kurir"`
-
+	NoMsn         string   `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
+	NoTandaTerima string   `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
+	NmCustomer    string   `form:"nm_customer11" json:"nm_customer11" gorm:"column:nm_customer11"`
+	NoKartu       string   `form:"no_kartu" json:"no_kartu" gorm:"column:no_kartu"`
+	StsJnsBayar   string   `form:"sts_jenis_bayar" json:"sts_jenis_bayar" gorm:"column:sts_jenis_bayar"`
+	StsKartu      string   `form:"sts_kartu" json:"sts_kartu" gorm:"column:sts_kartu"`
+	ALamatBantuan string   `form:"alamat_bantuan" json:"alamat_bantuan" gorm:"column:alamat_bantuan"`
+	StsKirim      string   `form:"sts_kirim" json:"sts_kirim" gorm:"column:sts_kirim"`
+	KdCard        string   `form:"kd_card" json:"kd_card" gorm:"column:kd_card"`
+	MstCard       MstCard  `json:"mst_card" gorm:"->;references:KdCard;foreignKey:KdCard"`
+	KdKurir       string   `form:"kode_kurir" json:"kode_kurir" gorm:"column:kode_kurir"`
+	Kurir         MstKurir `form:"kurir" json:"kurir" gorm:"->;references:KdKurir;foreignKey:KdKurir"`
 	// O
 	StsAsuransiPa string `form:"sts_asuransi_pa" json:"sts_asuransi_pa" gorm:"column:sts_asuransi_pa"`
 	// S

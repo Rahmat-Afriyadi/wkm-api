@@ -16,9 +16,10 @@ import (
 type TglMerahController interface {
 	MasterData(ctx *fiber.Ctx) error
 	MasterDataCount(ctx *fiber.Ctx) error
-	DetailMstMtr(ctx *fiber.Ctx) error
+	DetailTglMerah(ctx *fiber.Ctx) error
 	Create(ctx *fiber.Ctx) error
 	Update(ctx *fiber.Ctx) error
+	Delete(ctx *fiber.Ctx) error
 	UploadDokumen(ctx *fiber.Ctx) error
 }
 
@@ -44,13 +45,23 @@ func (tm *tglMerahController) MasterDataCount(ctx *fiber.Ctx) error {
 	return ctx.JSON(tm.tglMerahService.MasterDataCount(search))
 }
 
-func (tm *tglMerahController) DetailMstMtr(ctx *fiber.Ctx) error {
+func (tm *tglMerahController) DetailTglMerah(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	idVal, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		return ctx.JSON(map[string]interface{}{"message": err.Error()})
 	}
 	return ctx.JSON(tm.tglMerahService.Detail(idVal))
+}
+
+func (tm *tglMerahController) Delete(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+	idUint, _ := strconv.ParseUint(id, 10, 64)
+	err := tm.tglMerahService.Delete(idUint)
+	if err != nil {
+		return ctx.JSON(map[string]string{"message": err.Error()})
+	}
+	return ctx.JSON(map[string]string{"message": "Berhasil create"})
 }
 
 func (tm *tglMerahController) Update(ctx *fiber.Ctx) error {
@@ -146,7 +157,10 @@ func (tm *tglMerahController) Create(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
 
+	body.KdUser = details.Username
 	data, err := tm.tglMerahService.Create(body)
 	if err != nil {
 		return ctx.JSON(map[string]string{"message": err.Error()})

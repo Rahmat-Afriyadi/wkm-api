@@ -187,7 +187,7 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 
 func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
 	var faktur entity.Faktur3
-	result := tr.connGorm.Raw("select no_msn, no_tanda_terima, no_kartu, sts_jenis_bayar, sts_kartu from tr_wms_faktur3 where (replace(no_kartu, ' ','') = ?) or no_msn = ? or no_tanda_terima = ?", data.Kode, data.Kode, data.Kode).Scan(&faktur)
+	result := tr.connGorm.Raw("select no_msn, nm_customer11, no_kartu, sts_jenis_bayar, sts_kartu, alamat_bantuan,sts_asuransi_pa, sts_bayar_asuransi_pa, kerja_di, alamat_ktr, rt_ktr, rw_ktr, kel_ktr,kec_ktr,kodepos_ktr,kota1,alamat_srt12,alamat_srt11, sts_kirim,kel_srt1, kode_kurir,kec_srt1, kd_card,kodepos_srt1 from tr_wms_faktur3  where (replace(no_kartu, ' ','') = ?) or no_msn = ? or no_tanda_terima = ?", data.Kode, data.Kode, data.Kode).Scan(&faktur)
 	if result.Error != nil {
 		return entity.Faktur3{}, result.Error
 	}

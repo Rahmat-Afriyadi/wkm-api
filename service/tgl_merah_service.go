@@ -14,6 +14,7 @@ type TglMerahService interface {
 	UploadDokumen(body entity.TglMerah) error
 	Create(request.TglMerahRequest) (entity.TglMerah, error)
 	CreateFromFile(datas []entity.TglMerah) error
+	Delete(id uint64) error
 }
 
 type tglMerahService struct {
@@ -40,6 +41,9 @@ func (s *tglMerahService) Detail(id uint64) entity.TglMerah {
 
 func (s *tglMerahService) Update(body request.TglMerahRequest) error {
 	return s.trR.Update(body)
+}
+func (s *tglMerahService) Delete(id uint64) error {
+	return s.trR.Delete(id)
 }
 
 func (s *tglMerahService) UploadDokumen(body entity.TglMerah) error {
