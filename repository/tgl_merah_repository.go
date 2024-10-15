@@ -2,6 +2,8 @@ package repository
 
 import (
 	"errors"
+	"sort"
+	"time"
 	"wkm/entity"
 	"wkm/request"
 	"wkm/utils"
@@ -18,6 +20,7 @@ type TglMerahRepository interface {
 	UploadDokumen(data entity.TglMerah) error
 	BulkCreate(data []entity.TglMerah) error
 	Delete(id uint64) error
+	GetMinTglBayar() time.Time
 }
 
 type tglMerahRepository struct {
@@ -118,4 +121,26 @@ func (lR *tglMerahRepository) BulkCreate(datas []entity.TglMerah) error {
 	}
 
 	return nil
+}
+
+func (lR *tglMerahRepository) GetMinTglBayar() time.Time {
+	listTglMerah := []entity.TglMerah{}
+	today := time.Now()
+	min := today.AddDate(0, 0, -1)
+	if today.Weekday() == 1 {
+		min = today.AddDate(0, 0, -3)
+	}
+	lR.conn.Where("tgl_akhir = ?", min.Format("2006-01-02")).Find(&listTglMerah)
+	listMin := []time.Time{}
+	if len(listTglMerah) > 0 {
+		for _, v := range listTglMerah {
+			listMin = append(listMin, v.TglAwal)
+		}
+		sort.Slice(listMin, func(i, j int) bool {
+			return listMin[i].Before(listMin[j])
+		})
+		min = listMin[0]
+	}
+	return min
+
 }

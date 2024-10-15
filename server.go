@@ -85,22 +85,7 @@ var (
 
 func main() {
 
-	// var timestamp int64 = 1697245537 // Replace with your timestamp
-	// var timestamp int64 = 4553700000 // Replace with your timestamp
-	s := time.Date(2024, 9, 2, 0, 0, 0, 0, time.UTC) // Example date: October 13, 2023, 10:00:00 UTC
-
-	// Convert to Unix timestamp (seconds)
-	unixTimestamp := s.Unix()
-	fmt.Println("ini 9 september ", unixTimestamp, s.Format("2006-01-02"))
-
-	var timestamp int64 = 1697455370 // Replace with your timestamp
-
-	// Convert Unix timestamp to time.Time
-	t := time.Unix(timestamp, 0)
-
-	// Format and print the time
-	fmt.Println("Converted Time:", t)
-	fmt.Println("Formatted Time:", t.Format("2006-01-02 15:04:05"))
+	tglMerahRepository.GetMinTglBayar()
 
 	defer conn.Close()
 	defer sqlConnUser.Close()

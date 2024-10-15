@@ -117,7 +117,6 @@ func (tm *tglMerahController) UploadDokumen(ctx *fiber.Ctx) error {
 						success = false
 						continue
 					}
-					fmt.Println("ini rows yaa ", v[0])
 					date1, err := time.Parse("2006-01-02", v[0])
 					if err != nil {
 						pesanError = "Ada format tanggal yang tidak sesuai " + v[0]
