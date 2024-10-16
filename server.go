@@ -85,8 +85,6 @@ var (
 
 func main() {
 
-	tglMerahRepository.GetMinTglBayar()
-
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()

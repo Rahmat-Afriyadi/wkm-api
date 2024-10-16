@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"strings"
 	"wkm/entity"
 	"wkm/repository"
 	"wkm/request"
@@ -70,5 +71,10 @@ func (s *tr3Service) UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, 
 }
 
 func (s *tr3Service) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
+	data.Kode = strings.ReplaceAll(data.Kode, " ", "")
+	if len(data.Kode) > 16 {
+		data.Kode = data.Kode[:16]
+	}
+
 	return s.trR.WillBayar(data)
 }
