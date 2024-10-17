@@ -21,6 +21,7 @@ type TglMerahController interface {
 	Update(ctx *fiber.Ctx) error
 	Delete(ctx *fiber.Ctx) error
 	UploadDokumen(ctx *fiber.Ctx) error
+	MinTglBayar(ctx *fiber.Ctx) error
 }
 
 type tglMerahController struct {
@@ -120,11 +121,13 @@ func (tm *tglMerahController) UploadDokumen(ctx *fiber.Ctx) error {
 					date1, err := time.Parse("2006-01-02", v[0])
 					if err != nil {
 						pesanError = "Ada format tanggal yang tidak sesuai " + v[0]
+						success = false
 						return
 					}
 					date2, err := time.Parse("2006-01-02", v[1])
 					if err != nil {
 						pesanError = "Ada format tanggal yang tidak sesuai " + v[1]
+						success = false
 						return
 					}
 					datas = append(datas, entity.TglMerah{
@@ -150,6 +153,9 @@ func (tm *tglMerahController) UploadDokumen(ctx *fiber.Ctx) error {
 	}
 }
 
+func (tm *tglMerahController) MinTglBayar(ctx *fiber.Ctx) error {
+	return ctx.JSON(map[string]interface{}{"min": tm.tglMerahService.MinTglBayar()})
+}
 func (tm *tglMerahController) Create(ctx *fiber.Ctx) error {
 	var body request.TglMerahRequest
 	err := ctx.BodyParser(&body)

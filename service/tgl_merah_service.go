@@ -1,6 +1,7 @@
 package service
 
 import (
+	"time"
 	"wkm/entity"
 	"wkm/repository"
 	"wkm/request"
@@ -15,6 +16,7 @@ type TglMerahService interface {
 	Create(request.TglMerahRequest) (entity.TglMerah, error)
 	CreateFromFile(datas []entity.TglMerah) error
 	Delete(id uint64) error
+	MinTglBayar() time.Time
 }
 
 type tglMerahService struct {
@@ -46,6 +48,9 @@ func (s *tglMerahService) Delete(id uint64) error {
 	return s.trR.Delete(id)
 }
 
+func (s *tglMerahService) MinTglBayar() time.Time {
+	return s.trR.GetMinTglBayar()
+}
 func (s *tglMerahService) UploadDokumen(body entity.TglMerah) error {
 	return s.trR.UploadDokumen(body)
 }

@@ -1,21 +1,28 @@
 package entity
 
+import "time"
+
 type Faktur3 struct {
-	NoMsn         string   `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
-	NoTandaTerima string   `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
-	NmCustomer    string   `form:"nm_customer11" json:"nm_customer11" gorm:"column:nm_customer11"`
-	NmMtr         string   `form:"nm_mtr" json:"nm_mtr" gorm:"column:nm_mtr"`
-	Telp1         string   `form:"no_telp1" json:"no_telp1" gorm:"column:no_telp1"`
-	Hp1           string   `form:"no_hp1" json:"no_hp1" gorm:"column:no_hp1"`
-	NoKartu       string   `form:"no_kartu" json:"no_kartu" gorm:"column:no_kartu"`
-	StsJnsBayar   string   `form:"sts_jenis_bayar" json:"sts_jenis_bayar" gorm:"column:sts_jenis_bayar"`
-	StsKartu      string   `form:"sts_kartu" json:"sts_kartu" gorm:"column:sts_kartu"`
-	ALamatBantuan string   `form:"alamat_bantuan" json:"alamat_bantuan" gorm:"column:alamat_bantuan"`
-	StsKirim      string   `form:"sts_kirim" json:"sts_kirim" gorm:"column:sts_kirim"`
-	KdCard        string   `form:"kd_card" json:"kd_card" gorm:"column:kd_card"`
-	MstCard       MstCard  `json:"mst_card" gorm:"->;references:KdCard;foreignKey:KdCard"`
-	KdKurir       string   `form:"kode_kurir" json:"kode_kurir" gorm:"column:kode_kurir"`
-	Kurir         MstKurir `form:"kurir" json:"kurir" gorm:"->;references:KdKurir;foreignKey:KdKurir"`
+	NoMsn               string    `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
+	NoTandaTerima       string    `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
+	TglCetakTandaTerima time.Time `form:"tgl_cetak_tanda_terima" json:"tgl_cetak_tanda_terima" gorm:"column:tgl_cetak_tanda_terima"`
+	NmCustomer          string    `form:"nm_customer11" json:"nm_customer11" gorm:"column:nm_customer11"`
+	NmMtr               string    `form:"nm_mtr" json:"nm_mtr" gorm:"column:nm_mtr"`
+	Telp1               string    `form:"no_telp1" json:"no_telp1" gorm:"column:no_telp1"`
+	Hp1                 string    `form:"no_hp1" json:"no_hp1" gorm:"column:no_hp1"`
+	KdUser              string    `form:"kd_user" json:"kd_user" gorm:"column:kd_user"`
+	KdUser2             string    `form:"kd_user2" json:"kd_user2" gorm:"column:kd_user2"`
+	StsCetak3           string    `form:"sts_cetak3" json:"sts_cetak3" gorm:"column:sts_cetak3"`
+	StsJnsBayar         string    `form:"sts_jenis_bayar" json:"sts_jenis_bayar" gorm:"column:sts_jenis_bayar"`
+	StsKartu            string    `form:"sts_kartu" json:"sts_kartu" gorm:"column:sts_kartu"`
+	ALamatBantuan       string    `form:"alamat_bantuan" json:"alamat_bantuan" gorm:"column:alamat_bantuan"`
+	StsKirim            string    `form:"sts_kirim" json:"sts_kirim" gorm:"column:sts_kirim"`
+	KdCard              string    `form:"kd_card" json:"kd_card" gorm:"column:kd_card"`
+	MstCard             MstCard   `json:"mst_card" gorm:"->;references:KdCard;foreignKey:KdCard"`
+	KdKurir             string    `form:"kode_kurir" json:"kode_kurir" gorm:"column:kode_kurir"`
+	Kurir               MstKurir  `form:"kurir" json:"kurir" gorm:"->;references:KdKurir;foreignKey:KdKurir"`
+	NoKartu             string    `form:"no_kartu" json:"no_kartu" gorm:"column:no_kartu"`
+	Kartu               StockCard `form:"kartu" json:"kartu" gorm:"->;references:NoKartu;foreignKey:NoKartu"`
 	// O
 	StsAsuransiPa string `form:"sts_asuransi_pa" json:"sts_asuransi_pa" gorm:"column:sts_asuransi_pa"`
 	// S

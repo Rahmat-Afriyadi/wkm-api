@@ -15,6 +15,7 @@ type Tr3Service interface {
 	SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa
 	UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, payment_type string, username string)
 	WillBayar(data request.SearchWBRequest) (entity.Faktur3, error)
+	UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error)
 }
 
 type tr3Service struct {
@@ -29,7 +30,6 @@ func NewTr3Service(tR repository.Tr3Repository) Tr3Service {
 
 func (s *tr3Service) SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa {
 	return s.trR.SearchNoMsnByWa(t)
-
 }
 func (s *tr3Service) DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBlast {
 	s.trR.UpdateTglAkhirTenor()
@@ -68,6 +68,10 @@ func (s *tr3Service) DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBl
 
 func (s *tr3Service) UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, payment_type string, username string) {
 	s.trR.UpdateJenisBayar(data, payment_type, username)
+}
+
+func (s *tr3Service) UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error) {
+	return s.trR.UpdateInputBayar(data)
 }
 
 func (s *tr3Service) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {

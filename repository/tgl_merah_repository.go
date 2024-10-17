@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 	"wkm/entity"
@@ -79,6 +80,7 @@ func (lR *tglMerahRepository) MasterData(search string, limit int, pageParams in
 	datas := []entity.TglMerah{}
 	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
 	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
+	fmt.Println("ini data yaa ", datas)
 	return datas
 }
 
@@ -100,6 +102,7 @@ func (lR *tglMerahRepository) BulkCreate(datas []entity.TglMerah) error {
 	for _, value := range datas {
 		lR.conn.Where("tgl_awal", value.TglAwal.Format("2006-01-02")).Find(&exist)
 		if exist.ID != 0 {
+			fmt.Println("kesini gk sih ")
 			return errors.New("tgl tersebut telah diinput " + value.TglAwal.Format("2006-01-02"))
 		}
 	}
@@ -139,7 +142,11 @@ func (lR *tglMerahRepository) GetMinTglBayar() time.Time {
 		sort.Slice(listMin, func(i, j int) bool {
 			return listMin[i].Before(listMin[j])
 		})
-		min = listMin[0]
+		if listMin[0].Weekday() == 1 {
+			min = listMin[0].AddDate(0, 0, -3)
+		} else {
+			min = listMin[0].AddDate(0, 0, -1)
+		}
 	}
 	return min
 

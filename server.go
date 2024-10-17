@@ -205,6 +205,7 @@ func main() {
 
 	app.Get("/tgl-merah/master-data", middleware.DeserializeUser, tglMerahController.MasterData)
 	app.Get("/tgl-merah/master-data-count", middleware.DeserializeUser, tglMerahController.MasterDataCount)
+	app.Get("/tgl-merah/min-tgl-bayar", middleware.DeserializeUser, tglMerahController.MinTglBayar)
 	app.Get("/tgl-merah/detail-tgl-merah/:id", middleware.DeserializeUser, tglMerahController.DetailTglMerah)
 	app.Post("/tgl-merah/create-tgl-merah", middleware.DeserializeUser, tglMerahController.Create)
 	app.Post("/tgl-merah/update-tgl-merah", middleware.DeserializeUser, tglMerahController.Update)
