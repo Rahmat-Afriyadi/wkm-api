@@ -179,28 +179,34 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		return entity.Faktur3{}, errors.New("data tidak ditemukan")
 	}
 	trPembayaranRenewal := entity.TrPembayaranRenewal{
-		NoMsn:      faktur3.NoMsn,
-		RenewalKe:  faktur3.StsCetak3,
-		NmCustomer: faktur3.NmCustomer,
-		Kota:       faktur3.Kota,
-		KirimKe:    faktur3.StsKirim,
-		KdCard:     faktur3.KdCard,
-		KdUserTs:   faktur3.Kartu.KdUser,
-		// TglJualan:
-		NoKartu:       faktur3.NoKartu,
-		NoTandaTerima: faktur3.NoTandaTerima,
-		// CetakKe:
+		NoMsn:               faktur3.NoMsn,
+		RenewalKe:           faktur3.StsCetak3,
+		NmCustomer:          faktur3.NmCustomer,
+		Kota:                faktur3.Kota,
+		KirimKe:             faktur3.StsKirim,
+		KdCard:              faktur3.KdCard,
+		KdUserTs:            faktur3.KdUser,
+		NoKartu:             faktur3.NoKartu,
+		NoTandaTerima:       faktur3.NoTandaTerima,
 		KdUserFa:            data.KdUserFa,
 		TglCetakTandaTerima: faktur3.TglCetakTandaTerima,
 		KdUserSS:            faktur3.KdUser2,
 		JnsBayar:            faktur3.StsJnsBayar,
 		TglBayar:            data.TglBayar,
 		TglInsert:           time.Now(),
-		// TglUpdate:
-
 	}
+	now := time.Now()
+	faktur3.TglBayarRenewalFin = &data.TglBayar
+	faktur3.TglBayarRenewalFinKeyIn = &now
+	faktur3.StsKartu = "3"
+	faktur3.StsBawaKartu = "4"
+	faktur3.StsAsuransiPa = "O"
+	faktur3.StsBayarAsuransiPa = "S"
+	faktur3.StsBayarRenewal = "S"
+
+	tr.connGorm.Where("no_kartu = ?", faktur3.NoKartu).Updates(entity.StockCard{StsKartu: "3"})
 	tr.connGorm.Save(&trPembayaranRenewal)
-	fmt.Println("ini data ", faktur3)
+	tr.connGorm.Save(&faktur3)
 
 	return entity.Faktur3{}, nil
 }
@@ -221,18 +227,19 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 
 func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
 	var faktur entity.Faktur3
-	result := tr.connGorm.Select("no_msn,sts_cetak3, no_tanda_terima,nm_mtr, nm_customer11,no_telp1,no_hp1,no_kartu,sts_jenis_bayar,sts_kartu,alamat_bantuan,sts_kirim,kd_card,kode_kurir,sts_asuransi_pa,sts_bayar_asuransi_pa,alamat21,kota2,kec2,kel2,rt2,rw2,kodepos2,kerja_di,alamat_ktr,rt_ktr,rw_ktr,kel_ktr,kec_ktr,kodepos_ktr,kota1,alamat_srt12,alamat_srt11,kota_srt1,kec_srt1,kel_srt1,kodepos_srt1").Where("sts_bayar_renewal != 'S' and (replace(no_kartu, ' ','') = ? OR no_msn = ? or no_tanda_terima = ?)", data.Kode, data.Kode, data.Kode).Preload("Kurir").Preload("Kartu").Preload("MstCard").Find(&faktur)
+	result := tr.connGorm.Select("no_msn,sts_cetak3, no_tanda_terima,sts_bayar_renewal, nm_mtr, nm_customer11,no_telp1,no_hp1,no_kartu,sts_jenis_bayar,sts_kartu,alamat_bantuan,sts_kirim,kd_card,kode_kurir,sts_asuransi_pa,sts_bayar_asuransi_pa,alamat21,kota2,kec2,kel2,rt2,rw2,kodepos2,kerja_di,alamat_ktr,rt_ktr,rw_ktr,kel_ktr,kec_ktr,kodepos_ktr,kota1,alamat_srt12,alamat_srt11,kota_srt1,kec_srt1,kel_srt1,kodepos_srt1").Where("(replace(no_kartu, ' ','') = ? OR no_msn = ? or no_tanda_terima = ?)", data.Kode, data.Kode, data.Kode).Preload("Kurir").Preload("Kartu").Preload("MstCard").Find(&faktur)
 	if result.Error != nil {
 		return entity.Faktur3{}, result.Error
 	}
 	if faktur.NoKartu == "" {
-		return entity.Faktur3{}, errors.New("datanya gk ada tau")
+		return entity.Faktur3{}, errors.New("datanya gk ada yang tau")
 	}
 	stockCard := entity.StockCard{NoKartu: faktur.NoKartu}
 	tr.connGorm.Find(&stockCard)
+
 	if stockCard.StsKartu == "1" {
 		return entity.Faktur3{}, errors.New("Belum di barcode bawa pak Dadang")
-	} else if stockCard.StsKartu == "3" {
+	} else if stockCard.StsKartu == "3" || faktur.StsBayarRenewal == "S" {
 		return entity.Faktur3{}, errors.New("Sudah dibayar pak Dadang")
 	} else if stockCard.StsKartu == "4" {
 		return entity.Faktur3{}, errors.New("Gk ada yang punya kartu ini pada Dadang")

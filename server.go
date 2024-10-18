@@ -81,6 +81,10 @@ var (
 	tglMerahRepository repository.TglMerahRepository = repository.NewTglMerahRepository(gormDBWkm)
 	tglMerahService    service.TglMerahService       = service.NewTglMerahService(tglMerahRepository)
 	tglMerahController controller.TglMerahController = controller.NewTglMerahController(tglMerahService)
+
+	extendBayarRepository repository.TglMerahRepository = repository.NewTglMerahRepository(gormDBWkm)
+	extendBayarService    service.TglMerahService       = service.NewTglMerahService(extendBayarRepository)
+	extendBayarController controller.TglMerahController = controller.NewTglMerahController(extendBayarService)
 )
 
 func main() {

@@ -15,6 +15,8 @@ type Faktur3 struct {
 	StsCetak3           string    `form:"sts_cetak3" json:"sts_cetak3" gorm:"column:sts_cetak3"`
 	StsJnsBayar         string    `form:"sts_jenis_bayar" json:"sts_jenis_bayar" gorm:"column:sts_jenis_bayar"`
 	StsKartu            string    `form:"sts_kartu" json:"sts_kartu" gorm:"column:sts_kartu"`
+	StsBawaKartu        string    `form:"sts_bawa_kartu" json:"sts_bawa_kartu" gorm:"column:sts_bawa_kartu"`
+	StsBayarRenewal     string    `form:"sts_bayar_renewal" json:"sts_bayar_renewal" gorm:"column:sts_bayar_renewal"`
 	ALamatBantuan       string    `form:"alamat_bantuan" json:"alamat_bantuan" gorm:"column:alamat_bantuan"`
 	StsKirim            string    `form:"sts_kirim" json:"sts_kirim" gorm:"column:sts_kirim"`
 	KdCard              string    `form:"kd_card" json:"kd_card" gorm:"column:kd_card"`
@@ -23,6 +25,10 @@ type Faktur3 struct {
 	Kurir               MstKurir  `form:"kurir" json:"kurir" gorm:"->;references:KdKurir;foreignKey:KdKurir"`
 	NoKartu             string    `form:"no_kartu" json:"no_kartu" gorm:"column:no_kartu"`
 	Kartu               StockCard `form:"kartu" json:"kartu" gorm:"->;references:NoKartu;foreignKey:NoKartu"`
+	// Tanggal tanggal bayar
+	TglBayarRenewal         *time.Time `form:"tgl_bayar_renewal" json:"tgl_bayar_renewal" gorm:"column:tgl_bayar_renewal"`
+	TglBayarRenewalFin      *time.Time `form:"tgl_bayar_renewal_fin" json:"tgl_bayar_renewal_fin" gorm:"column:tgl_bayar_renewal_fin"`
+	TglBayarRenewalFinKeyIn *time.Time `form:"tgl_bayar_renewal_fin_key_in" json:"tgl_bayar_renewal_fin_key_in" gorm:"column:tgl_bayar_renewal_fin_key_in"`
 	// O
 	StsAsuransiPa string `form:"sts_asuransi_pa" json:"sts_asuransi_pa" gorm:"column:sts_asuransi_pa"`
 	// S
