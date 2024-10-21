@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	"time"
 	"wkm/entity"
 	"wkm/request"
 	"wkm/utils"
@@ -12,9 +14,11 @@ import (
 type ExtendBayarRepository interface {
 	MasterData(search string, limit int, pageParams int) []entity.ExtendBayar
 	MasterDataCount(search string) int64
-	DetailExtendBayar(id uint64) entity.ExtendBayar
+	DetailExtendBayar(id string) entity.ExtendBayar
 	Create(data request.ExtendBayarRequest) (entity.ExtendBayar, error)
-	Update(data request.ExtendBayarRequest) error
+	UpdateFa(data request.ExtendBayarRequest) error
+	UpdateLf(data request.ExtendBayarRequest) error
+	Delete(id string) error
 }
 
 type extendBayarRepository struct {
@@ -29,18 +33,23 @@ func NewExtendBayarRepository(conn *gorm.DB) ExtendBayarRepository {
 
 func (lR *extendBayarRepository) Create(data request.ExtendBayarRequest) (entity.ExtendBayar, error) {
 
-	// newExtendBayar := entity.ExtendBayar{
-	// 	TglAwal:   data.TglAwal,
-	// 	TglAkhir:  data.TglAkhir,
-	// 	KdUser:    data.KdUser,
-	// 	Deskripsi: data.Deskripsi,
-	// }
-	// lR.conn.Save(&newExtendBayar)
-	return entity.ExtendBayar{}, nil
-
+	newExtendBayar := entity.ExtendBayar{
+		NoMsn:          data.NoMsn,
+		KdUserFa:       data.KdUserFa,
+		StsApproval:    "P",
+		TglPengajuan:   time.Now(),
+		TglActualBayar: data.TglActualBayar,
+		TglUpdateFa:    time.Now(),
+		Deskripsi:      data.Deskripsi,
+	}
+	result := lR.conn.Save(&newExtendBayar)
+	if result.Error != nil {
+		return entity.ExtendBayar{}, result.Error
+	}
+	return newExtendBayar, nil
 }
 
-func (lR *extendBayarRepository) Delete(id uint64) error {
+func (lR *extendBayarRepository) Delete(id string) error {
 
 	result := lR.conn.Where("id", id).Delete(&entity.ExtendBayar{})
 	if result.Error != nil {
@@ -55,17 +64,31 @@ func (lR *extendBayarRepository) UploadDokumen(data entity.ExtendBayar) error {
 
 }
 
-func (lR *extendBayarRepository) Update(data request.ExtendBayarRequest) error {
-	// extendBayar := entity.ExtendBayar{ID: data.Id}
-	// lR.conn.Find(&extendBayar)
-	// if extendBayar.ID == 0 {
-	// 	return errors.New("data tersebut tidak ditemukan")
-	// }
-	// extendBayar.TglAwal = data.TglAwal
-	// extendBayar.TglAkhir = data.TglAkhir
-	// extendBayar.Deskripsi = data.Deskripsi
-	// extendBayar.KdUser = data.KdUser
-	// lR.conn.Save(&extendBayar)
+func (lR *extendBayarRepository) UpdateFa(data request.ExtendBayarRequest) error {
+	extendBayar := entity.ExtendBayar{Id: data.Id}
+	lR.conn.Find(&extendBayar)
+	if extendBayar.NoMsn == "" {
+		return errors.New("data tersebut tidak ditemukan")
+	}
+	extendBayar.TglActualBayar = data.TglActualBayar
+	extendBayar.Deskripsi = data.Deskripsi
+	extendBayar.KdUserFa = data.KdUserFa
+	result := lR.conn.Save(&extendBayar)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (lR *extendBayarRepository) UpdateLf(data request.ExtendBayarRequest) error {
+	extendBayar := entity.ExtendBayar{Id: data.Id}
+	lR.conn.Find(&extendBayar)
+	if extendBayar.NoMsn == "" {
+		return errors.New("data tersebut tidak ditemukan")
+	}
+	extendBayar.StsApproval = data.StsApproval
+	extendBayar.KdUserLf = data.KdUserLf
+	lR.conn.Save(&extendBayar)
 	return nil
 }
 
@@ -84,8 +107,8 @@ func (lR *extendBayarRepository) MasterDataCount(search string) int64 {
 	return int64(len(datas))
 }
 
-func (lR *extendBayarRepository) DetailExtendBayar(id uint64) entity.ExtendBayar {
-	extendBayar := entity.ExtendBayar{Id: "id"}
+func (lR *extendBayarRepository) DetailExtendBayar(id string) entity.ExtendBayar {
+	extendBayar := entity.ExtendBayar{Id: id}
 	lR.conn.Find(&extendBayar)
 	return extendBayar
 }

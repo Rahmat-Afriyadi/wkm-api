@@ -82,9 +82,9 @@ var (
 	tglMerahService    service.TglMerahService       = service.NewTglMerahService(tglMerahRepository)
 	tglMerahController controller.TglMerahController = controller.NewTglMerahController(tglMerahService)
 
-	extendBayarRepository repository.TglMerahRepository = repository.NewTglMerahRepository(gormDBWkm)
-	extendBayarService    service.TglMerahService       = service.NewTglMerahService(extendBayarRepository)
-	extendBayarController controller.TglMerahController = controller.NewTglMerahController(extendBayarService)
+	extendBayarRepository repository.ExtendBayarRepository = repository.NewExtendBayarRepository(gormDBWkm)
+	extendBayarService    service.ExtendBayarService       = service.NewExtendBayarService(extendBayarRepository)
+	extendBayarController controller.ExtendBayarController = controller.NewExtendBayarController(extendBayarService)
 )
 
 func main() {
@@ -215,6 +215,14 @@ func main() {
 	app.Post("/tgl-merah/update-tgl-merah", middleware.DeserializeUser, tglMerahController.Update)
 	app.Post("/tgl-merah/upload-excel", middleware.DeserializeUser, tglMerahController.UploadDokumen)
 	app.Delete("/tgl-merah/delete/:id", middleware.DeserializeUser, tglMerahController.Delete)
+
+	app.Get("/extend-bayar/master-data", middleware.DeserializeUser, extendBayarController.MasterData)
+	app.Get("/extend-bayar/master-data-count", middleware.DeserializeUser, extendBayarController.MasterDataCount)
+	app.Get("/extend-bayar/detail-extend-bayar/:id", middleware.DeserializeUser, extendBayarController.DetailExtendBayar)
+	app.Post("/extend-bayar/create-extend-bayar", middleware.DeserializeUser, extendBayarController.Create)
+	app.Post("/extend-bayar/update-extend-bayar", middleware.DeserializeUser, extendBayarController.UpdateFa)
+	app.Post("/extend-bayar/update-extend-bayar/lf", middleware.DeserializeUser, extendBayarController.UpdateLf)
+	app.Delete("/extend-bayar/delete/:id", middleware.DeserializeUser, extendBayarController.Delete)
 
 	app.Post("/faktur-3/input-bayar", middleware.DeserializeUser, tr3Controller.UpdateInputBayar)
 	app.Post("/faktur-3/search/will-bayar", middleware.DeserializeUser, tr3Controller.WillBayar)
