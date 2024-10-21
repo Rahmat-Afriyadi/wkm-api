@@ -80,7 +80,6 @@ func (lR *tglMerahRepository) MasterData(search string, limit int, pageParams in
 	datas := []entity.TglMerah{}
 	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
 	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
-	fmt.Println("ini data yaa ", datas)
 	return datas
 }
 

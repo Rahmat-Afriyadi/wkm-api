@@ -8,11 +8,13 @@ import (
 )
 
 type ExtendBayar struct {
-	Id        string `form:"id" json:"id" gorm:"primary_key;column:id"`
-	NoMsn     string `form:"no_msn" json:"no_msn" gorm:"column:no_msn"`
-	KdUserFa  string `form:"kd_user_fa" json:"kd_user_fa" gorm:"column:kd_user_fa"`
-	KdUserLf  string `form:"kd_user_lf" json:"kd_user_lf" gorm:"column:kd_user_lf"`
-	Deskripsi string `form:"deskripsi" json:"deskripsi" gorm:"column:deskripsi"`
+	Id        string  `form:"id" json:"id" gorm:"primary_key;column:id"`
+	NoMsn     string  `form:"no_msn" json:"no_msn" gorm:"column:no_msn"`
+	Faktur    Faktur3 `form:"faktur" json:"faktur" gorm:"->;references:NoMsn;foreignKey:NoMsn"`
+	KdUserFa  string  `form:"kd_user_fa" json:"kd_user_fa" gorm:"column:kd_user_fa"`
+	KdUserLf  string  `form:"kd_user_lf" json:"kd_user_lf" gorm:"column:kd_user_lf"`
+	RenewalKe string  `form:"renewal_ke" json:"renewal_ke" gorm:"column:renewal_ke"`
+	Deskripsi string  `form:"deskripsi" json:"deskripsi" gorm:"column:deskripsi"`
 	// P O R
 	StsApproval    string     `form:"sts_approval" json:"sts_approval" gorm:"column:sts_approval"`
 	TglPengajuan   time.Time  `form:"tgl_pengajuan" json:"tgl_pengajuan" gorm:"type:DATE;default:null;column:tgl_pengajuan"`

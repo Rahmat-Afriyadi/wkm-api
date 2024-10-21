@@ -2,7 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 	"time"
 	"wkm/entity"
 	"wkm/request"
@@ -41,6 +40,7 @@ func (lR *extendBayarRepository) Create(data request.ExtendBayarRequest) (entity
 		TglActualBayar: data.TglActualBayar,
 		TglUpdateFa:    time.Now(),
 		Deskripsi:      data.Deskripsi,
+		RenewalKe:      data.RenewalKe,
 	}
 	result := lR.conn.Save(&newExtendBayar)
 	if result.Error != nil {
@@ -93,10 +93,14 @@ func (lR *extendBayarRepository) UpdateLf(data request.ExtendBayarRequest) error
 }
 
 func (lR *extendBayarRepository) MasterData(search string, limit int, pageParams int) []entity.ExtendBayar {
+	if search == "undefined" {
+		search = ""
+	}
 	datas := []entity.ExtendBayar{}
 	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
-	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
-	fmt.Println("ini data yaa ", datas)
+	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Preload("Faktur", func(db *gorm.DB) *gorm.DB {
+		return db.Select("no_msn, nm_customer11") // Select only id and title from Posts
+	}).Find(&datas)
 	return datas
 }
 

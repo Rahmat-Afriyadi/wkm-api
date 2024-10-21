@@ -10,4 +10,5 @@ type ExtendBayarRequest struct {
 	TglActualBayar time.Time `json:"tgl_actual_bayar"`
 	StsApproval    string    `json:"sts_approval"`
 	Deskripsi      string    `json:"deskripsi"`
+	RenewalKe      string    `json:"sts_cetak3"`
 }
