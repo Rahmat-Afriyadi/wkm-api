@@ -194,6 +194,7 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		JnsBayar:            faktur3.StsJnsBayar,
 		TglBayar:            data.TglBayar,
 		TglInsert:           time.Now(),
+		TglJualan:           faktur3.TglVerifikasi,
 	}
 	now := time.Now()
 	faktur3.TglBayarRenewalFin = &data.TglBayar
@@ -227,7 +228,7 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 
 func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
 	var faktur entity.Faktur3
-	result := tr.connGorm.Select("no_msn,sts_cetak3, no_tanda_terima,sts_bayar_renewal, nm_mtr, nm_customer11,no_telp1,no_hp1,no_kartu,sts_jenis_bayar,sts_kartu,alamat_bantuan,sts_kirim,kd_card,kode_kurir,sts_asuransi_pa,sts_bayar_asuransi_pa,alamat21,kota2,kec2,kel2,rt2,rw2,kodepos2,kerja_di,alamat_ktr,rt_ktr,rw_ktr,kel_ktr,kec_ktr,kodepos_ktr,kota1,alamat_srt12,alamat_srt11,kota_srt1,kec_srt1,kel_srt1,kodepos_srt1").Where("(replace(no_kartu, ' ','') = ? OR no_msn = ? or no_tanda_terima = ?)", data.Kode, data.Kode, data.Kode).Preload("Kurir").Preload("Kartu").Preload("MstCard").Find(&faktur)
+	result := tr.connGorm.Select("no_msn,sts_cetak3, no_tanda_terima,sts_bayar_renewal, nm_mtr, nm_customer11,no_telp1,no_hp1,no_kartu,sts_jenis_bayar,sts_kartu,alamat_bantuan,sts_kirim,kd_card,kode_kurir,sts_asuransi_pa,sts_bayar_asuransi_pa,alamat21,kota2,kec2,kel2,rt2,rw2,kodepos2,kerja_di,alamat_ktr,rt_ktr,rw_ktr,kel_ktr,kec_ktr,kodepos_ktr,kota1, tgl_verifikasi, alamat_srt12,alamat_srt11,kota_srt1,kec_srt1,kel_srt1,kodepos_srt1").Where("(replace(no_kartu, ' ','') = ? OR no_msn = ? or no_tanda_terima = ?)", data.Kode, data.Kode, data.Kode).Preload("Kurir").Preload("Kartu").Preload("MstCard").Find(&faktur)
 	if result.Error != nil {
 		return entity.Faktur3{}, result.Error
 	}
@@ -237,6 +238,9 @@ func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3
 	stockCard := entity.StockCard{NoKartu: faktur.NoKartu}
 	tr.connGorm.Find(&stockCard)
 
+	if faktur.StsJnsBayar == "T" && faktur.StsBayarRenewal != "S" {
+		return faktur, nil
+	}
 	if stockCard.StsKartu == "1" {
 		return entity.Faktur3{}, errors.New("Belum di barcode bawa pak Dadang")
 	} else if stockCard.StsKartu == "3" || faktur.StsBayarRenewal == "S" {

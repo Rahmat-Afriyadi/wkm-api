@@ -53,7 +53,7 @@ func (tm *extendBayarController) Delete(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.JSON(map[string]string{"message": err.Error()})
 	}
-	return ctx.JSON(map[string]string{"message": "Berhasil create"})
+	return ctx.JSON(map[string]string{"message": "Berhasil Delete"})
 }
 
 func (tm *extendBayarController) Create(ctx *fiber.Ctx) error {
@@ -68,9 +68,9 @@ func (tm *extendBayarController) Create(ctx *fiber.Ctx) error {
 	body.KdUserFa = details.Username
 	data, err := tm.extendBayarService.Create(body)
 	if err != nil {
-		return ctx.JSON(map[string]string{"message": err.Error()})
+		return ctx.JSON(map[string]string{"message": err.Error(), "status": "fail"})
 	}
-	return ctx.JSON(map[string]interface{}{"message": "Berhasil create", "id_extendBayar": data.Id})
+	return ctx.JSON(map[string]interface{}{"message": "Pengajuan Extend Bayar Berhasil", "status": "success", "id": data.Id})
 }
 
 func (tm *extendBayarController) UpdateFa(ctx *fiber.Ctx) error {

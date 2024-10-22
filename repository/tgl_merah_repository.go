@@ -77,6 +77,9 @@ func (lR *tglMerahRepository) Update(data request.TglMerahRequest) error {
 }
 
 func (lR *tglMerahRepository) MasterData(search string, limit int, pageParams int) []entity.TglMerah {
+	if search == "undefined" {
+		search = ""
+	}
 	datas := []entity.TglMerah{}
 	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
 	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
@@ -84,6 +87,9 @@ func (lR *tglMerahRepository) MasterData(search string, limit int, pageParams in
 }
 
 func (lR *tglMerahRepository) MasterDataCount(search string) int64 {
+	if search == "undefined" {
+		search = ""
+	}
 	var datas []entity.TglMerah
 	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
 	query.Select("id").Find(&datas)

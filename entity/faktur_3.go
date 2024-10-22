@@ -6,6 +6,7 @@ type Faktur3 struct {
 	NoMsn               string    `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
 	NoTandaTerima       string    `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
 	TglCetakTandaTerima time.Time `form:"tgl_cetak_tanda_terima" json:"tgl_cetak_tanda_terima" gorm:"column:tgl_cetak_tanda_terima"`
+	TglVerifikasi       time.Time `form:"tgl_verifikasi" json:"tgl_verifikasi" gorm:"column:tgl_verifikasi"`
 	NmCustomer          string    `form:"nm_customer11" json:"nm_customer11" gorm:"column:nm_customer11"`
 	NmMtr               string    `form:"nm_mtr" json:"nm_mtr" gorm:"column:nm_mtr"`
 	Telp1               string    `form:"no_telp1" json:"no_telp1" gorm:"column:no_telp1"`

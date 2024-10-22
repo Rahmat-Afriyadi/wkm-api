@@ -31,7 +31,7 @@ func NewExtendBayarRepository(conn *gorm.DB) ExtendBayarRepository {
 }
 
 func (lR *extendBayarRepository) Create(data request.ExtendBayarRequest) (entity.ExtendBayar, error) {
-
+	existsExtendBayar := entity.ExtendBayar{}
 	newExtendBayar := entity.ExtendBayar{
 		NoMsn:          data.NoMsn,
 		KdUserFa:       data.KdUserFa,
@@ -41,6 +41,10 @@ func (lR *extendBayarRepository) Create(data request.ExtendBayarRequest) (entity
 		TglUpdateFa:    time.Now(),
 		Deskripsi:      data.Deskripsi,
 		RenewalKe:      data.RenewalKe,
+	}
+	lR.conn.Where("no_msn = ? and sts_approval = ? ", data.NoMsn, "P").First(&existsExtendBayar)
+	if existsExtendBayar.NoMsn == data.NoMsn && existsExtendBayar.StsApproval == "P" {
+		return entity.ExtendBayar{}, errors.New("data tersebut sedang diproses")
 	}
 	result := lR.conn.Save(&newExtendBayar)
 	if result.Error != nil {
@@ -105,6 +109,9 @@ func (lR *extendBayarRepository) MasterData(search string, limit int, pageParams
 }
 
 func (lR *extendBayarRepository) MasterDataCount(search string) int64 {
+	if search == "undefined" {
+		search = ""
+	}
 	var datas []entity.ExtendBayar
 	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
 	query.Select("id").Find(&datas)
@@ -113,6 +120,6 @@ func (lR *extendBayarRepository) MasterDataCount(search string) int64 {
 
 func (lR *extendBayarRepository) DetailExtendBayar(id string) entity.ExtendBayar {
 	extendBayar := entity.ExtendBayar{Id: id}
-	lR.conn.Find(&extendBayar)
+	lR.conn.Preload("Faktur").Find(&extendBayar)
 	return extendBayar
 }
