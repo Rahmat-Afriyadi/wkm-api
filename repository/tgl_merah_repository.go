@@ -13,8 +13,8 @@ import (
 )
 
 type TglMerahRepository interface {
-	MasterData(search string, limit int, pageParams int) []entity.TglMerah
-	MasterDataCount(search string) int64
+	MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.TglMerah
+	MasterDataCount(search string, tgl1 string, tgl2 string) int64
 	DetailTglMerah(id uint64) entity.TglMerah
 	Create(data request.TglMerahRequest) (entity.TglMerah, error)
 	Update(data request.TglMerahRequest) error
@@ -76,22 +76,28 @@ func (lR *tglMerahRepository) Update(data request.TglMerahRequest) error {
 	return nil
 }
 
-func (lR *tglMerahRepository) MasterData(search string, limit int, pageParams int) []entity.TglMerah {
+func (lR *tglMerahRepository) MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.TglMerah {
 	if search == "undefined" {
 		search = ""
 	}
 	datas := []entity.TglMerah{}
 	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("tgl_awal >= ? and tgl_awal <= ?", tgl1, tgl2)
+	}
 	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
 	return datas
 }
 
-func (lR *tglMerahRepository) MasterDataCount(search string) int64 {
+func (lR *tglMerahRepository) MasterDataCount(search string, tgl1 string, tgl2 string) int64 {
 	if search == "undefined" {
 		search = ""
 	}
 	var datas []entity.TglMerah
 	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("tgl_awal >= ? and tgl_awal <= ?", tgl1, tgl2)
+	}
 	query.Select("id").Find(&datas)
 	return int64(len(datas))
 }

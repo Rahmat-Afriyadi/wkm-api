@@ -7,13 +7,16 @@ import (
 )
 
 type ExtendBayarService interface {
-	MasterData(search string, limit int, pageParams int) []entity.ExtendBayar
-	MasterDataCount(search string) int64
+	MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar
+	MasterDataCount(search string, tgl1 string, tgl2 string) int64
+	MasterDataLf(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar
+	MasterDataLfCount(search string, tgl1 string, tgl2 string) int64
 	Detail(id string) entity.ExtendBayar
 	UpdateFa(body request.ExtendBayarRequest) error
 	UpdateLf(body request.ExtendBayarRequest) error
 	Create(request.ExtendBayarRequest) (entity.ExtendBayar, error)
 	Delete(id string) error
+	UpdateApprovalLf(body request.ExtendBayarApprovalRequest) error
 }
 
 type extendBayarService struct {
@@ -26,12 +29,19 @@ func NewExtendBayarService(tR repository.ExtendBayarRepository) ExtendBayarServi
 	}
 }
 
-func (s *extendBayarService) MasterData(search string, limit int, pageParams int) []entity.ExtendBayar {
-	return s.trR.MasterData(search, limit, pageParams)
+func (s *extendBayarService) MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar {
+	return s.trR.MasterData(search, tgl1, tgl2, limit, pageParams)
 }
 
-func (lR *extendBayarService) MasterDataCount(search string) int64 {
-	return lR.trR.MasterDataCount(search)
+func (lR *extendBayarService) MasterDataCount(search string, tgl1 string, tgl2 string) int64 {
+	return lR.trR.MasterDataCount(search, tgl1, tgl2)
+}
+func (s *extendBayarService) MasterDataLf(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar {
+	return s.trR.MasterDataLf(search, tgl1, tgl2, limit, pageParams)
+}
+
+func (lR *extendBayarService) MasterDataLfCount(search string, tgl1 string, tgl2 string) int64 {
+	return lR.trR.MasterDataLfCount(search, tgl1, tgl2)
 }
 
 func (s *extendBayarService) Detail(id string) entity.ExtendBayar {
@@ -50,4 +60,8 @@ func (s *extendBayarService) Delete(id string) error {
 
 func (s *extendBayarService) Create(body request.ExtendBayarRequest) (entity.ExtendBayar, error) {
 	return s.trR.Create(body)
+}
+
+func (s *extendBayarService) UpdateApprovalLf(body request.ExtendBayarApprovalRequest) error {
+	return s.trR.UpdateApprovalLf(body)
 }

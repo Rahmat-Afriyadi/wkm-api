@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"time"
 	"wkm/entity"
 	"wkm/request"
@@ -11,13 +12,16 @@ import (
 )
 
 type ExtendBayarRepository interface {
-	MasterData(search string, limit int, pageParams int) []entity.ExtendBayar
-	MasterDataCount(search string) int64
+	MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar
+	MasterDataCount(search string, tgl1 string, tgl2 string) int64
+	MasterDataLf(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar
+	MasterDataLfCount(search string, tgl1 string, tgl2 string) int64
 	DetailExtendBayar(id string) entity.ExtendBayar
 	Create(data request.ExtendBayarRequest) (entity.ExtendBayar, error)
 	UpdateFa(data request.ExtendBayarRequest) error
 	UpdateLf(data request.ExtendBayarRequest) error
 	Delete(id string) error
+	UpdateApprovalLf(body request.ExtendBayarApprovalRequest) error
 }
 
 type extendBayarRepository struct {
@@ -96,24 +100,85 @@ func (lR *extendBayarRepository) UpdateLf(data request.ExtendBayarRequest) error
 	return nil
 }
 
-func (lR *extendBayarRepository) MasterData(search string, limit int, pageParams int) []entity.ExtendBayar {
+func (lR *extendBayarRepository) UpdateApprovalLf(data request.ExtendBayarApprovalRequest) error {
+	sqlConn, _ := lR.conn.DB()
+	faktur3Repository := NewTr3nRepository(sqlConn, lR.conn)
+	for _, v := range data.Datas {
+		extendBayar := entity.ExtendBayar{NoMsn: v.NoMsn}
+		lR.conn.Find(&extendBayar)
+		if extendBayar.NoMsn == "" || extendBayar.StsApproval == "O" {
+			continue
+		}
+		extendBayar.StsApproval = data.StsApproval
+		extendBayar.KdUserLf = data.KdUserLf
+		lR.conn.Save(&extendBayar)
+		if data.StsApproval == "O" {
+			faktur3Repository.UpdateInputBayar(request.InputBayarRequest{TglBayar: v.TglActualBayar, NoMsn: v.NoMsn, KdUserFa: v.KdUserFa})
+		}
+	}
+	return nil
+}
+
+func (lR *extendBayarRepository) MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar {
 	if search == "undefined" {
 		search = ""
 	}
 	datas := []entity.ExtendBayar{}
-	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
+	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
+	fmt.Println("ini params ", search, tgl1, tgl2)
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
+	}
 	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Preload("Faktur", func(db *gorm.DB) *gorm.DB {
 		return db.Select("no_msn, nm_customer11") // Select only id and title from Posts
 	}).Find(&datas)
 	return datas
 }
 
-func (lR *extendBayarRepository) MasterDataCount(search string) int64 {
+func (lR *extendBayarRepository) MasterDataCount(search string, tgl1 string, tgl2 string) int64 {
 	if search == "undefined" {
 		search = ""
 	}
 	var datas []entity.ExtendBayar
-	query := lR.conn.Where("deskripsi like ?", "%"+search+"%")
+	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
+	}
+	query.Select("id").Find(&datas)
+	return int64(len(datas))
+}
+
+func (lR *extendBayarRepository) MasterDataLf(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar {
+	if search == "undefined" {
+		search = ""
+	}
+	datas := []entity.ExtendBayar{}
+	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
+	if search == "" {
+		query.Where("a.sts_approval = ?", "P")
+	}
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
+	}
+	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Preload("Faktur", func(db *gorm.DB) *gorm.DB {
+		return db.Select("no_msn, nm_customer11") // Select only id and title from Posts
+	}).Find(&datas)
+	return datas
+}
+
+func (lR *extendBayarRepository) MasterDataLfCount(search string, tgl1 string, tgl2 string) int64 {
+	if search == "undefined" {
+		search = ""
+	}
+
+	var datas []entity.ExtendBayar
+	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
+	if search == "" {
+		query.Where("a.sts_approval = ?", "P")
+	}
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
+	}
 	query.Select("id").Find(&datas)
 	return int64(len(datas))
 }

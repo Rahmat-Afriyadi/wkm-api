@@ -36,14 +36,18 @@ func NewTglMerahController(aS service.TglMerahService) TglMerahController {
 
 func (tm *tglMerahController) MasterData(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
-	return ctx.JSON(tm.tglMerahService.MasterData(search, limit, pageParams))
+	return ctx.JSON(tm.tglMerahService.MasterData(search, tgl1, tgl2, limit, pageParams))
 }
 
 func (tm *tglMerahController) MasterDataCount(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
-	return ctx.JSON(tm.tglMerahService.MasterDataCount(search))
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	return ctx.JSON(tm.tglMerahService.MasterDataCount(search, tgl1, tgl2))
 }
 
 func (tm *tglMerahController) DetailTglMerah(ctx *fiber.Ctx) error {

@@ -205,7 +205,7 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 	faktur3.StsBayarAsuransiPa = "S"
 	faktur3.StsBayarRenewal = "S"
 
-	tr.connGorm.Where("no_kartu = ?", faktur3.NoKartu).Updates(entity.StockCard{StsKartu: "3"})
+	tr.connGorm.Where("no_kartu = ?", faktur3.NoKartu).Updates(entity.StockCard{StsKartu: "3", TglUpdate: time.Now()})
 	tr.connGorm.Save(&trPembayaranRenewal)
 	tr.connGorm.Save(&faktur3)
 

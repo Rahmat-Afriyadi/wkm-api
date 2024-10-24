@@ -25,7 +25,7 @@ func NewUserRepository(connUser *gorm.DB) UserRepository {
 
 func (lR *userRepository) FindById(id uint32) entity.User {
 	user := entity.User{ID: id}
-	lR.connUser.Find(&user)
+	lR.connUser.Preload("Role").Find(&user)
 
 	var permissions []entity.Permission
 	lR.connUser.Where("role_id", user.RoleId).Find(&permissions)

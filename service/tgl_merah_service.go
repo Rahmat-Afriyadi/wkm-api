@@ -8,8 +8,8 @@ import (
 )
 
 type TglMerahService interface {
-	MasterData(search string, limit int, pageParams int) []entity.TglMerah
-	MasterDataCount(search string) int64
+	MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.TglMerah
+	MasterDataCount(search string, tgl1 string, tgl2 string) int64
 	Detail(id uint64) entity.TglMerah
 	Update(body request.TglMerahRequest) error
 	UploadDokumen(body entity.TglMerah) error
@@ -29,12 +29,12 @@ func NewTglMerahService(tR repository.TglMerahRepository) TglMerahService {
 	}
 }
 
-func (s *tglMerahService) MasterData(search string, limit int, pageParams int) []entity.TglMerah {
-	return s.trR.MasterData(search, limit, pageParams)
+func (s *tglMerahService) MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.TglMerah {
+	return s.trR.MasterData(search, tgl1, tgl2, limit, pageParams)
 }
 
-func (lR *tglMerahService) MasterDataCount(search string) int64 {
-	return lR.trR.MasterDataCount(search)
+func (lR *tglMerahService) MasterDataCount(search string, tgl1 string, tgl2 string) int64 {
+	return lR.trR.MasterDataCount(search, tgl1, tgl2)
 }
 
 func (s *tglMerahService) Detail(id uint64) entity.TglMerah {
