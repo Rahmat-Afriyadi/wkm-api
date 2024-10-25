@@ -196,6 +196,8 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		TglInsert:           time.Now(),
 		TglJualan:           faktur3.TglVerifikasi,
 	}
+	fmt.Println("ini tr pembayaran renewal ", trPembayaranRenewal.TglCetakTandaTerima)
+	fmt.Println("ini faktur ", faktur3.TglCetakTandaTerima)
 	now := time.Now()
 	faktur3.TglBayarRenewalFin = &data.TglBayar
 	faktur3.TglBayarRenewalFinKeyIn = &now

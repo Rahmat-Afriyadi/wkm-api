@@ -104,7 +104,7 @@ func (lR *extendBayarRepository) UpdateApprovalLf(data request.ExtendBayarApprov
 	sqlConn, _ := lR.conn.DB()
 	faktur3Repository := NewTr3nRepository(sqlConn, lR.conn)
 	for _, v := range data.Datas {
-		extendBayar := entity.ExtendBayar{NoMsn: v.NoMsn}
+		extendBayar := entity.ExtendBayar{Id: v.Id}
 		lR.conn.Find(&extendBayar)
 		if extendBayar.NoMsn == "" || extendBayar.StsApproval == "O" {
 			continue
@@ -113,7 +113,11 @@ func (lR *extendBayarRepository) UpdateApprovalLf(data request.ExtendBayarApprov
 		extendBayar.KdUserLf = data.KdUserLf
 		lR.conn.Save(&extendBayar)
 		if data.StsApproval == "O" {
-			faktur3Repository.UpdateInputBayar(request.InputBayarRequest{TglBayar: v.TglActualBayar, NoMsn: v.NoMsn, KdUserFa: v.KdUserFa})
+			fmt.Println("ini bodynya yaa ", request.InputBayarRequest{TglBayar: extendBayar.TglActualBayar, NoMsn: extendBayar.NoMsn, KdUserFa: extendBayar.KdUserFa})
+			_, err := faktur3Repository.UpdateInputBayar(request.InputBayarRequest{TglBayar: extendBayar.TglActualBayar, NoMsn: extendBayar.NoMsn, KdUserFa: extendBayar.KdUserFa})
+			if err != nil {
+				fmt.Println("masuk sini guys ", err.Error())
+			}
 		}
 	}
 	return nil
@@ -185,6 +189,6 @@ func (lR *extendBayarRepository) MasterDataLfCount(search string, tgl1 string, t
 
 func (lR *extendBayarRepository) DetailExtendBayar(id string) entity.ExtendBayar {
 	extendBayar := entity.ExtendBayar{Id: id}
-	lR.conn.Preload("Faktur").Find(&extendBayar)
+	lR.conn.Preload("Faktur").Preload("Faktur.Kartu").Preload("Faktur.Kurir").Preload("Faktur.MstCard").Find(&extendBayar)
 	return extendBayar
 }

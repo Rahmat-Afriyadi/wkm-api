@@ -222,6 +222,7 @@ func main() {
 	app.Post("/extend-bayar/create-extend-bayar", middleware.DeserializeUser, extendBayarController.Create)
 	app.Post("/extend-bayar/update-extend-bayar", middleware.DeserializeUser, extendBayarController.UpdateFa)
 	app.Post("/extend-bayar/update-extend-bayar/lf", middleware.DeserializeUser, extendBayarController.UpdateLf)
+	app.Post("/extend-bayar/update-extend-bayar/approval-lf", middleware.DeserializeUser, extendBayarController.UpdateApprovalLf)
 	app.Delete("/extend-bayar/delete/:id", middleware.DeserializeUser, extendBayarController.Delete)
 
 	app.Post("/faktur-3/input-bayar", middleware.DeserializeUser, tr3Controller.UpdateInputBayar)

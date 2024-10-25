@@ -17,6 +17,7 @@ type ExtendBayarController interface {
 	Create(ctx *fiber.Ctx) error
 	UpdateFa(ctx *fiber.Ctx) error
 	UpdateLf(ctx *fiber.Ctx) error
+	UpdateApprovalLf(ctx *fiber.Ctx) error
 	Delete(ctx *fiber.Ctx) error
 }
 
@@ -125,18 +126,19 @@ func (tm *extendBayarController) UpdateApprovalLf(ctx *fiber.Ctx) error {
 	var body request.ExtendBayarApprovalRequest
 	err := ctx.BodyParser(&body)
 	if err != nil {
-		fmt.Println("error body parser ", err)
+		fmt.Println("error body parser kesini yaa", err)
+		return ctx.JSON(map[string]string{"message": err.Error()})
 	}
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 
 	if details.Role.Name != "LEADER_FA" {
-		return ctx.Status(403).JSON(map[string]string{"message": "Kamu bukan Leader FA"})
+		return ctx.Status(403).JSON(map[string]string{"message": "Kamu bukan Leader FA", "status": "fail"})
 	}
 	body.KdUserLf = details.Username
 	err = tm.extendBayarService.UpdateApprovalLf(body)
 	if err != nil {
-		return ctx.JSON(map[string]string{"message": err.Error()})
+		return ctx.JSON(map[string]string{"message": err.Error(), "status": "fail"})
 	}
-	return ctx.JSON(map[string]interface{}{"message": "Berhasil update"})
+	return ctx.JSON(map[string]interface{}{"message": "Berhasil update", "status": "success"})
 }
