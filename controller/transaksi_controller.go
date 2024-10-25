@@ -144,7 +144,6 @@ func (tr *transaksiController) ImportExcell(ctx *fiber.Ctx) error {
 				// if len(rows) < 1 {
 				// 	return
 				// }
-				fmt.Println("ini adalah details ", details.Name)
 				for _, v := range rows[4:] {
 					num64, _ := strconv.ParseFloat(v[16], 64)
 					fmt.Println("ini rows yaa ", ExcelDateToTime(num64))

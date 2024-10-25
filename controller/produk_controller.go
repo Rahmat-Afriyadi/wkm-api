@@ -71,7 +71,6 @@ func (tr *produkController) UploadLogo(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
-	fmt.Println("ini body", body)
 
 	file, _ := ctx.FormFile("files")
 	if file != nil {
@@ -82,7 +81,6 @@ func (tr *produkController) UploadLogo(ctx *fiber.Ctx) error {
 		}
 		body.Logo = "/uploads/" + fileName
 	}
-	fmt.Println("kesini gk yaa dia ", body)
 	err = tr.produkService.UploadLogo(body)
 	if err != nil {
 		return ctx.JSON(map[string]interface{}{"message": err.Error()})

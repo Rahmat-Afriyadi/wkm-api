@@ -113,10 +113,9 @@ func (lR *extendBayarRepository) UpdateApprovalLf(data request.ExtendBayarApprov
 		extendBayar.KdUserLf = data.KdUserLf
 		lR.conn.Save(&extendBayar)
 		if data.StsApproval == "O" {
-			fmt.Println("ini bodynya yaa ", request.InputBayarRequest{TglBayar: extendBayar.TglActualBayar, NoMsn: extendBayar.NoMsn, KdUserFa: extendBayar.KdUserFa})
 			_, err := faktur3Repository.UpdateInputBayar(request.InputBayarRequest{TglBayar: extendBayar.TglActualBayar, NoMsn: extendBayar.NoMsn, KdUserFa: extendBayar.KdUserFa})
 			if err != nil {
-				fmt.Println("masuk sini guys ", err.Error())
+				fmt.Println("error bulk update ", err.Error())
 			}
 		}
 	}

@@ -88,7 +88,6 @@ func (lR *produkRepository) UploadLogo(data entity.MasterProduk) error {
 		return errors.New("data tidak ditemukan")
 	}
 	record.Logo = data.Logo
-	fmt.Println("harus kesini lah yaa ", record)
 	result := lR.conn.Save(&record)
 	if result.Error != nil {
 		fmt.Println("ini error ", result.Error)
