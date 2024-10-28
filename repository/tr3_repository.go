@@ -232,15 +232,18 @@ func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3
 	if result.Error != nil {
 		return entity.Faktur3{}, result.Error
 	}
-	if faktur.NoKartu == "" {
-		return entity.Faktur3{}, errors.New("datanya gk ada yang tau")
-	}
-	stockCard := entity.StockCard{NoKartu: faktur.NoKartu}
-	tr.connGorm.Find(&stockCard)
-
+	stockCard := entity.StockCard{}
+	tr.connGorm.Where("no_kartu = ? ", faktur.NoKartu).Find(&stockCard)
 	if faktur.StsJnsBayar == "T" && faktur.StsBayarRenewal != "S" {
 		return faktur, nil
 	}
+	if faktur.NoKartu == "" && faktur.StsJnsBayar != "T" {
+		return entity.Faktur3{}, errors.New("datanya bukan transfer tapi gk ada nomor kartunya")
+	}
+	if faktur.StsJnsBayar == "C" && stockCard.NoKartu == "" {
+		return entity.Faktur3{}, errors.New("Difaktur ada nomor kartunya tapi di stockCard gk ada")
+	}
+
 	if stockCard.StsKartu == "1" {
 		return entity.Faktur3{}, errors.New("Belum di barcode bawa pak Dadang")
 	} else if stockCard.StsKartu == "3" || faktur.StsBayarRenewal == "S" {
