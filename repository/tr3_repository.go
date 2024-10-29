@@ -195,11 +195,20 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 	if faktur3.NmCustomer == "" {
 		return entity.Faktur3{}, errors.New("data tidak ditemukan")
 	}
+	kotaTrPembayaranRenewal := ""
+	if faktur3.StsKirim == "1" {
+		kotaTrPembayaranRenewal = faktur3.Kota
+	} else if faktur3.StsKirim == "2" {
+		kotaTrPembayaranRenewal = faktur3.KotaKtr
+	} else if faktur3.StsKirim == "3" {
+		kotaTrPembayaranRenewal = faktur3.KotaSrt1
+	}
 	trPembayaranRenewal := entity.TrPembayaranRenewal{
 		NoMsn:               faktur3.NoMsn,
 		RenewalKe:           faktur3.StsCetak3,
 		NmCustomer:          faktur3.NmCustomer,
-		Kota:                faktur3.Kota,
+		Kota:                kotaTrPembayaranRenewal,
+		CetakKe:             faktur3.Print,
 		KirimKe:             faktur3.StsKirim,
 		KdCard:              faktur3.KdCard,
 		KdUserTs:            faktur3.KdUser,
@@ -216,17 +225,28 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 	now := time.Now()
 	faktur3.TglBayarRenewalFin = &data.TglBayar
 	faktur3.TglBayarRenewalFinKeyIn = &now
+	faktur3.KdUser2 = data.KdUserFa
 	faktur3.StsKartu = "3"
 	faktur3.StsBawaKartu = "4"
 	faktur3.StsAsuransiPa = "O"
 	faktur3.StsBayarAsuransiPa = "S"
 	faktur3.StsBayarRenewal = "S"
 
-	tr.connGorm.Where("no_kartu = ?", faktur3.NoKartu).Updates(entity.StockCard{StsKartu: "3", TglUpdate: time.Now()})
+	if faktur3.StsJnsBayar == "C" {
+		stockCard := entity.StockCard{NoKartu: faktur3.NoKartu}
+		tr.connGorm.Find(&stockCard)
+		faktur3.TglExpired = &stockCard.TglExpired
+		stockCard.StsKartu = "3"
+		stockCard.NoMsn = faktur3.NoMsn
+		stockCard.TglUpdate = time.Now()
+		stockCard.KdUser4 = data.KdUserFa
+		tr.connGorm.Save(&stockCard)
+	}
+
 	tr.connGorm.Save(&trPembayaranRenewal)
 	tr.connGorm.Save(&faktur3)
 
-	LogBayar(fmt.Sprint("%s %s %s", time.Now().Format("2006-01-02"), data.NoMsn, data.KdUserFa))
+	LogBayar(fmt.Sprint(time.Now().Format("2006-01-02 15:04:05"), " - ", data.NoMsn, " - ", data.KdUserFa))
 
 	return entity.Faktur3{}, nil
 }
@@ -248,6 +268,7 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
 	var faktur entity.Faktur3
 	result := tr.connGorm.Select("no_msn,sts_cetak3, no_tanda_terima,sts_bayar_renewal, nm_mtr, nm_customer11,no_telp1,no_hp1,no_kartu,sts_jenis_bayar,sts_kartu,alamat_bantuan,sts_kirim,kd_card,kode_kurir,sts_asuransi_pa,sts_bayar_asuransi_pa,alamat21,kota2,kec2,kel2,rt2,rw2,kodepos2,kerja_di,alamat_ktr,rt_ktr,rw_ktr,kel_ktr,kec_ktr,kodepos_ktr,kota1, tgl_verifikasi, alamat_srt12,alamat_srt11,kota_srt1,kec_srt1,kel_srt1,kodepos_srt1").Where("(replace(no_kartu, ' ','') = ? OR no_msn = ? or no_tanda_terima = ?)", data.Kode, data.Kode, data.Kode).Preload("Kurir").Preload("Kartu").Preload("MstCard").Find(&faktur)
+	fmt.Println("ini faktur guys ", faktur.NoKartu, faktur.NoMsn, faktur.StsJnsBayar)
 	if result.Error != nil {
 		return entity.Faktur3{}, result.Error
 	}
@@ -257,12 +278,13 @@ func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3
 		return faktur, nil
 	}
 	if faktur.NoKartu == "" && faktur.StsJnsBayar != "T" {
-		return entity.Faktur3{}, errors.New("datanya bukan transfer tapi gk ada nomor kartunya")
+		return entity.Faktur3{}, errors.New("Kartu tidak ditemukan")
 	}
 	if faktur.StsJnsBayar == "C" && stockCard.NoKartu == "" {
 		return entity.Faktur3{}, errors.New("Difaktur ada nomor kartunya tapi di stockCard gk ada")
 	}
 
+	fmt.Println("ini stoccard guys ", stockCard.StsKartu)
 	if stockCard.StsKartu == "1" {
 		return entity.Faktur3{}, errors.New("Belum di barcode bawa pak Dadang")
 	} else if stockCard.StsKartu == "3" || faktur.StsBayarRenewal == "S" {

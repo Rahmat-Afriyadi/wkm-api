@@ -42,6 +42,12 @@ func (lR *tglMerahRepository) Create(data request.TglMerahRequest) (entity.TglMe
 		KdUser:    data.KdUser,
 		Deskripsi: data.Deskripsi,
 	}
+	exists := entity.TglMerah{}
+	lR.conn.Where("tgl_awal", data.TglAwal.Format("2006-01-02")).Find(&exists)
+	if exists.ID != 0 {
+		fmt.Println("kesini gk sih ")
+		return entity.TglMerah{}, errors.New("tgl tersebut telah diinput " + data.TglAwal.Format("2006-01-02"))
+	}
 	lR.conn.Save(&newTglMerah)
 	return newTglMerah, nil
 
