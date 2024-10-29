@@ -88,7 +88,6 @@ var (
 )
 
 func main() {
-
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
