@@ -46,6 +46,28 @@ func (tr *tr3Repository) DataWABlast(request request.DataWaBlastRequest) []entit
 	fmt.Println("ini request ", request)
 	datas := []entity.DataWaBlast{}
 
+	queries := []struct {
+		Query  string
+		Params []interface{}
+	}{
+		{"update tr_wms_faktur2 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
+		{"update tr_wms_faktur3 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
+		{"update tr_wms_faktur4 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
+		{"update tr_wms_faktur2 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
+		{"update tr_wms_faktur3 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
+		{"update tr_wms_faktur4 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
+	}
+	// Execute each query
+	tx := tr.connGorm.Begin()
+	for _, q := range queries {
+		result := tx.Exec(q.Query, q.Params...)
+		if result.Error != nil {
+			tx.Rollback()
+			fmt.Println("Error:", result.Error)
+		}
+	}
+	tx.Commit()
+
 	tables := []string{
 		"tr_wms_faktur2",
 		"tr_wms_faktur3",
@@ -240,11 +262,20 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		stockCard.NoMsn = faktur3.NoMsn
 		stockCard.TglUpdate = time.Now()
 		stockCard.KdUser4 = data.KdUserFa
-		tr.connGorm.Save(&stockCard)
+		result := tr.connGorm.Save(&stockCard)
+		if result.Error != nil {
+			return entity.Faktur3{}, result.Error
+		}
 	}
 
-	tr.connGorm.Save(&trPembayaranRenewal)
-	tr.connGorm.Save(&faktur3)
+	result := tr.connGorm.Save(&trPembayaranRenewal)
+	if result.Error != nil {
+		return entity.Faktur3{}, result.Error
+	}
+	result = tr.connGorm.Save(&faktur3)
+	if result.Error != nil {
+		return entity.Faktur3{}, result.Error
+	}
 
 	LogBayar(fmt.Sprint(time.Now().Format("2006-01-02 15:04:05"), " - ", data.NoMsn, " - ", data.KdUserFa))
 
@@ -281,16 +312,16 @@ func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3
 		return entity.Faktur3{}, errors.New("Kartu tidak ditemukan")
 	}
 	if faktur.StsJnsBayar == "C" && stockCard.NoKartu == "" {
-		return entity.Faktur3{}, errors.New("Difaktur ada nomor kartunya tapi di stockCard gk ada")
+		return entity.Faktur3{}, errors.New("Kartu tidak ditemukan di stockCard")
 	}
 
 	fmt.Println("ini stoccard guys ", stockCard.StsKartu)
 	if stockCard.StsKartu == "1" {
-		return entity.Faktur3{}, errors.New("Belum di barcode bawa pak Dadang")
+		return entity.Faktur3{}, errors.New("Belum di barcode bawa")
 	} else if stockCard.StsKartu == "3" || faktur.StsBayarRenewal == "S" {
-		return entity.Faktur3{}, errors.New("Sudah dibayar pak Dadang")
+		return entity.Faktur3{}, errors.New("Sudah dibayar")
 	} else if stockCard.StsKartu == "4" {
-		return entity.Faktur3{}, errors.New("Gk ada yang punya kartu ini pada Dadang")
+		return entity.Faktur3{}, errors.New("Posisi kartu di clear data")
 	}
 
 	return faktur, nil

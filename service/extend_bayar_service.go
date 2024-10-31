@@ -15,7 +15,7 @@ type ExtendBayarService interface {
 	UpdateFa(body request.ExtendBayarRequest) error
 	UpdateLf(body request.ExtendBayarRequest) error
 	Create(request.ExtendBayarRequest) (entity.ExtendBayar, error)
-	Delete(id string) error
+	Delete(id string, kdUserFa string) error
 	UpdateApprovalLf(body request.ExtendBayarApprovalRequest) error
 }
 
@@ -54,8 +54,8 @@ func (s *extendBayarService) UpdateFa(body request.ExtendBayarRequest) error {
 func (s *extendBayarService) UpdateLf(body request.ExtendBayarRequest) error {
 	return s.trR.UpdateLf(body)
 }
-func (s *extendBayarService) Delete(id string) error {
-	return s.trR.Delete(id)
+func (s *extendBayarService) Delete(id string, kdUserFa string) error {
+	return s.trR.Delete(id, kdUserFa)
 }
 
 func (s *extendBayarService) Create(body request.ExtendBayarRequest) (entity.ExtendBayar, error) {

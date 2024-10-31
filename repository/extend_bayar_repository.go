@@ -20,7 +20,7 @@ type ExtendBayarRepository interface {
 	Create(data request.ExtendBayarRequest) (entity.ExtendBayar, error)
 	UpdateFa(data request.ExtendBayarRequest) error
 	UpdateLf(data request.ExtendBayarRequest) error
-	Delete(id string) error
+	Delete(id string, kdUserFa string) error
 	UpdateApprovalLf(body request.ExtendBayarApprovalRequest) error
 }
 
@@ -57,9 +57,9 @@ func (lR *extendBayarRepository) Create(data request.ExtendBayarRequest) (entity
 	return newExtendBayar, nil
 }
 
-func (lR *extendBayarRepository) Delete(id string) error {
+func (lR *extendBayarRepository) Delete(id string, kdUserFa string) error {
 
-	result := lR.conn.Where("id", id).Delete(&entity.ExtendBayar{})
+	result := lR.conn.Where("id", id).Updates(entity.ExtendBayar{TglUpdateFa: time.Now(), IsDeleted: false, KdUserFa: kdUserFa})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -91,33 +91,40 @@ func (lR *extendBayarRepository) UpdateFa(data request.ExtendBayarRequest) error
 func (lR *extendBayarRepository) UpdateLf(data request.ExtendBayarRequest) error {
 	extendBayar := entity.ExtendBayar{Id: data.Id}
 	lR.conn.Find(&extendBayar)
+	now := time.Now()
 	if extendBayar.NoMsn == "" {
 		return errors.New("data tersebut tidak ditemukan")
 	}
 	extendBayar.StsApproval = data.StsApproval
 	extendBayar.KdUserLf = data.KdUserLf
-	lR.conn.Save(&extendBayar)
+	extendBayar.TglUpdateLf = &now
+	result := lR.conn.Save(&extendBayar)
+	if result.Error != nil {
+		return result.Error
+	}
 	return nil
 }
 
 func (lR *extendBayarRepository) UpdateApprovalLf(data request.ExtendBayarApprovalRequest) error {
 	sqlConn, _ := lR.conn.DB()
 	faktur3Repository := NewTr3nRepository(sqlConn, lR.conn)
+	now := time.Now()
 	for _, v := range data.Datas {
 		extendBayar := entity.ExtendBayar{Id: v.Id}
 		lR.conn.Find(&extendBayar)
 		if extendBayar.NoMsn == "" || extendBayar.StsApproval == "O" {
 			continue
 		}
-		extendBayar.StsApproval = data.StsApproval
-		extendBayar.KdUserLf = data.KdUserLf
-		lR.conn.Save(&extendBayar)
 		if data.StsApproval == "O" {
 			_, err := faktur3Repository.UpdateInputBayar(request.InputBayarRequest{TglBayar: extendBayar.TglActualBayar, NoMsn: extendBayar.NoMsn, KdUserFa: extendBayar.KdUserFa})
 			if err != nil {
-				fmt.Println("error bulk update ", err.Error())
+				return err
 			}
 		}
+		extendBayar.StsApproval = data.StsApproval
+		extendBayar.KdUserLf = data.KdUserLf
+		extendBayar.TglUpdateLf = &now
+		lR.conn.Save(&extendBayar)
 	}
 	return nil
 }
@@ -127,7 +134,7 @@ func (lR *extendBayarRepository) MasterData(search string, tgl1 string, tgl2 str
 		search = ""
 	}
 	datas := []entity.ExtendBayar{}
-	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
+	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.is_deleted = ?", false).Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
 	fmt.Println("ini params ", search, tgl1, tgl2)
 	if tgl1 != "" && tgl2 != "" {
 		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
@@ -143,7 +150,7 @@ func (lR *extendBayarRepository) MasterDataCount(search string, tgl1 string, tgl
 		search = ""
 	}
 	var datas []entity.ExtendBayar
-	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
+	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.is_deleted = ?", false).Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
 	if tgl1 != "" && tgl2 != "" {
 		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
 	}
@@ -156,8 +163,8 @@ func (lR *extendBayarRepository) MasterDataLf(search string, tgl1 string, tgl2 s
 		search = ""
 	}
 	datas := []entity.ExtendBayar{}
-	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
-	if search == "" {
+	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.is_deleted = ?", false).Where("a.deskripsi like ? or a.no_msn like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
+	if search == "" && (tgl1 == "" || tgl2 == "") {
 		query.Where("a.sts_approval = ?", "P")
 	}
 	if tgl1 != "" && tgl2 != "" {
@@ -175,8 +182,8 @@ func (lR *extendBayarRepository) MasterDataLfCount(search string, tgl1 string, t
 	}
 
 	var datas []entity.ExtendBayar
-	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
-	if search == "" {
+	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.is_deleted = ?", false).Where("a.deskripsi like ? or  a.no_msn like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
+	if search == "" && (tgl1 == "" || tgl2 == "") {
 		query.Where("a.sts_approval = ?", "P")
 	}
 	if tgl1 != "" && tgl2 != "" {

@@ -64,7 +64,9 @@ func (tm *extendBayarController) DetailExtendBayar(ctx *fiber.Ctx) error {
 
 func (tm *extendBayarController) Delete(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
-	err := tm.extendBayarService.Delete(id)
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	err := tm.extendBayarService.Delete(id, details.Username)
 	if err != nil {
 		return ctx.JSON(map[string]string{"message": err.Error()})
 	}
@@ -117,9 +119,9 @@ func (tm *extendBayarController) UpdateLf(ctx *fiber.Ctx) error {
 	body.KdUserLf = details.Username
 	err = tm.extendBayarService.UpdateLf(body)
 	if err != nil {
-		return ctx.JSON(map[string]string{"message": err.Error()})
+		return ctx.JSON(map[string]string{"message": err.Error(), "status": "fail"})
 	}
-	return ctx.JSON(map[string]interface{}{"message": "Berhasil update"})
+	return ctx.JSON(map[string]interface{}{"message": "Berhasil update", "status": "success"})
 }
 
 func (tm *extendBayarController) UpdateApprovalLf(ctx *fiber.Ctx) error {

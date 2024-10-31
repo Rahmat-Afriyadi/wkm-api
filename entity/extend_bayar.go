@@ -15,6 +15,8 @@ type ExtendBayar struct {
 	KdUserLf  string  `form:"kd_user_lf" json:"kd_user_lf" gorm:"column:kd_user_lf"`
 	RenewalKe string  `form:"renewal_ke" json:"renewal_ke" gorm:"column:renewal_ke"`
 	Deskripsi string  `form:"deskripsi" json:"deskripsi" gorm:"column:deskripsi"`
+	IsDeleted bool    `form:"is_deleted" json:"is_deleted" gorm:"column:is_deleted"`
+
 	// P O R
 	StsApproval    string     `form:"sts_approval" json:"sts_approval" gorm:"column:sts_approval"`
 	TglPengajuan   time.Time  `form:"tgl_pengajuan" json:"tgl_pengajuan" gorm:"type:DATE;default:null;column:tgl_pengajuan"`

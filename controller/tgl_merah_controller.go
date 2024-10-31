@@ -66,7 +66,7 @@ func (tm *tglMerahController) Delete(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.JSON(map[string]string{"message": err.Error()})
 	}
-	return ctx.JSON(map[string]string{"message": "Berhasil create"})
+	return ctx.JSON(map[string]string{"message": "Berhasil Delete"})
 }
 
 func (tm *tglMerahController) Update(ctx *fiber.Ctx) error {
@@ -172,7 +172,7 @@ func (tm *tglMerahController) Create(ctx *fiber.Ctx) error {
 	body.KdUser = details.Username
 	data, err := tm.tglMerahService.Create(body)
 	if err != nil {
-		return ctx.JSON(map[string]string{"message": err.Error()})
+		return ctx.JSON(map[string]string{"message": err.Error(), "status": "fail"})
 	}
-	return ctx.JSON(map[string]interface{}{"message": "Berhasil create", "id_tglMerah": data.ID})
+	return ctx.JSON(map[string]interface{}{"message": "Berhasil create", "id_tglMerah": data.ID, "status": "success"})
 }

@@ -120,9 +120,9 @@ func (tr *tr3Controller) UpdateInputBayar(ctx *fiber.Ctx) error {
 	body.KdUserFa = details.Username
 	data, err := tr.tr3Service.UpdateInputBayar(body)
 	if err != nil {
-		return ctx.Status(400).JSON(map[string]string{"message": err.Error()})
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
 	}
-	return ctx.JSON(data)
+	return ctx.JSON(map[string]interface{}{"data": data, "status": "success"})
 }
 
 func (tr *tr3Controller) WillBayar(ctx *fiber.Ctx) error {

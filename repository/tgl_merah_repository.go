@@ -44,8 +44,9 @@ func (lR *tglMerahRepository) Create(data request.TglMerahRequest) (entity.TglMe
 	}
 	exists := entity.TglMerah{}
 	lR.conn.Where("tgl_awal", data.TglAwal.Format("2006-01-02")).Find(&exists)
+	fmt.Println("ini tanggal awal yaa ", data.TglAwal, exists)
 	if exists.ID != 0 {
-		fmt.Println("kesini gk sih ")
+		fmt.Println("kesini gk sih ", exists.ID)
 		return entity.TglMerah{}, errors.New("tgl tersebut telah diinput " + data.TglAwal.Format("2006-01-02"))
 	}
 	lR.conn.Save(&newTglMerah)
