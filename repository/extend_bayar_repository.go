@@ -2,9 +2,9 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 	"time"
 	"wkm/entity"
+
 	"wkm/request"
 	"wkm/utils"
 
@@ -22,6 +22,7 @@ type ExtendBayarRepository interface {
 	UpdateLf(data request.ExtendBayarRequest) error
 	Delete(id string, kdUserFa string) error
 	UpdateApprovalLf(body request.ExtendBayarApprovalRequest) error
+	BulkCreate(datas []entity.ExtendBayar) error
 }
 
 type extendBayarRepository struct {
@@ -59,7 +60,7 @@ func (lR *extendBayarRepository) Create(data request.ExtendBayarRequest) (entity
 
 func (lR *extendBayarRepository) Delete(id string, kdUserFa string) error {
 
-	result := lR.conn.Where("id", id).Updates(entity.ExtendBayar{TglUpdateFa: time.Now(), IsDeleted: false, KdUserFa: kdUserFa})
+	result := lR.conn.Where("id", id).Updates(entity.ExtendBayar{TglUpdateFa: time.Now(), IsDeleted: true, KdUserFa: kdUserFa})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -135,7 +136,6 @@ func (lR *extendBayarRepository) MasterData(search string, tgl1 string, tgl2 str
 	}
 	datas := []entity.ExtendBayar{}
 	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.is_deleted = ?", false).Where("a.deskripsi like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%")
-	fmt.Println("ini params ", search, tgl1, tgl2)
 	if tgl1 != "" && tgl2 != "" {
 		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
 	}
@@ -197,4 +197,41 @@ func (lR *extendBayarRepository) DetailExtendBayar(id string) entity.ExtendBayar
 	extendBayar := entity.ExtendBayar{Id: id}
 	lR.conn.Preload("Faktur").Preload("Faktur.Kartu").Preload("Faktur.Kurir").Preload("Faktur.MstCard").Find(&extendBayar)
 	return extendBayar
+}
+
+func (lR *extendBayarRepository) BulkCreate(datas []entity.ExtendBayar) error {
+	var exist entity.ExtendBayar
+	sqlDb, err := lR.conn.DB()
+	if err != nil {
+		return err
+	}
+	tr3Repository := NewTr3nRepository(sqlDb, lR.conn)
+	for _, value := range datas {
+		_, err := tr3Repository.WillBayar(request.SearchWBRequest{Kode: value.NoMsn})
+		if err != nil {
+			return err
+		}
+		lR.conn.Where("no_msn", value.NoMsn).Where("sts_approval", "P").Where("is_deleted", false).First(&exist)
+		if exist.Id != "" {
+			return errors.New("Nomor mesin tersebut pending " + value.NoMsn)
+		}
+	}
+	if len(datas) > 0 {
+		tx := lR.conn.Begin()
+		batchSize := 500
+		for i := 0; i < len(datas); i += batchSize {
+			end := i + batchSize
+			if end > len(datas) {
+				end = len(datas)
+			}
+			batch := datas[i:end]
+			if err := tx.Table("pengajuan_extend_bayar").Save(&batch).Error; err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+		tx.Commit()
+	}
+
+	return nil
 }

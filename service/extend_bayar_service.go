@@ -17,6 +17,7 @@ type ExtendBayarService interface {
 	Create(request.ExtendBayarRequest) (entity.ExtendBayar, error)
 	Delete(id string, kdUserFa string) error
 	UpdateApprovalLf(body request.ExtendBayarApprovalRequest) error
+	CreateFromFile(data []entity.ExtendBayar) error
 }
 
 type extendBayarService struct {
@@ -64,4 +65,8 @@ func (s *extendBayarService) Create(body request.ExtendBayarRequest) (entity.Ext
 
 func (s *extendBayarService) UpdateApprovalLf(body request.ExtendBayarApprovalRequest) error {
 	return s.trR.UpdateApprovalLf(body)
+}
+
+func (s *extendBayarService) CreateFromFile(datas []entity.ExtendBayar) error {
+	return s.trR.BulkCreate(datas)
 }

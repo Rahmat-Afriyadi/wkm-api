@@ -220,6 +220,7 @@ func main() {
 	app.Get("/extend-bayar/detail-extend-bayar/:id", middleware.DeserializeUser, extendBayarController.DetailExtendBayar)
 	app.Post("/extend-bayar/create-extend-bayar", middleware.DeserializeUser, extendBayarController.Create)
 	app.Post("/extend-bayar/update-extend-bayar", middleware.DeserializeUser, extendBayarController.UpdateFa)
+	app.Post("/extend-bayar/upload-excel", middleware.DeserializeUser, extendBayarController.UploadDokumen)
 	app.Post("/extend-bayar/update-extend-bayar/lf", middleware.DeserializeUser, extendBayarController.UpdateLf)
 	app.Post("/extend-bayar/update-extend-bayar/approval-lf", middleware.DeserializeUser, extendBayarController.UpdateApprovalLf)
 	app.Delete("/extend-bayar/delete/:id", middleware.DeserializeUser, extendBayarController.Delete)
