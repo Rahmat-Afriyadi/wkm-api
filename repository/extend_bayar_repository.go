@@ -209,7 +209,7 @@ func (lR *extendBayarRepository) BulkCreate(datas []entity.ExtendBayar) error {
 	for _, value := range datas {
 		_, err := tr3Repository.WillBayar(request.SearchWBRequest{Kode: value.NoMsn})
 		if err != nil {
-			return err
+			return errors.New("Nomor Mesin " + value.NoMsn + " " + err.Error())
 		}
 		lR.conn.Where("no_msn", value.NoMsn).Where("sts_approval", "P").Where("is_deleted", false).First(&exist)
 		if exist.Id != "" {

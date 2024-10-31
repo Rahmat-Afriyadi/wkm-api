@@ -77,9 +77,9 @@ func (tm *tglMerahController) Update(ctx *fiber.Ctx) error {
 	}
 	err = tm.tglMerahService.Update(body)
 	if err != nil {
-		return ctx.JSON(map[string]interface{}{"message": err.Error()})
+		return ctx.JSON(map[string]interface{}{"message": err.Error(), "status": "fail"})
 	}
-	return ctx.JSON(map[string]string{"message": "Berhasil Update"})
+	return ctx.JSON(map[string]string{"message": "Berhasil Update", "status": "success"})
 }
 
 func (tm *tglMerahController) UploadDokumen(ctx *fiber.Ctx) error {
