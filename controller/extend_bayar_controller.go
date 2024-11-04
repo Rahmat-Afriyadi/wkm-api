@@ -40,12 +40,13 @@ func (tm *extendBayarController) MasterData(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
 	tgl1 := ctx.Query("tgl1")
 	tgl2 := ctx.Query("tgl2")
+	sa := ctx.Query("sa")
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	if details.Role.Name == "LEADER_FA" {
-		return ctx.JSON(tm.extendBayarService.MasterDataLf(search, tgl1, tgl2, limit, pageParams))
+		return ctx.JSON(tm.extendBayarService.MasterDataLf(search, tgl1, tgl2, sa, limit, pageParams))
 	}
 	return ctx.JSON(tm.extendBayarService.MasterData(search, tgl1, tgl2, limit, pageParams))
 }
@@ -55,9 +56,10 @@ func (tm *extendBayarController) MasterDataCount(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user")
 	tgl1 := ctx.Query("tgl1")
 	tgl2 := ctx.Query("tgl2")
+	sa := ctx.Query("sa")
 	details, _ := user.(entity.User)
 	if details.Role.Name == "LEADER_FA" {
-		return ctx.JSON(tm.extendBayarService.MasterDataLfCount(search, tgl1, tgl2))
+		return ctx.JSON(tm.extendBayarService.MasterDataLfCount(search, tgl1, tgl2, sa))
 	}
 	return ctx.JSON(tm.extendBayarService.MasterDataCount(search, tgl1, tgl2))
 }

@@ -119,7 +119,7 @@ func main() {
 	}))
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "https://gofiber.io, http://localhost:3000",
+		AllowOrigins: "https://gofiber.io, http://localhost:3000, http://192.168.70.17:3000",
 		AllowHeaders: "Origin, Content-Type, Accept,  Access-Control-Allow-Origin, Authorization",
 	}))
 

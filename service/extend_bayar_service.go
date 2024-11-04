@@ -9,8 +9,8 @@ import (
 type ExtendBayarService interface {
 	MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar
 	MasterDataCount(search string, tgl1 string, tgl2 string) int64
-	MasterDataLf(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar
-	MasterDataLfCount(search string, tgl1 string, tgl2 string) int64
+	MasterDataLf(search string, tgl1 string, tgl2 string, sa string, limit int, pageParams int) []entity.ExtendBayar
+	MasterDataLfCount(search string, tgl1 string, tgl2 string, sa string) int64
 	Detail(id string) entity.ExtendBayar
 	UpdateFa(body request.ExtendBayarRequest) error
 	UpdateLf(body request.ExtendBayarRequest) error
@@ -37,12 +37,12 @@ func (s *extendBayarService) MasterData(search string, tgl1 string, tgl2 string,
 func (lR *extendBayarService) MasterDataCount(search string, tgl1 string, tgl2 string) int64 {
 	return lR.trR.MasterDataCount(search, tgl1, tgl2)
 }
-func (s *extendBayarService) MasterDataLf(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar {
-	return s.trR.MasterDataLf(search, tgl1, tgl2, limit, pageParams)
+func (s *extendBayarService) MasterDataLf(search string, tgl1 string, tgl2 string, sa string, limit int, pageParams int) []entity.ExtendBayar {
+	return s.trR.MasterDataLf(search, tgl1, tgl2, sa, limit, pageParams)
 }
 
-func (lR *extendBayarService) MasterDataLfCount(search string, tgl1 string, tgl2 string) int64 {
-	return lR.trR.MasterDataLfCount(search, tgl1, tgl2)
+func (lR *extendBayarService) MasterDataLfCount(search string, tgl1 string, tgl2 string, sa string) int64 {
+	return lR.trR.MasterDataLfCount(search, tgl1, tgl2, sa)
 }
 
 func (s *extendBayarService) Detail(id string) entity.ExtendBayar {

@@ -14,8 +14,8 @@ import (
 type ExtendBayarRepository interface {
 	MasterData(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar
 	MasterDataCount(search string, tgl1 string, tgl2 string) int64
-	MasterDataLf(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar
-	MasterDataLfCount(search string, tgl1 string, tgl2 string) int64
+	MasterDataLf(search string, tgl1 string, tgl2 string, sa string, limit int, pageParams int) []entity.ExtendBayar
+	MasterDataLfCount(search string, tgl1 string, tgl2 string, sa string) int64
 	DetailExtendBayar(id string) entity.ExtendBayar
 	Create(data request.ExtendBayarRequest) (entity.ExtendBayar, error)
 	UpdateFa(data request.ExtendBayarRequest) error
@@ -158,14 +158,14 @@ func (lR *extendBayarRepository) MasterDataCount(search string, tgl1 string, tgl
 	return int64(len(datas))
 }
 
-func (lR *extendBayarRepository) MasterDataLf(search string, tgl1 string, tgl2 string, limit int, pageParams int) []entity.ExtendBayar {
+func (lR *extendBayarRepository) MasterDataLf(search string, tgl1 string, tgl2 string, sa string, limit int, pageParams int) []entity.ExtendBayar {
 	if search == "undefined" {
 		search = ""
 	}
 	datas := []entity.ExtendBayar{}
 	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.is_deleted = ?", false).Where("a.deskripsi like ? or a.no_msn like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
-	if search == "" && (tgl1 == "" || tgl2 == "") {
-		query.Where("a.sts_approval = ?", "P")
+	if sa != "all" {
+		query.Where("a.sts_approval = ?", sa)
 	}
 	if tgl1 != "" && tgl2 != "" {
 		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
@@ -176,15 +176,15 @@ func (lR *extendBayarRepository) MasterDataLf(search string, tgl1 string, tgl2 s
 	return datas
 }
 
-func (lR *extendBayarRepository) MasterDataLfCount(search string, tgl1 string, tgl2 string) int64 {
+func (lR *extendBayarRepository) MasterDataLfCount(search string, tgl1 string, tgl2 string, sa string) int64 {
 	if search == "undefined" {
 		search = ""
 	}
 
 	var datas []entity.ExtendBayar
 	query := lR.conn.Table("pengajuan_extend_bayar AS a").Joins("JOIN tr_wms_faktur3 as b ON b.no_msn = a.no_msn").Where("a.is_deleted = ?", false).Where("a.deskripsi like ? or  a.no_msn like ? or b.nm_customer11 like ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
-	if search == "" && (tgl1 == "" || tgl2 == "") {
-		query.Where("a.sts_approval = ?", "P")
+	if sa != "all" {
+		query.Where("a.sts_approval = ?", sa)
 	}
 	if tgl1 != "" && tgl2 != "" {
 		query.Where("a.tgl_pengajuan >= ? and a.tgl_pengajuan <= ?", tgl1, tgl2)
