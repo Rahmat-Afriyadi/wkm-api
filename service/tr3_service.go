@@ -53,7 +53,7 @@ func (s *tr3Service) DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBl
 		}
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("A%d", i+2), each.NoMsn)
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("B%d", i+2), each.NmCustomer)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("C%d", i+2), each.KdUser)
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("C%d", i+2), *each.KdUser)
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("D%d", i+2), NoYgDiHubRenewal)
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("E%d", i+2), each.NoWa)
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("F%d", i+2), each.TglAkhirTenor[:10])

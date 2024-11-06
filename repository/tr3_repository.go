@@ -46,28 +46,6 @@ func (tr *tr3Repository) DataWABlast(request request.DataWaBlastRequest) []entit
 	fmt.Println("ini request ", request)
 	datas := []entity.DataWaBlast{}
 
-	queries := []struct {
-		Query  string
-		Params []interface{}
-	}{
-		{"update tr_wms_faktur2 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
-		{"update tr_wms_faktur3 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
-		{"update tr_wms_faktur4 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
-		{"update tr_wms_faktur2 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
-		{"update tr_wms_faktur3 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
-		{"update tr_wms_faktur4 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
-	}
-	// Execute each query
-	tx := tr.connGorm.Begin()
-	for _, q := range queries {
-		result := tx.Exec(q.Query, q.Params...)
-		if result.Error != nil {
-			tx.Rollback()
-			fmt.Println("Error:", result.Error)
-		}
-	}
-	tx.Commit()
-
 	tables := []string{
 		"tr_wms_faktur2",
 		"tr_wms_faktur3",
@@ -79,11 +57,12 @@ func (tr *tr3Repository) DataWABlast(request request.DataWaBlastRequest) []entit
 	for _, table := range tables {
 		go func() {
 			query := ""
-			if table != "tr_wms_faktur2" {
-				query = fmt.Sprint("select * from (select no_msn, nm_customer11, kd_user, no_yg_dihub_renewal, case when trim(no_wa) REGEXP '^[+62]|^[0-9]*$' and no_wa is not null and no_wa not like '021%' then no_wa when trim(sms_no) REGEXP '^[+62]|^[0-9]*$' and sms_no is not null and sms_no not like '021%' then sms_no when trim(no_telp2) REGEXP '^[+62]|^[0-9]*$' and no_telp2 is not null and no_telp2 not like '021%' then no_telp2 when trim(no_telp1) REGEXP '^[+62]|^[0-9]*$' and no_telp1 is not null and no_telp1 not like '021%' then no_telp1 when trim(no_hp2) REGEXP '^[+62]|^[0-9]*$' and no_hp2 is not null and no_hp2 not like '021%' then no_hp2 when trim(no_hp1)REGEXP '^[+62]|^[0-9]*$' and no_hp1 is not null and no_hp1 not like '021%' then no_hp1 end as no_wa, tgl_akhir_tenor from (select no_msn,nm_customer11,kd_user, case when ket_no_telp1 in ('1','1A','1B') then no_telp1 else null end as 'no_telp1', case when ket_no_telp2 in ('1','2') then no_telp2 else null end as 'no_telp2', case when no_hp2 is not null and no_hp2 != '' then no_hp2 else null end as 'no_hp2', case when ket_no_hp1 in ('1','1A','1B') then no_hp1 else null end as 'no_hp1', no_yg_dihub_renewal,sms_no,no_wa,tgl_akhir_tenor from ", table, " where tgl_akhir_tenor>=? and tgl_akhir_tenor<=? and (no_leas =? or no_leas2=?) and (kode_kerja ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], ") or kode_kerja2 ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], "))) t) u where no_wa is not null")
-			} else {
-				query = fmt.Sprint("select * from (select no_msn, nm_customer11, kd_user, no_yg_dihub_renewal, case when trim(no_telp2) REGEXP '^[+62]|^[0-9]*$' and no_telp2 is not null and no_telp2 not like '021%' then no_telp2 when trim(no_telp1) REGEXP '^[+62]|^[0-9]*$' and no_telp1 is not null and no_telp1 not like '021%' then no_telp1 when trim(no_hp2) REGEXP '^[+62]|^[0-9]*$' and no_hp2 is not null and no_hp2 not like '021%' then no_hp2 when trim(no_hp1) REGEXP '^[+62]|^[0-9]*$' and no_hp1 is not null and no_hp1 not like '021%' then no_hp1 end as no_wa,tgl_akhir_tenor from ", table, " where tgl_akhir_tenor>=? and tgl_akhir_tenor<=? and (no_leas =? or no_leas2=?) and (kode_kerja ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], ") or kode_kerja2 ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], "))) a where no_wa is not null")
-			}
+			// if table != "tr_wms_faktur2" {
+			query = fmt.Sprint("select * from (select no_msn, nm_customer11, kd_user, no_yg_dihub_renewal, case when trim(no_wa) REGEXP '^[+62]|^[0-9]*$' and no_wa is not null and no_wa not like '021%' then no_wa when trim(sms_no) REGEXP '^[+62]|^[0-9]*$' and sms_no is not null and sms_no not like '021%' then sms_no when trim(no_telp2) REGEXP '^[+62]|^[0-9]*$' and no_telp2 is not null and no_telp2 not like '021%' then no_telp2 when trim(no_telp1) REGEXP '^[+62]|^[0-9]*$' and no_telp1 is not null and no_telp1 not like '021%' then no_telp1 when trim(no_hp2) REGEXP '^[+62]|^[0-9]*$' and no_hp2 is not null and no_hp2 not like '021%' then no_hp2 when trim(no_hp1)REGEXP '^[+62]|^[0-9]*$' and no_hp1 is not null and no_hp1 not like '021%' then no_hp1 end as no_wa, tgl_akhir_tenor from (select no_msn,nm_customer11,kd_user,case when ket_no_telp1 in ('1','1A','1B') then no_telp1 else no_hp1 end as 'no_telp1', case when ket_no_telp2 in ('1','2') then no_telp2 else no_hp1 end as 'no_telp2',case when no_hp2 is not null and no_hp2 != '' then no_hp2 else no_hp1 end as 'no_hp2', case when ket_no_hp1 in ('1','1A','1B') then no_hp1 else no_hp1 end as 'no_hp1', no_yg_dihub_renewal,sms_no,no_wa,tgl_akhir_tenor from ", table, " where tgl_akhir_tenor>=? and tgl_akhir_tenor<=? and (no_leas =? or no_leas2=?) and (kode_kerja ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], ") or kode_kerja2 ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], "))) t) u where no_wa is not null and no_wa != ''")
+			// } else {
+			// 	query = fmt.Sprint("select * from (select no_msn, nm_customer11, kd_user, no_yg_dihub_renewal, case when trim(no_telp2) REGEXP '^[+62]|^[0-9]*$' and no_telp2 is not null and no_telp2 not like '021%' then no_telp2 when trim(no_telp1) REGEXP '^[+62]|^[0-9]*$' and no_telp1 is not null and no_telp1 not like '021%' then no_telp1 when trim(no_hp2) REGEXP '^[+62]|^[0-9]*$' and no_hp2 is not null and no_hp2 not like '021%' then no_hp2 when trim(no_hp1) REGEXP '^[+62]|^[0-9]*$' and no_hp1 is not null and no_hp1 not like '021%' then no_hp1 end as no_wa,tgl_akhir_tenor from ", table, " where tgl_akhir_tenor>=? and tgl_akhir_tenor<=? and (no_leas =? or no_leas2=?) and (kode_kerja ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], ") or kode_kerja2 ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], "))) a where no_wa is not null")
+			// }
+			fmt.Println("ini query yaa ", query)
 			statement, err := tr.conn.PrepareContext(ctx, query)
 			if err != nil {
 				fmt.Println(err)
@@ -110,11 +89,14 @@ func (tr *tr3Repository) DataWABlast(request request.DataWaBlastRequest) []entit
 		rows := <-resultChannel
 		defer rows.Close()
 		for rows.Next() {
+			iniKdUser := ""
 			data := entity.DataWaBlast{}
-			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.KdUser, &data.NoYgDiHubRenewal, &data.NoWa, &data.TglAkhirTenor); err != nil {
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &iniKdUser, &data.NoYgDiHubRenewal, &data.NoWa, &data.TglAkhirTenor); err != nil {
 				fmt.Println("Error scanning row:", err)
 				continue
 			}
+			data.KdUser = &iniKdUser
+			// fmt.Println("ini user ", iniKdUser, data.KdUser)
 			datas = append(datas, data)
 		}
 	}
@@ -299,6 +281,30 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 		}
 
 	}
+
+	// pisah
+
+	// queries := []struct {
+	// 	Query  string
+	// 	Params []interface{}
+	// }{
+	// 	{"update tr_wms_faktur2 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
+	// 	{"update tr_wms_faktur3 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
+	// 	{"update tr_wms_faktur4 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
+	// 	{"update tr_wms_faktur2 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
+	// 	{"update tr_wms_faktur3 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
+	// 	{"update tr_wms_faktur4 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
+	// }
+	// // Execute each query
+	// tx := tr.connGorm.Begin()
+	// for _, q := range queries {
+	// 	result := tx.Exec(q.Query, q.Params...)
+	// 	if result.Error != nil {
+	// 		tx.Rollback()
+	// 		fmt.Println("Error:", result.Error)
+	// 	}
+	// }
+	// tx.Commit()
 }
 
 func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
