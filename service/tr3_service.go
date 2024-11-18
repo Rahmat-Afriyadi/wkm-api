@@ -6,6 +6,7 @@ import (
 	"wkm/entity"
 	"wkm/repository"
 	"wkm/request"
+	"wkm/response"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 )
@@ -16,6 +17,7 @@ type Tr3Service interface {
 	UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, payment_type string, username string)
 	WillBayar(data request.SearchWBRequest) (entity.Faktur3, error)
 	UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error)
+	DataRenewal(data request.DataRenewalRequest) ([]response.DataRenewalResponse, error)
 }
 
 type tr3Service struct {
@@ -26,6 +28,10 @@ func NewTr3Service(tR repository.Tr3Repository) Tr3Service {
 	return &tr3Service{
 		trR: tR,
 	}
+}
+
+func (s *tr3Service) DataRenewal(t request.DataRenewalRequest) ([]response.DataRenewalResponse, error){
+	return s.trR.DataRenewalRequest(t)
 }
 
 func (s *tr3Service) SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa {

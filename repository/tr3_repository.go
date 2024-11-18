@@ -10,6 +10,7 @@ import (
 	"time"
 	"wkm/entity"
 	"wkm/request"
+	"wkm/response"
 
 	"gorm.io/gorm"
 )
@@ -26,6 +27,7 @@ type Tr3Repository interface {
 	UpdateTglAkhirTenor()
 	WillBayar(data request.SearchWBRequest) (entity.Faktur3, error)
 	UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error)
+	DataRenewalRequest(data request.DataRenewalRequest) ([]response.DataRenewalResponse, error)
 }
 
 type tr3Repository struct {
@@ -38,6 +40,94 @@ func NewTr3nRepository(conn *sql.DB, connGorm *gorm.DB) Tr3Repository {
 		conn:     conn,
 		connGorm: connGorm,
 	}
+}
+
+func (tr *tr3Repository) DataRenewalRequest(data request.DataRenewalRequest) ([]response.DataRenewalResponse, error) {
+	query := `
+    SELECT 
+    	'PLATINUM' AS jns_card,
+    	SUM(jumlah_data) AS total_jumlah_data
+	FROM (
+    SELECT 
+        COUNT(*) AS jumlah_data
+    FROM 
+        db_wkm.tr_wms_faktur3 twf
+    JOIN 
+        db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+    WHERE 
+        YEAR(twf.tgl_bayar_renewal_fin) = ?
+        AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+        AND mc.jns_card LIKE '%PLATINUM%'
+        AND mc.jns_card NOT LIKE '%PLATINUM PLUS%'
+    GROUP BY 
+        mc.jns_card
+	) AS subquery
+
+	UNION ALL
+
+	SELECT 
+    	'PLATINUM PLUS' AS jns_card,
+    	COUNT(*) AS total_jumlah_data
+	FROM 
+    	db_wkm.tr_wms_faktur3 twf
+	JOIN 
+    	db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+	WHERE 
+    	YEAR(twf.tgl_bayar_renewal_fin) = ?
+    	AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+    	AND mc.jns_card LIKE '%PLATINUM PLUS%'
+
+	UNION ALL
+
+	SELECT 
+    	'BASIC' AS jns_card,
+    	COUNT(*) AS total_jumlah_data
+	FROM 
+    	db_wkm.tr_wms_faktur3 twf
+	JOIN 
+    	db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+	WHERE 
+    	YEAR(twf.tgl_bayar_renewal_fin) = ?
+    	AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+    	AND mc.jns_card LIKE '%BASIC%'
+
+	UNION ALL
+
+	SELECT 
+    	'GOLD' AS jns_card,
+    	COUNT(*) AS total_jumlah_data
+	FROM 
+    	db_wkm.tr_wms_faktur3 twf
+	JOIN 
+    	db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+	WHERE 
+    	YEAR(twf.tgl_bayar_renewal_fin) = ? 
+    	AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+    	AND mc.jns_card LIKE '%GOLD%';
+    `
+	rows, err := tr.conn.Query(query, data.Year, data.Month, data.Year, data.Month, data.Year, data.Month, data.Year, data.Month)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    
+    var results []response.DataRenewalResponse
+
+    // Mengambil hasil dari query
+    for rows.Next() {
+        var result response.DataRenewalResponse
+        if err := rows.Scan(&result.JnsCard, &result.TotalJumlahData); err != nil {
+            return nil, err
+        }
+        results = append(results, result)
+    }
+
+    // Memeriksa apakah ada kesalahan saat iterasi
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return results, nil
 }
 
 func (tr *tr3Repository) DataWABlast(request request.DataWaBlastRequest) []entity.DataWaBlast {

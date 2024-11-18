@@ -22,6 +22,7 @@ type Tr3Controller interface {
 	EditJenisBayar(ctx *fiber.Ctx) error
 	UpdateInputBayar(ctx *fiber.Ctx) error
 	WillBayar(ctx *fiber.Ctx) error
+	DataRenewal(ctx *fiber.Ctx) error
 }
 
 type tr3Controller struct {
@@ -42,6 +43,25 @@ func (tr *tr3Controller) ExportDataWaBlast(ctx *fiber.Ctx) error {
 	_ = tr.tr3Service.DataWABlast(request)
 	return ctx.Download("./file1.xlsx")
 
+}
+
+func (tr *tr3Controller) DataRenewal(ctx *fiber.Ctx) error {
+	var request request.DataRenewalRequest
+	if err := ctx.BodyParser(&request); err != nil {
+		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})
+	}
+	
+	// Memanggil service untuk melakukan pembaruan data
+	data, err := tr.tr3Service.DataRenewal(request)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"error": "Data renewal failed", "details": err.Error()})
+	}
+	
+	// Menampilkan data dan error di console (untuk debugging)
+	fmt.Println(data, err)
+	
+	// Mengembalikan data sebagai respons JSON
+	return ctx.JSON(fiber.Map{"message": "Data renewal successful", "data": data})
 }
 
 func (tr *tr3Controller) SearchNoMsnByWa(ctx *fiber.Ctx) error {
