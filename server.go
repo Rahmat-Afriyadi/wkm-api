@@ -230,7 +230,9 @@ func main() {
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 
-	app.Post("/data-renewal", tr3Controller.DataRenewal)
+	app.Post("/data-renewal",middleware.DeserializeUser, tr3Controller.DataRenewal)
+	app.Post("/export-data-renewal", tr3Controller.ExportDataRenewal)
+	app.Post("/export-data-plat-plus", tr3Controller.ExportDataPlatinumPlus)
 
 	app.Listen(":3001")
 }
