@@ -82,6 +82,7 @@ func (tr *tr3Repository) ExportDataRenewalBasic(data request.DataRenewalRequest)
 	WHERE 
 	    YEAR(twf.tgl_bayar_renewal_fin) = ? 
 	    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+		AND twf.sts_renewal = 'O' AND twf.sts_bayar_renewal = 'S'
 		AND mc.jns_card LIKE '%BASIC%';`
 
 	rows, err := tr.conn.Query(query, data.Year, data.Month)
@@ -147,6 +148,7 @@ func (tr *tr3Repository) ExportDataRenewalGold(data request.DataRenewalRequest) 
 	WHERE 
 	    YEAR(twf.tgl_bayar_renewal_fin) = ? 
 	    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+		AND twf.sts_renewal = 'O' AND twf.sts_bayar_renewal = 'S'
 		AND mc.jns_card LIKE '%Gold%';`
 
 	rows, err := tr.conn.Query(query, data.Year, data.Month)
@@ -211,6 +213,7 @@ func (tr *tr3Repository) ExportDataRenewalPlatinum(data request.DataRenewalReque
 	    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
 	WHERE 
 	    YEAR(twf.tgl_bayar_renewal_fin) = ? 
+		AND twf.sts_renewal = 'O' AND twf.sts_bayar_renewal = 'S'
 	    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
 		AND mc.jns_card LIKE '%PLATINUM%' 
 	    AND mc.jns_card NOT LIKE '%PLUS%';`
@@ -280,6 +283,7 @@ func (tr *tr3Repository) ExportDataRenewalPlatinumPlus(data request.DataRenewalR
 	WHERE 
 	    YEAR(twf.tgl_bayar_renewal_fin) = ? 
 	    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+		AND twf.sts_renewal = 'O' AND twf.sts_bayar_renewal = 'S'
 		AND mc.jns_card LIKE '%PLUS%';`
 
 	rows, err := tr.conn.Query(query, data.Year, data.Month)
@@ -320,7 +324,9 @@ FROM
 JOIN 
     db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
 WHERE 
-    YEAR(twf.tgl_bayar_renewal_fin) = ?
+	twf.sts_renewal = 'O' 
+	AND twf.sts_bayar_renewal = 'S'
+    AND YEAR(twf.tgl_bayar_renewal_fin) = ?
     AND MONTH(twf.tgl_bayar_renewal_fin) = ?
     AND mc.jns_card LIKE '%PLUS%'
 
@@ -337,7 +343,9 @@ FROM
     JOIN 
         db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
     WHERE 
-        YEAR(twf.tgl_bayar_renewal_fin) = ?
+		twf.sts_renewal = 'O' 
+		AND twf.sts_bayar_renewal = 'S'
+        AND YEAR(twf.tgl_bayar_renewal_fin) = ?
         AND MONTH(twf.tgl_bayar_renewal_fin) = ?
         AND mc.jns_card LIKE '%PLATINUM%'
         AND mc.jns_card NOT LIKE '%PLUS%'
@@ -354,7 +362,9 @@ FROM
 JOIN 
     db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
 WHERE 
-    YEAR(twf.tgl_bayar_renewal_fin) = ? 
+	twf.sts_renewal = 'O' 
+	AND twf.sts_bayar_renewal = 'S'
+    AND YEAR(twf.tgl_bayar_renewal_fin) = ? 
     AND MONTH(twf.tgl_bayar_renewal_fin) = ?
     AND mc.jns_card LIKE '%GOLD%'
 
@@ -368,17 +378,18 @@ FROM
 JOIN 
     db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
 WHERE 
-    YEAR(twf.tgl_bayar_renewal_fin) = ?
+	twf.sts_renewal = 'O' 
+	AND twf.sts_bayar_renewal = 'S'
+    AND YEAR(twf.tgl_bayar_renewal_fin) = ?
     AND MONTH(twf.tgl_bayar_renewal_fin) = ?
     AND mc.jns_card LIKE '%BASIC%';
-
     `
 	rows, err := tr.conn.Query(query, data.Year, data.Month, data.Year, data.Month, data.Year, data.Month, data.Year, data.Month)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
+	
 	var results []response.DataRenewalResponse
 
 	// Mengambil hasil dari query
@@ -399,7 +410,6 @@ WHERE
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
 	return results, nil
 }
 
