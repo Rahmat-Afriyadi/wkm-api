@@ -13,7 +13,10 @@ type Faktur3 struct {
 	Telp1               string     `form:"no_telp1" json:"no_telp1" gorm:"column:no_telp1"`
 	Hp1                 string     `form:"no_hp1" json:"no_hp1" gorm:"column:no_hp1"`
 	KdUser              string     `form:"kd_user" json:"kd_user" gorm:"column:kd_user"`
+	User                SecUser    `json:"user_2" gorm:"->;references:Username;foreignKey:kd_user"`
 	KdUser2             string     `form:"kd_user2" json:"kd_user2" gorm:"column:kd_user2"`
+	KdUser10            string     `form:"kd_user10" json:"kd_user10" gorm:"column:kd_user10"`
+	User10              SecUser    `json:"user_10" gorm:"->;references:Username;foreignKey:KdUser10"`
 	Print               uint8      `form:"print" json:"print" gorm:"column:print"`
 	StsCetak3           string     `form:"sts_cetak3" json:"sts_cetak3" gorm:"column:sts_cetak3"`
 	StsJnsBayar         string     `form:"sts_jenis_bayar" json:"sts_jenis_bayar" gorm:"column:sts_jenis_bayar"`
