@@ -25,6 +25,7 @@ type Tr3Controller interface {
 	DataRenewal(ctx *fiber.Ctx) error
 	ExportDataRenewal(ctx *fiber.Ctx) error
 	ExportDataPlatinumPlus(ctx *fiber.Ctx) error
+	ExportPembayaranRenewal(ctx *fiber.Ctx) error
 }
 
 type tr3Controller struct {
@@ -189,4 +190,15 @@ func (tr *tr3Controller) WillBayar(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(map[string]string{"message": err.Error()})
 	}
 	return ctx.JSON(faktur3)
+}
+
+func (tr *tr3Controller) ExportPembayaranRenewal(ctx *fiber.Ctx) error {
+	var request request.RangeTanggalRequest
+	if err := ctx.BodyParser(&request); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	fmt.Println("ini body ya guys ", request)
+	tr.tr3Service.ExportPembayaranRenewal(request)
+	return ctx.Download("./pembayaran-renewal.xlsx")
+
 }

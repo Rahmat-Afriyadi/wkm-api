@@ -33,6 +33,7 @@ type Tr3Repository interface {
 	ExportDataRenewalPlatinum(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
 	ExportDataRenewalPlatinumPlus(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
 	ExportDataAsuransiPlatinumPlus(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
+	DataPembayaran(tgl1 string, tgl2 string) []entity.Faktur3
 }
 
 type tr3Repository struct {
@@ -470,10 +471,10 @@ WHERE
 		if err := rows.Scan(&result.JnsCard, &result.TotalJumlahData); err != nil {
 			return nil, err
 		}
-		zero:= 0
+		zero := 0
 		if result.TotalJumlahData == nil {
 			result.TotalJumlahData = &zero
-		} 
+		}
 		results = append(results, result)
 	}
 
@@ -749,6 +750,18 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 	// 	}
 	// }
 	// tx.Commit()
+}
+
+func (lR *tr3Repository) DataPembayaran(tgl1 string, tgl2 string) []entity.Faktur3 {
+	var datas []entity.Faktur3
+	query := lR.connGorm.Table("tr_wms_faktur3 AS a").Joins("JOIN stock_card as b ON b.no_kartu = a.no_kartu")
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("a.tgl_bayar_renewal_fin >= ? and a.tgl_bayar_renewal_fin <= ?", tgl1, tgl2)
+	}
+	query.Select("a.no_msn, a.kd_card,a.no_tanda_terima,a.no_kartu, a.nm_customer11, a.tgl_bayar_renewal_fin, a.kd_user, a.kd_user10, a.kode_kurir, a.sts_jenis_bayar").Preload("User").Preload("User10").Preload("Kurir").Preload("MstCard", func(db *gorm.DB) *gorm.DB {
+		return db.Select("kd_card,jns_card,harga_pokok,asuransi,asuransi_motor") // Pilih kolom tertentu
+	}).Find(&datas)
+	return datas
 }
 
 func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {

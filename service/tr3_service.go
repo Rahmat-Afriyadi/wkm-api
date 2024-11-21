@@ -2,7 +2,9 @@ package service
 
 import (
 	"fmt"
+	"math"
 	"strings"
+	"time"
 	"wkm/entity"
 	"wkm/repository"
 	"wkm/request"
@@ -18,6 +20,7 @@ type Tr3Service interface {
 	WillBayar(data request.SearchWBRequest) (entity.Faktur3, error)
 	UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error)
 	DataRenewal(data request.DataRenewalRequest) ([]response.DataRenewalResponse, error)
+	ExportPembayaranRenewal(data request.RangeTanggalRequest) error
 	ExportDataRenewal(data request.DataRenewalRequest) (entity.DataRenewal, error)
 	ExportDataPlatinumPlus(data request.DataRenewalRequest) (entity.DataRenewal, error)
 }
@@ -33,68 +36,189 @@ func NewTr3Service(tR repository.Tr3Repository) Tr3Service {
 }
 
 func GetFormattedAddress(record entity.DataRenewal) string {
-    var addressParts []string
+	var addressParts []string
 
-    // Check if Alamat is not empty
-    if record.Alamat != "" {
-        addressParts = append(addressParts, record.Alamat)
-    } else if record.Alamat11 != nil && *record.Alamat11 != "" {
-        addressParts = append(addressParts, *record.Alamat11)
-    }
+	// Check if Alamat is not empty
+	if record.Alamat != "" {
+		addressParts = append(addressParts, record.Alamat)
+	} else if record.Alamat11 != nil && *record.Alamat11 != "" {
+		addressParts = append(addressParts, *record.Alamat11)
+	}
 
-    // Check RT
-    rtText := ""
-    if record.Rt != "" {
-        rtText = fmt.Sprintf("RT %s", record.Rt)
-    } else if record.Rt1 != nil && *record.Rt1 != "" {
-        rtText = fmt.Sprintf("RT %s", *record.Rt1)
-    }
-    if rtText != "" {
-        addressParts = append(addressParts, rtText)
-    }
+	// Check RT
+	rtText := ""
+	if record.Rt != "" {
+		rtText = fmt.Sprintf("RT %s", record.Rt)
+	} else if record.Rt1 != nil && *record.Rt1 != "" {
+		rtText = fmt.Sprintf("RT %s", *record.Rt1)
+	}
+	if rtText != "" {
+		addressParts = append(addressParts, rtText)
+	}
 
-    // Check RW
-    rwText := ""
-    if record.Rw != "" {
-        rwText = fmt.Sprintf("RW %s", record.Rw)
-    } else if record.Rw1 != nil && *record.Rw1 != "" {
-        rwText = fmt.Sprintf("RW %s", *record.Rw1)
-    }
-    if rwText != "" {
-        addressParts = append(addressParts, rwText)
-    }
+	// Check RW
+	rwText := ""
+	if record.Rw != "" {
+		rwText = fmt.Sprintf("RW %s", record.Rw)
+	} else if record.Rw1 != nil && *record.Rw1 != "" {
+		rwText = fmt.Sprintf("RW %s", *record.Rw1)
+	}
+	if rwText != "" {
+		addressParts = append(addressParts, rwText)
+	}
 
-    // Add Kelurahan, Kecamatan, Kota, and KodePos
-    if record.Kel != "" {
-        addressParts = append(addressParts, record.Kel)
-    } else if record.Kel1 != nil && *record.Kel1 != "" {
-        addressParts = append(addressParts, *record.Kel1)
-    }
+	// Add Kelurahan, Kecamatan, Kota, and KodePos
+	if record.Kel != "" {
+		addressParts = append(addressParts, record.Kel)
+	} else if record.Kel1 != nil && *record.Kel1 != "" {
+		addressParts = append(addressParts, *record.Kel1)
+	}
 
-    // Add Kecamatan
-    if record.Kec != "" {
-        addressParts = append(addressParts, record.Kec)
-    } else if record.Kec1 != nil && *record.Kec1 != "" {
-        addressParts = append(addressParts, *record.Kec1)
-    }
+	// Add Kecamatan
+	if record.Kec != "" {
+		addressParts = append(addressParts, record.Kec)
+	} else if record.Kec1 != nil && *record.Kec1 != "" {
+		addressParts = append(addressParts, *record.Kec1)
+	}
 
-    // Add Kota
-    if record.Kota != nil && *record.Kota != "" {
-        addressParts = append(addressParts, *record.Kota)
-    } else if record.Kota1 != nil && *record.Kota1 != "" {
-        addressParts = append(addressParts, *record.Kota1)
-    }
+	// Add Kota
+	if record.Kota != nil && *record.Kota != "" {
+		addressParts = append(addressParts, *record.Kota)
+	} else if record.Kota1 != nil && *record.Kota1 != "" {
+		addressParts = append(addressParts, *record.Kota1)
+	}
 
-    // Add Kode Pos
-    if record.Kodepos != "" {
-        addressParts = append(addressParts, record.Kodepos)
-    } else if record.Kodepos1 != nil && *record.Kodepos1 != "" {
-        addressParts = append(addressParts, *record.Kodepos1)
-    }
+	// Add Kode Pos
+	if record.Kodepos != "" {
+		addressParts = append(addressParts, record.Kodepos)
+	} else if record.Kodepos1 != nil && *record.Kodepos1 != "" {
+		addressParts = append(addressParts, *record.Kodepos1)
+	}
 
-    // Join all parts of the address
-    formattedAddress := strings.Join(addressParts, " ")
-    return formattedAddress
+	// Join all parts of the address
+	formattedAddress := strings.Join(addressParts, " ")
+	return formattedAddress
+}
+
+func (s *tr3Service) ExportPembayaranRenewal(data request.RangeTanggalRequest) error {
+	dataPembayaran := s.trR.DataPembayaran(data.Tgl1, data.Tgl2)
+	// Create a new Excel file
+	xlsx := excelize.NewFile()
+
+	// Define the sheet name
+	sheetName := "REKAP"
+	xlsx.NewSheet(sheetName)
+
+	// Remove the default "Sheet1"
+	xlsx.DeleteSheet("Sheet1")
+	tgl1, _ := time.Parse("2006-01-02", data.Tgl1)
+	tgl2, _ := time.Parse("2006-01-02", data.Tgl2)
+
+	headerStyle, _ := xlsx.NewStyle(`{
+		"font": {
+			"bold": true
+		},
+		"alignment": {
+	        "horizontal": "center",
+	        "vertical": "center",
+			"wrap_text": true
+	    },
+		"fill": {
+			"type": "pattern",
+			"color": [
+				"#FFFF00"
+			],
+			"pattern": 1
+		},
+		"border": [
+			{
+				"type": "left",
+				"style": 1,
+				"color": "#000000"
+			},
+			{
+				"type": "top",
+				"style": 1,
+				"color": "#000000"
+			},
+			{
+				"type": "right",
+				"style": 1,
+				"color": "#000000"
+			},
+			{
+				"type": "bottom",
+				"style": 1,
+				"color": "#000000"
+			}
+		]
+	}`)
+	borderStyle, _ := xlsx.NewStyle(`{
+		"alignment": {
+	        "horizontal": "center",
+	        "vertical": "center"
+	    },
+		"border": [
+			{
+				"type": "left",
+				"style": 1,
+				"color": "#000000"
+			},
+			{
+				"type": "top",
+				"style": 1,
+				"color": "#000000"
+			},
+			{
+				"type": "right",
+				"style": 1,
+				"color": "#000000"
+			},
+			{
+				"type": "bottom",
+				"style": 1,
+				"color": "#000000"
+			}
+		]
+	}`)
+
+	// Set headers for the sheet, including the new columns
+	xlsx.SetCellValue(sheetName, "A1", "Laporan Pembayaran Renewal All "+tgl1.Format("02-Jan-2006")+" sd "+tgl2.Format("02-Jan-2006"))
+	headers := []string{"NO", "NAMA MEMBER", "TANGGAL BAYAR", "CARD", "JENIS BAYAR", "KD USER", "CONFIRMER", "KURIR", "NO TANDA TERIMA", "ASURANSI", "ASURANSI MOTOR", "HARGA POKOK", "DPP", "PPN"}
+	for i, header := range headers {
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("%s2", string('A'+i)), header)
+	}
+
+	startRow := 3
+	for i, record := range dataPembayaran {
+		dpp := float64(record.MstCard.HargaPokok) / 1.11
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("A%d", i+3), i+1)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("B%d", i+3), record.NmCustomer)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("C%d", i+3), record.TglBayarRenewalFin.Format("02-Jan-2006"))
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("D%d", i+3), record.MstCard.JnsCard)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("E%d", i+3), record.StsJnsBayar)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("F%d", i+3), record.User.FullName)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("G%d", i+3), record.User10.FullName)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("H%d", i+3), record.Kurir.NmKurir)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("I%d", i+3), record.NoTandaTerima)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("J%d", i+3), record.MstCard.Asuransi)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("K%d", i+3), record.MstCard.AsuransiMotor)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("L%d", i+3), record.MstCard.HargaPokok)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("M%d", i+3), math.Round(dpp))
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("N%d", i+3), math.Round(dpp*0.11))
+		startRow += 1
+	}
+
+	xlsx.MergeCell(sheetName, "A1", "N1")
+	xlsx.SetCellStyle(sheetName, "A1", "N1", headerStyle)
+	xlsx.SetCellStyle(sheetName, "A2", "N2", headerStyle)
+	xlsx.SetCellStyle(sheetName, fmt.Sprintf("A%d", 3), fmt.Sprintf("N%d", startRow-1), borderStyle)
+
+	if err := xlsx.SaveAs("./pembayaran-renewal.xlsx"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *tr3Service) ExportDataPlatinumPlus(data request.DataRenewalRequest) (entity.DataRenewal, error) {
@@ -156,11 +280,11 @@ func (s *tr3Service) ExportDataPlatinumPlus(data request.DataRenewalRequest) (en
 			namaKartu = record.NmCustomer
 		}
 		var NmMtrValue string
-    	if record.NmMtr != nil {
-        	NmMtrValue = *record.NmMtr // Dereference the pointer
-    	} else {
-        NmMtrValue = "" // Handle nil case
-    	}
+		if record.NmMtr != nil {
+			NmMtrValue = *record.NmMtr // Dereference the pointer
+		} else {
+			NmMtrValue = "" // Handle nil case
+		}
 		namaTertanggung := record.NamaKtp
 		if namaTertanggung == "" {
 			namaTertanggung = record.NmCustomer
@@ -298,7 +422,7 @@ func writeDataRenewalToSheet(xlsx *excelize.File, sheetName string, data []entit
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), record.NoMsn)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), record.NoKartu)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), record.NmCustomer)
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), namaKartu) 
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), namaKartu)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), namaTertanggung)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("H%d", i+2), record.JnsCard)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("I%d", i+2), tglMohonValue)
@@ -335,7 +459,7 @@ func writeDataRenewalToSheet(xlsx *excelize.File, sheetName string, data []entit
 	return nil
 }
 
-func (s *tr3Service) DataRenewal(t request.DataRenewalRequest) ([]response.DataRenewalResponse, error){
+func (s *tr3Service) DataRenewal(t request.DataRenewalRequest) ([]response.DataRenewalResponse, error) {
 	return s.trR.DataRenewalRequest(t)
 }
 
