@@ -233,7 +233,7 @@ func (s *tr3Service) ExportDataPlatinumPlus(data request.DataRenewalRequest) (en
 	xlsx.DeleteSheet("Sheet1")
 
 	// Set headers for the sheet, including the new columns
-	headers := []string{"KD DLR", "NAMA DEALER", "NO MESIN", "NO MEMBERSHIP", "NO. RANGKA", "MERK", "TYPE", "NAMA STNK", "NAMA KARTU", "NAMA TERTANGGUNG", "JNS KARTU", "TGL AWAL", "TGL AKHIR", "ALAMAT"}
+	headers := []string{"KD DLR", "NAMA DEALER", "NO MEMBERSHIP", "NO. RANGKA", "MERK", "TYPE", "NO MESIN", "NAMA STNK", "NAMA KARTU", "NAMA TERTANGGUNG", "JNS KARTU", "TGL MOHON", "TGL AWAL", "TGL AKHIR", "ALAMAT"}
 	for i, header := range headers {
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("%s1", string('A'+i)), header)
 	}
@@ -253,7 +253,7 @@ func (s *tr3Service) ExportDataPlatinumPlus(data request.DataRenewalRequest) (en
 	}
 
 	// Fetch data for Platinum Plus
-	platinumPlusData, err := s.trR.ExportDataRenewalPlatinumPlus(data)
+	platinumPlusData, err := s.trR.ExportDataAsuransiPlatinumPlus(data)
 	if err != nil {
 		return entity.DataRenewal{}, err
 	}
@@ -262,11 +262,19 @@ func (s *tr3Service) ExportDataPlatinumPlus(data request.DataRenewalRequest) (en
 	for i, record := range platinumPlusData {
 
 		var kdDlrValue string
-		if record.KdDlr != nil {
-			kdDlrValue = *record.KdDlr // Dereference the pointer
+    	if record.KdDlr != nil {
+        	kdDlrValue = *record.KdDlr // Dereference the pointer
+    	} else {
+        kdDlrValue = "" // Handle nil case
+    	}
+
+		var tglMohonValue string
+		if record.TglMohon != nil {
+   			tglMohonValue = record.TglMohon.Format("2006-01-02") // Format time.Time to string
 		} else {
-			kdDlrValue = "" // Handle nil case
+   			tglMohonValue = "" // Handle nil case
 		}
+
 		namaKartu := record.NamaKtp
 		if namaKartu == "" {
 			namaKartu = record.NmCustomer
@@ -286,18 +294,19 @@ func (s *tr3Service) ExportDataPlatinumPlus(data request.DataRenewalRequest) (en
 		// Set values for each column, including the new ones
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), kdDlrValue)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), record.NmDlr)
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), record.NoMsn)
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), record.NoKartu)
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), record.NoRgk)                         // NO. RANGKA (manual input can be added later)
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), "HONDA")                              // MERK
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), NmMtrValue)                           // TYPE
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("H%d", i+2), record.NmCustomer)                    // NAMA STNK
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("I%d", i+2), namaKartu)                            // NAMA KARTU
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("J%d", i+2), namaTertanggung)                      // NAMA TERTANGGUNG
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("K%d", i+2), record.JnsCard)                       // JNS KARTU
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("L%d", i+2), record.TglAwal.Format("2006-01-02"))  // TGL AWAL
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("M%d", i+2), record.TglAkhir.Format("2006-01-02")) // TGL AKHIR
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("N%d", i+2), formattedAddress)                     // ALAMAT
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), record.NoKartu)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), record.NoRgk) // NO. RANGKA (manual input can be added later)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), "HONDA") // MERK
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), NmMtrValue) // TYPE
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), record.NoMsn)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("H%d", i+2), record.NmCustomer) // NAMA STNK
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("I%d", i+2), namaKartu) // NAMA KARTU
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("J%d", i+2), namaTertanggung) // NAMA TERTANGGUNG
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("K%d", i+2), record.JnsCard) // JNS KARTU
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("L%d", i+2), tglMohonValue) // TGL MOHON
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("M%d", i+2), record.TglAwal.Format("2006-01-02")) // TGL AWAL
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("N%d", i+2), record.TglAkhir.Format("2006-01-02")) // TGL AKHIR
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("O%d", i+2), formattedAddress) // ALAMAT
 	}
 
 	// Save the Excel file
@@ -321,7 +330,7 @@ func (s *tr3Service) ExportDataRenewal(data request.DataRenewalRequest) (entity.
 	xlsx.DeleteSheet("Sheet1")
 
 	// Set headers for each sheet
-	headers := []string{"KD DLR", "NAMA DEALER", "NO MESIN", "NO KARTU", "NAMA STNK", "NAMA KARTU", "NAMA TERTANGGUNG", "JNS KARTU", "TGL AWAL", "TGL AKHIR", "ALAMAT"}
+	headers := []string{"KD DLR", "NAMA DEALER", "NO MESIN", "NO KARTU", "NAMA STNK", "NAMA KARTU", "NAMA TERTANGGUNG", "JNS KARTU", "TGL MOHON", "TGL AWAL", "TGL AKHIR", "ALAMAT"}
 	for _, sheet := range sheets {
 		for i, header := range headers {
 			xlsx.SetCellValue(sheet, fmt.Sprintf("%s1", string('A'+i)), header)
@@ -385,10 +394,16 @@ func writeDataRenewalToSheet(xlsx *excelize.File, sheetName string, data []entit
 	for i, record := range data {
 
 		var kdDlrValue string
-		if record.KdDlr != nil {
-			kdDlrValue = *record.KdDlr // Dereference the pointer
+    	if record.KdDlr != nil {
+        	kdDlrValue = *record.KdDlr // Dereference the pointer
+    	} else {
+        kdDlrValue = "" // Handle nil case
+    	}
+		var tglMohonValue string
+		if record.TglMohon != nil {
+   			tglMohonValue = record.TglMohon.Format("2006-01-02") // Format time.Time to string
 		} else {
-			kdDlrValue = "" // Handle nil case
+   			tglMohonValue = "" // Handle nil case
 		}
 		namaKartu := record.NamaKtp
 		if namaKartu == "" {
@@ -410,9 +425,10 @@ func writeDataRenewalToSheet(xlsx *excelize.File, sheetName string, data []entit
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), namaKartu)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), namaTertanggung)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("H%d", i+2), record.JnsCard)
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("I%d", i+2), record.TglAwal.Format("2006-01-02"))
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("J%d", i+2), record.TglAkhir.Format("2006-01-02"))
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("K%d", i+2), formattedAddress)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("I%d", i+2), tglMohonValue)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("J%d", i+2), record.TglAwal.Format("2006-01-02"))
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("K%d", i+2), record.TglAkhir.Format("2006-01-02"))
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("L%d", i+2), formattedAddress)
 	}
 
 	validCount := 0

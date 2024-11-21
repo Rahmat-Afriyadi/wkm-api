@@ -32,6 +32,7 @@ type Tr3Repository interface {
 	ExportDataRenewalGold(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
 	ExportDataRenewalPlatinum(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
 	ExportDataRenewalPlatinumPlus(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
+	ExportDataAsuransiPlatinumPlus(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
 	DataPembayaran(tgl1 string, tgl2 string) []entity.Faktur3
 }
 
@@ -313,6 +314,76 @@ func (tr *tr3Repository) ExportDataRenewalPlatinumPlus(data request.DataRenewalR
 
 	return results, nil
 }
+
+func (tr *tr3Repository) ExportDataAsuransiPlatinumPlus(data request.DataRenewalRequest) ([]entity.DataRenewal, error) {
+	query := `
+	SELECT 
+    twf.kd_dlr, 
+    twf.nm_dlr, 
+    twf.no_msn, 
+    twf.no_kartu,
+    twf.no_rgk,
+    twf.nm_mtr,
+    twf.nm_customer11, 
+    twf.nama_ktp,
+    mc.jns_card,
+    twf.tgl_mohon,
+    twf.alamat11, 
+    twf.rt1, 
+    twf.rw1, 
+    twf.kel1, 
+    twf.kec1, 
+    twf.kota1, 
+    twf.kodepos1, 
+    twf.alamat21, 
+    twf.rt2, 
+    twf.rw2, 
+    twf.kel2, 
+    twf.kec2, 
+    twf.kota2, 
+    twf.kodepos2, 
+    twf.jns_beli, 
+    CAST(DATE_FORMAT(twf.tgl_bayar_renewal_fin, '%Y-%m-01') AS DATE) AS 'tgl_awal',
+    CAST(DATE_FORMAT(DATE_ADD(twf.tgl_bayar_renewal_fin, INTERVAL 12 MONTH), '%Y-%m-01') AS DATE) AS 'tgl_akhir', 
+    twf.no_tanda_terima
+FROM 
+    db_wkm.tr_wms_faktur3 twf
+JOIN 
+    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+WHERE 
+    YEAR(twf.tgl_bayar_renewal_fin) = ? 
+    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+    AND twf.sts_renewal = 'O' 
+    AND twf.sts_bayar_renewal = 'S'
+    AND mc.jns_card LIKE '%PLUS%';`
+
+	rows, err := tr.conn.Query(query, data.Year, data.Month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []entity.DataRenewal
+
+	for rows.Next() {
+		var result entity.DataRenewal
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NoRgk, &result.NmMtr, &result.NmCustomer, &result.NamaKtp,
+			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
+			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
+			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
+			&result.JnsBeli, &result.TglAwal, &result.TglAkhir, &result.NoTandaTerima); err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
 
 func (tr *tr3Repository) DataRenewalRequest(data request.DataRenewalRequest) ([]response.DataRenewalResponse, error) {
 	fmt.Println("ini data ", data)

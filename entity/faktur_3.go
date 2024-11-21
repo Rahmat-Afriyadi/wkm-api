@@ -15,7 +15,7 @@ type Faktur3 struct {
 	KdUser              string     `form:"kd_user" json:"kd_user" gorm:"column:kd_user"`
 	User                SecUser    `json:"user_2" gorm:"->;references:Username;foreignKey:kd_user"`
 	KdUser2             string     `form:"kd_user2" json:"kd_user2" gorm:"column:kd_user2"`
-	KdUser10            string     `form:"kd_user10" json:"kd_user10" gorm:"column:kd_user10"`
+	KdUser10            *string    `form:"kd_user10" json:"kd_user10" gorm:"column:kd_user10"`
 	User10              SecUser    `json:"user_10" gorm:"->;references:Username;foreignKey:KdUser10"`
 	Print               uint8      `form:"print" json:"print" gorm:"column:print"`
 	StsCetak3           string     `form:"sts_cetak3" json:"sts_cetak3" gorm:"column:sts_cetak3"`
