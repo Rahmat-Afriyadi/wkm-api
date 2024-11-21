@@ -230,6 +230,7 @@ func main() {
 
 	app.Post("/faktur-3/input-bayar", middleware.DeserializeUser, tr3Controller.UpdateInputBayar)
 	app.Post("/faktur-3/search/will-bayar", middleware.DeserializeUser, tr3Controller.WillBayar)
+	app.Post("/export-data-pembayaran", middleware.DeserializeUser, tr3Controller.ExportPembayaranRenewal)
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
 
