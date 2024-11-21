@@ -10,6 +10,7 @@ import (
 	"time"
 	"wkm/entity"
 	"wkm/request"
+	"wkm/response"
 
 	"gorm.io/gorm"
 )
@@ -26,6 +27,12 @@ type Tr3Repository interface {
 	UpdateTglAkhirTenor()
 	WillBayar(data request.SearchWBRequest) (entity.Faktur3, error)
 	UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error)
+	DataRenewalRequest(data request.DataRenewalRequest) ([]response.DataRenewalResponse, error)
+	ExportDataRenewalBasic(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
+	ExportDataRenewalGold(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
+	ExportDataRenewalPlatinum(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
+	ExportDataRenewalPlatinumPlus(data request.DataRenewalRequest) ([]entity.DataRenewal, error)
+	DataPembayaran(tgl1 string, tgl2 string) []entity.Faktur3
 }
 
 type tr3Repository struct {
@@ -38,6 +45,373 @@ func NewTr3nRepository(conn *sql.DB, connGorm *gorm.DB) Tr3Repository {
 		conn:     conn,
 		connGorm: connGorm,
 	}
+}
+
+func (tr *tr3Repository) ExportDataRenewalBasic(data request.DataRenewalRequest) ([]entity.DataRenewal, error) {
+	query := `
+	SELECT 
+	    twf.kd_dlr, 
+	    twf.nm_dlr, 
+	    twf.no_msn, 
+	    twf.no_kartu, 
+	    twf.nm_customer11, 
+	    twf.nama_ktp,
+	    mc.jns_card,
+	    twf.tgl_mohon,
+	    twf.alamat11, 
+	    twf.rt1, 
+	    twf.rw1, 
+	    twf.kel1, 
+	    twf.kec1, 
+	    twf.kota1, 
+	    twf.kodepos1, 
+	    twf.alamat21, 
+	    twf.rt2, 
+	    twf.rw2, 
+	    twf.kel2, 
+	    twf.kec2, 
+	    twf.kota2, 
+	    twf.kodepos2, 
+	    twf.jns_beli, 
+	    twf.tgl_bayar_renewal_fin AS 'tgl_awal', 
+	    DATE_ADD(twf.tgl_bayar_renewal_fin, INTERVAL 13 MONTH) AS 'tgl_akhir', 
+	    twf.no_tanda_terima
+	FROM 
+	    db_wkm.tr_wms_faktur3 twf
+	JOIN 
+	    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+	WHERE 
+	    YEAR(twf.tgl_bayar_renewal_fin) = ? 
+	    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+		AND twf.sts_renewal = 'O' AND twf.sts_bayar_renewal = 'S'
+		AND mc.jns_card LIKE '%BASIC%';`
+
+	rows, err := tr.conn.Query(query, data.Year, data.Month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []entity.DataRenewal
+
+	for rows.Next() {
+		var result entity.DataRenewal
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
+			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
+			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
+			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
+			&result.JnsBeli, &result.TglAwal, &result.TglAkhir, &result.NoTandaTerima); err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (tr *tr3Repository) ExportDataRenewalGold(data request.DataRenewalRequest) ([]entity.DataRenewal, error) {
+	query := `
+	SELECT 
+	    twf.kd_dlr, 
+	    twf.nm_dlr, 
+	    twf.no_msn, 
+	    twf.no_kartu, 
+	    twf.nm_customer11, 
+	    twf.nama_ktp,
+	    mc.jns_card,
+	    twf.tgl_mohon,
+	    twf.alamat11, 
+	    twf.rt1, 
+	    twf.rw1, 
+	    twf.kel1, 
+	    twf.kec1, 
+	    twf.kota1, 
+	    twf.kodepos1, 
+	    twf.alamat21, 
+	    twf.rt2, 
+	    twf.rw2, 
+	    twf.kel2, 
+	    twf.kec2, 
+	    twf.kota2, 
+	    twf.kodepos2, 
+	    twf.jns_beli, 
+	    twf.tgl_bayar_renewal_fin AS 'tgl_awal', 
+	    DATE_ADD(twf.tgl_bayar_renewal_fin, INTERVAL 13 MONTH) AS 'tgl_akhir', 
+	    twf.no_tanda_terima
+	FROM 
+	    db_wkm.tr_wms_faktur3 twf
+	JOIN 
+	    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+	WHERE 
+	    YEAR(twf.tgl_bayar_renewal_fin) = ? 
+	    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+		AND twf.sts_renewal = 'O' AND twf.sts_bayar_renewal = 'S'
+		AND mc.jns_card LIKE '%Gold%';`
+
+	rows, err := tr.conn.Query(query, data.Year, data.Month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []entity.DataRenewal
+
+	for rows.Next() {
+		var result entity.DataRenewal
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
+			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
+			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
+			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
+			&result.JnsBeli, &result.TglAwal, &result.TglAkhir, &result.NoTandaTerima); err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (tr *tr3Repository) ExportDataRenewalPlatinum(data request.DataRenewalRequest) ([]entity.DataRenewal, error) {
+	query := `
+	SELECT 
+	    twf.kd_dlr, 
+	    twf.nm_dlr, 
+	    twf.no_msn, 
+	    twf.no_kartu, 
+	    twf.nm_customer11, 
+	    twf.nama_ktp,
+	    mc.jns_card,
+	    twf.tgl_mohon,
+	    twf.alamat11, 
+	    twf.rt1, 
+	    twf.rw1, 
+	    twf.kel1, 
+	    twf.kec1, 
+	    twf.kota1, 
+	    twf.kodepos1, 
+	    twf.alamat21, 
+	    twf.rt2, 
+	    twf.rw2, 
+	    twf.kel2, 
+	    twf.kec2, 
+	    twf.kota2, 
+	    twf.kodepos2, 
+	    twf.jns_beli, 
+	    twf.tgl_bayar_renewal_fin AS 'tgl_awal', 
+	    DATE_ADD(twf.tgl_bayar_renewal_fin, INTERVAL 13 MONTH) AS 'tgl_akhir', 
+	    twf.no_tanda_terima
+	FROM 
+	    db_wkm.tr_wms_faktur3 twf
+	JOIN 
+	    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+	WHERE 
+	    YEAR(twf.tgl_bayar_renewal_fin) = ? 
+		AND twf.sts_renewal = 'O' AND twf.sts_bayar_renewal = 'S'
+	    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+		AND mc.jns_card LIKE '%PLATINUM%' 
+	    AND mc.jns_card NOT LIKE '%PLUS%';`
+
+	rows, err := tr.conn.Query(query, data.Year, data.Month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []entity.DataRenewal
+
+	for rows.Next() {
+		var result entity.DataRenewal
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
+			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
+			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
+			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
+			&result.JnsBeli, &result.TglAwal, &result.TglAkhir, &result.NoTandaTerima); err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (tr *tr3Repository) ExportDataRenewalPlatinumPlus(data request.DataRenewalRequest) ([]entity.DataRenewal, error) {
+	query := `
+	SELECT 
+	    twf.kd_dlr, 
+	    twf.nm_dlr, 
+	    twf.no_msn, 
+	    twf.no_kartu,
+		twf.no_rgk,
+	    twf.nm_mtr,
+	    twf.nm_customer11, 
+	    twf.nama_ktp,
+	    mc.jns_card,
+	    twf.tgl_mohon,
+	    twf.alamat11, 
+	    twf.rt1, 
+	    twf.rw1, 
+	    twf.kel1, 
+	    twf.kec1, 
+	    twf.kota1, 
+	    twf.kodepos1, 
+	    twf.alamat21, 
+	    twf.rt2, 
+	    twf.rw2, 
+	    twf.kel2, 
+	    twf.kec2, 
+	    twf.kota2, 
+	    twf.kodepos2, 
+	    twf.jns_beli, 
+	    twf.tgl_bayar_renewal_fin AS 'tgl_awal', 
+	    DATE_ADD(twf.tgl_bayar_renewal_fin, INTERVAL 13 MONTH) AS 'tgl_akhir', 
+	    twf.no_tanda_terima
+	FROM 
+	    db_wkm.tr_wms_faktur3 twf
+	JOIN 
+	    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+	WHERE 
+	    YEAR(twf.tgl_bayar_renewal_fin) = ? 
+	    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+		AND twf.sts_renewal = 'O' AND twf.sts_bayar_renewal = 'S'
+		AND mc.jns_card LIKE '%PLUS%';`
+
+	rows, err := tr.conn.Query(query, data.Year, data.Month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []entity.DataRenewal
+
+	for rows.Next() {
+		var result entity.DataRenewal
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NoRgk, &result.NmMtr, &result.NmCustomer, &result.NamaKtp,
+			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
+			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
+			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
+			&result.JnsBeli, &result.TglAwal, &result.TglAkhir, &result.NoTandaTerima); err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (tr *tr3Repository) DataRenewalRequest(data request.DataRenewalRequest) ([]response.DataRenewalResponse, error) {
+	fmt.Println("ini data ", data)
+	query := `
+    SELECT 
+    'PLATINUM PLUS' AS jns_card,
+    COUNT(*) AS total_jumlah_data
+FROM 
+    db_wkm.tr_wms_faktur3 twf
+JOIN 
+    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+WHERE 
+	twf.sts_renewal = 'O' 
+	AND twf.sts_bayar_renewal = 'S'
+    AND YEAR(twf.tgl_bayar_renewal_fin) = ?
+    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+    AND mc.jns_card LIKE '%PLUS%'
+
+UNION ALL
+
+SELECT 
+    'PLATINUM' AS jns_card,
+    SUM(jumlah_data) AS total_jumlah_data
+FROM 
+    (SELECT 
+        COUNT(*) AS jumlah_data
+    FROM 
+        db_wkm.tr_wms_faktur3 twf
+    JOIN 
+        db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+    WHERE 
+		twf.sts_renewal = 'O' 
+		AND twf.sts_bayar_renewal = 'S'
+        AND YEAR(twf.tgl_bayar_renewal_fin) = ?
+        AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+        AND mc.jns_card LIKE '%PLATINUM%'
+        AND mc.jns_card NOT LIKE '%PLUS%'
+    GROUP BY 
+        mc.jns_card) AS subquery
+
+UNION ALL
+
+SELECT 
+    'GOLD' AS jns_card,
+    COUNT(*) AS total_jumlah_data
+FROM 
+    db_wkm.tr_wms_faktur3 twf
+JOIN 
+    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+WHERE 
+	twf.sts_renewal = 'O' 
+	AND twf.sts_bayar_renewal = 'S'
+    AND YEAR(twf.tgl_bayar_renewal_fin) = ? 
+    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+    AND mc.jns_card LIKE '%GOLD%'
+
+UNION ALL
+
+SELECT 
+    'BASIC' AS jns_card,
+    COUNT(*) AS total_jumlah_data
+FROM 
+    db_wkm.tr_wms_faktur3 twf
+JOIN 
+    db_wkm.mst_card mc ON twf.kd_card = mc.kd_card 
+WHERE 
+	twf.sts_renewal = 'O' 
+	AND twf.sts_bayar_renewal = 'S'
+    AND YEAR(twf.tgl_bayar_renewal_fin) = ?
+    AND MONTH(twf.tgl_bayar_renewal_fin) = ?
+    AND mc.jns_card LIKE '%BASIC%';
+    `
+	rows, err := tr.conn.Query(query, data.Year, data.Month, data.Year, data.Month, data.Year, data.Month, data.Year, data.Month)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	var results []response.DataRenewalResponse
+
+	// Mengambil hasil dari query
+	for rows.Next() {
+		var result response.DataRenewalResponse
+
+		if err := rows.Scan(&result.JnsCard, &result.TotalJumlahData); err != nil {
+			return nil, err
+		}
+		zero := 0
+		if result.TotalJumlahData == nil {
+			result.TotalJumlahData = &zero
+		}
+		results = append(results, result)
+	}
+
+	// Memeriksa apakah ada kesalahan saat iterasi
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return results, nil
 }
 
 func (tr *tr3Repository) DataWABlast(request request.DataWaBlastRequest) []entity.DataWaBlast {
@@ -305,6 +679,18 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 	// 	}
 	// }
 	// tx.Commit()
+}
+
+func (lR *tr3Repository) DataPembayaran(tgl1 string, tgl2 string) []entity.Faktur3 {
+	var datas []entity.Faktur3
+	query := lR.connGorm.Table("tr_wms_faktur3 AS a").Joins("JOIN stock_card as b ON b.no_kartu = a.no_kartu")
+	if tgl1 != "" && tgl2 != "" {
+		query.Where("a.tgl_bayar_renewal_fin >= ? and a.tgl_bayar_renewal_fin <= ?", tgl1, tgl2)
+	}
+	query.Select("a.no_msn, a.kd_card,a.no_tanda_terima,a.no_kartu, a.nm_customer11, a.tgl_bayar_renewal_fin, a.kd_user, a.kd_user10, a.kode_kurir, a.sts_jenis_bayar").Preload("User").Preload("User10").Preload("Kurir").Preload("MstCard", func(db *gorm.DB) *gorm.DB {
+		return db.Select("kd_card,jns_card,harga_pokok,asuransi,asuransi_motor") // Pilih kolom tertentu
+	}).Find(&datas)
+	return datas
 }
 
 func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {

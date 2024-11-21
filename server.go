@@ -5,6 +5,7 @@ import (
 	"time"
 	"wkm/config"
 	"wkm/middleware"
+	"wkm/request"
 
 	"wkm/controller"
 	"wkm/repository"
@@ -91,6 +92,8 @@ func main() {
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
+	tr3Service.ExportPembayaranRenewal(request.RangeTanggalRequest{Tgl1: "2024-10-01", Tgl2: "2024-10-31"})
+	fmt.Println("ini data yaa ", tr3Repository.DataPembayaran("2024-10-01", "2024-10-31")[0].User10)
 
 	jakartaTime, _ := time.LoadLocation("Asia/Jakarta")
 	scheduler := cron.New(cron.WithLocation(jakartaTime))
@@ -227,8 +230,13 @@ func main() {
 
 	app.Post("/faktur-3/input-bayar", middleware.DeserializeUser, tr3Controller.UpdateInputBayar)
 	app.Post("/faktur-3/search/will-bayar", middleware.DeserializeUser, tr3Controller.WillBayar)
+	app.Post("/export-data-pembayaran", middleware.DeserializeUser, tr3Controller.ExportPembayaranRenewal)
 
 	app.Get("/merk/master-data/:jenisKendaraan", middleware.DeserializeUser, merkController.MasterData)
+
+	app.Post("/data-renewal", middleware.DeserializeUser, tr3Controller.DataRenewal)
+	app.Post("/export-data-renewal", tr3Controller.ExportDataRenewal)
+	app.Post("/export-data-plat-plus", tr3Controller.ExportDataPlatinumPlus)
 
 	app.Listen(":3001")
 }
