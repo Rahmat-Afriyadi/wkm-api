@@ -27,8 +27,8 @@ type AsuransiService interface {
 	MasterAlasanPending() []entity.MasterAlasanPending
 	MasterAlasanTdkBerminat() []entity.MasterAlasanTdkBerminat
 	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
-	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval
-	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64
+	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, jnsAsuransi int, pageParams int, limit int) []entity.ListApproval
+	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int, jnsAsuransi int) int64
 	AsuransiMstProduk(search string) []entity.MasterProduk
 }
 
@@ -44,11 +44,11 @@ func NewAsuransiService(tR repository.AsuransiRepository, ur repository.UserRepo
 	}
 }
 
-func (s *asuransiService) ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval {
-	return s.trR.ListApprovalTransaksi(username, tgl1, tgl2, search, stsPembelian, pageParams, limit)
+func (s *asuransiService) ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, jnsAsuransi int, pageParams int, limit int) []entity.ListApproval {
+	return s.trR.ListApprovalTransaksi(username, tgl1, tgl2, search, stsPembelian, jnsAsuransi, pageParams, limit)
 }
-func (s *asuransiService) ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64 {
-	return s.trR.ListApprovalTransaksiCount(username, tgl1, tgl2, search, stsPembelian)
+func (s *asuransiService) ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int, jnsAsuransi int) int64 {
+	return s.trR.ListApprovalTransaksiCount(username, tgl1, tgl2, search, stsPembelian, jnsAsuransi)
 }
 func (s *asuransiService) MasterData(search string, dataSource string, sts string, usename string, tgl1 string, tgl2 string, ap string, limit int, pageParams int) []entity.MasterAsuransi {
 	return s.trR.MasterData(search, dataSource, sts, usename, tgl1, tgl2, ap, limit, pageParams)

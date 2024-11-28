@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"sync"
+	"time"
 	"wkm/entity"
 	"wkm/repository"
 	"wkm/request"
@@ -169,6 +170,13 @@ func (tr *tr3Controller) UpdateInputBayar(ctx *fiber.Ctx) error {
 	var body request.InputBayarRequest
 	if err := ctx.BodyParser(&body); err != nil {
 		return ctx.Status(400).JSON(err)
+	}
+	minLimit, err := time.Parse("2006-01-02", "2024-01-01")
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
+	}
+	if body.TglBayar.Before(minLimit) {
+		return ctx.Status(400).JSON(map[string]string{"message": "Mohon mengisi tanggal bayar", "status": "fail"})
 	}
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)

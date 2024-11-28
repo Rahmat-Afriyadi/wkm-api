@@ -69,6 +69,7 @@ func (tr *asuransiController) ListApprovalTransaksi(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	stsPembelian, _ := strconv.Atoi(ctx.Query("sb"))
+	jnsAsuransi, _ := strconv.Atoi(ctx.Query("ja"))
 	userParams := ""
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
@@ -76,7 +77,7 @@ func (tr *asuransiController) ListApprovalTransaksi(ctx *fiber.Ctx) error {
 		userParams = details.Username
 	}
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
-	return ctx.JSON(tr.asuransiService.ListApprovalTransaksi(userParams, tgl1, tgl2, search, stsPembelian, pageParams, limit))
+	return ctx.JSON(tr.asuransiService.ListApprovalTransaksi(userParams, tgl1, tgl2, search, stsPembelian, jnsAsuransi, pageParams, limit))
 }
 
 func (tr *asuransiController) AsuransiMstProduk(ctx *fiber.Ctx) error {
@@ -89,13 +90,14 @@ func (tr *asuransiController) ListApprovalTransaksiCount(ctx *fiber.Ctx) error {
 	tgl2 := ctx.Query("tgl2")
 	search := ctx.Query("search")
 	stsPembelian, _ := strconv.Atoi(ctx.Query("sb"))
+	jnsAsuransi, _ := strconv.Atoi(ctx.Query("ja"))
 	userParams := ""
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	if details.RoleId == 1 {
 		userParams = details.Username
 	}
-	return ctx.JSON(tr.asuransiService.ListApprovalTransaksiCount(userParams, tgl1, tgl2, search, stsPembelian))
+	return ctx.JSON(tr.asuransiService.ListApprovalTransaksiCount(userParams, tgl1, tgl2, search, stsPembelian, jnsAsuransi))
 }
 
 func (tr *asuransiController) MasterDataRekapTele(ctx *fiber.Ctx) error {
