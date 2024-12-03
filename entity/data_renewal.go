@@ -18,7 +18,7 @@ type DataRenewal struct {
 	JnsBeli         	*string     `form:"jns_beli" json:"jns_beli" gorm:"column:jns_beli"`
 	TglAwal         	*time.Time `form:"tgl_awal" json:"tgl_awal" gorm:"column:tgl_awal"`
 	TglAkhir        	*time.Time `form:"tgl_akhir" json:"tgl_akhir" gorm:"column:tgl_akhir"`
-	NoRgk 				string     `form:"no_rgk" json:"no_rgk" gorm:"column:no_rgk"`
+	NoRgk 				*string     `form:"no_rgk" json:"no_rgk" gorm:"column:no_rgk"`
 	NoMsn               string     `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
 	NoTandaTerima       string     `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
 	TglCetakTandaTerima time.Time  `form:"tgl_cetak_tanda_terima" json:"tgl_cetak_tanda_terima" gorm:"column:tgl_cetak_tanda_terima"`
