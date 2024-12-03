@@ -36,6 +36,7 @@ func NewExtendBayarController(aS service.ExtendBayarService) ExtendBayarControll
 	}
 }
 
+// test yaa
 func (tm *extendBayarController) MasterData(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
 	tgl1 := ctx.Query("tgl1")
