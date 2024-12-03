@@ -95,6 +95,7 @@ type ListApproval struct {
 	IdTransaksi  string `json:"id_transaksi" gorm:"column:id_transaksi"`
 	NamaKonsumen string `json:"nm_konsumen" gorm:"column:nm_konsumen"`
 	NoHp         string `json:"no_hp" gorm:"column:no_hp"`
+	JnsAsuransi  uint8  `json:"jns_asuransi" gorm:"column:jns_asuransi"`
 	TglPengajuan string `json:"tgl_beli" gorm:"column:tgl_beli"`
 	Status       string `json:"sts_pembelian" gorm:"column:sts_pembelian"`
 }

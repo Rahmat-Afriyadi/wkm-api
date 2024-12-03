@@ -43,8 +43,8 @@ type AsuransiRepository interface {
 	RekapTeleReport(username string, tgl1 string, tgl2 string) []map[string]interface{}
 
 	DetailApprovalTransaksi(idTrx string) entity.DetailApproval
-	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval
-	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64
+	ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, jnsAsuransi int, pageParams int, limit int) []entity.ListApproval
+	ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int, jnsAsuransi int) int64
 	AsuransiMstProduk(search string) []entity.MasterProduk
 }
 
@@ -71,11 +71,18 @@ func (lR *asuransiRepository) DetailApprovalTransaksi(idTrx string) entity.Detai
 	return detail
 }
 
-func (lR *asuransiRepository) ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, pageParams int, limit int) []entity.ListApproval {
+func (lR *asuransiRepository) ListApprovalTransaksi(username string, tgl1 string, tgl2 string, search string, stsPembelian int, jnsAsuransi int, pageParams int, limit int) []entity.ListApproval {
 	datas := []entity.ListApproval{}
-	query := lR.connG.Table("transaksi t").Joins("inner join produk p on t.id_produk = p.id_produk").Joins("inner join konsumen k on k.nik = t.nik").Joins("left join asuransi a on a.no_msn = t.no_msn").Select("t.id_transaksi, k.nm_konsumen, k.no_hp, t.tgl_beli, t.sts_pembelian").Where("t.tgl_beli >= ? and t.tgl_beli <= ? ", tgl1, tgl2)
+	query := lR.connG.Table("transaksi t").Joins("inner join produk p on t.id_produk = p.id_produk").Joins("inner join konsumen k on k.nik = t.nik").Joins("left join asuransi a on a.no_msn = t.no_msn").Select("t.id_transaksi, k.nm_konsumen, k.no_hp, t.tgl_beli, t.sts_pembelian, p.jns_asuransi").Where("t.tgl_beli >= ? and t.tgl_beli <= ? ", tgl1, tgl2)
+	if search == "undefined" {
+		search = ""
+	}
+	query.Where("k.nm_konsumen like ? or k.no_hp like ?", "%"+search+"%", "%"+search+"%")
 	if username != "" {
 		query.Where("a.kd_user = ?", username)
+	}
+	if jnsAsuransi != 0 && jnsAsuransi < 4 {
+		query.Where("p.jns_asuransi = ?", jnsAsuransi)
 	}
 	if stsPembelian != 0 {
 		query.Where("t.sts_pembelian = ?", stsPembelian)
@@ -84,11 +91,18 @@ func (lR *asuransiRepository) ListApprovalTransaksi(username string, tgl1 string
 	return datas
 }
 
-func (lR *asuransiRepository) ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int) int64 {
+func (lR *asuransiRepository) ListApprovalTransaksiCount(username string, tgl1 string, tgl2 string, search string, stsPembelian int, jnsAsuransi int) int64 {
 	datas := []entity.ListApproval{}
 	query := lR.connG.Table("transaksi t").Joins("inner join produk p on t.id_produk = p.id_produk").Joins("inner join konsumen k on k.nik = t.nik").Joins("left join asuransi a on a.no_msn = t.no_msn").Select("t.id_transaksi").Where("t.tgl_beli >= ? and t.tgl_beli <= ?", tgl1, tgl2)
+	if search == "undefined" {
+		search = ""
+	}
+	query.Where("k.nm_konsumen like ? or k.no_hp like ?", "%"+search+"%", "%"+search+"%")
 	if username != "" {
 		query.Where("a.kd_user = ?", username)
+	}
+	if jnsAsuransi != 0 && jnsAsuransi < 4 {
+		query.Where("p.jns_asuransi = ?", jnsAsuransi)
 	}
 	if stsPembelian != 0 {
 		query.Where("t.sts_pembelian = ?", stsPembelian)
