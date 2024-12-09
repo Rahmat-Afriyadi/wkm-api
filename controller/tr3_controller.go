@@ -149,10 +149,14 @@ func (tr *tr3Controller) EditJenisBayar(ctx *fiber.Ctx) error {
 						success = false
 						continue
 					}
+					if len(v[8]) < 10 {
+						continue
+					}
 					datas = append(datas, repository.ParamsUpdateJenisBayar{
 						NoTandaTerima: v[8],
 						NamaCustomer:  v[1],
 					})
+
 				}
 				tr.tr3Service.UpdateJenisBayar(datas, data.PaymentType, details.Username)
 			}(&wg)
@@ -205,7 +209,6 @@ func (tr *tr3Controller) ExportPembayaranRenewal(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(400).JSON(err)
 	}
-	fmt.Println("ini body ya guys ", request)
 	tr.tr3Service.ExportPembayaranRenewal(request)
 	return ctx.Download("./pembayaran-renewal.xlsx")
 

@@ -106,7 +106,7 @@ func (s *tr3Service) ExportPembayaranRenewal(data request.RangeTanggalRequest) e
 	xlsx := excelize.NewFile()
 
 	// Define the sheet name
-	sheetName := "REKAP"
+	sheetName := "Lap. Pembayaran Renewal All"
 	xlsx.NewSheet(sheetName)
 
 	// Remove the default "Sheet1"
@@ -191,9 +191,13 @@ func (s *tr3Service) ExportPembayaranRenewal(data request.RangeTanggalRequest) e
 
 	startRow := 3
 	for i, record := range dataPembayaran {
+		namaCustomer := record.NmCustomer
+		if record.NamaKtp != "" {
+			namaCustomer += fmt.Sprintf(" (%s)", record.NamaKtp)
+		}
 		dpp := float64(record.MstCard.HargaPokok) / 1.11
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("A%d", i+3), i+1)
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("B%d", i+3), record.NmCustomer)
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("B%d", i+3), namaCustomer)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("C%d", i+3), record.TglBayarRenewalFin.Format("02-Jan-2006"))
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("D%d", i+3), record.MstCard.JnsCard)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("E%d", i+3), record.StsJnsBayar)
@@ -303,8 +307,8 @@ func (s *tr3Service) ExportDataPlatinumPlus(data request.DataRenewalRequest) (en
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), record.NmDlr)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), record.NoKartu)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), NoRgkValue) // NO. RANGKA (manual input can be added later)
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), "HONDA")      // MERK
-		xlsx.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), NmMtrValue)   // TYPE
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), "HONDA")    // MERK
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), NmMtrValue) // TYPE
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), record.NoMsn)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("H%d", i+2), record.NmCustomer)                    // NAMA STNK
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("I%d", i+2), namaKartu)                            // NAMA KARTU

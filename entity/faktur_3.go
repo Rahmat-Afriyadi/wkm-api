@@ -9,6 +9,7 @@ type Faktur3 struct {
 	TglVerifikasi       time.Time  `form:"tgl_verifikasi" json:"tgl_verifikasi" gorm:"column:tgl_verifikasi"`
 	TglExpired          *time.Time `form:"tgl_expired" json:"tgl_expired" gorm:"column:tgl_expired"`
 	NmCustomer          string     `form:"nm_customer11" json:"nm_customer11" gorm:"column:nm_customer11"`
+	NamaKtp             string     `form:"nama_ktp" json:"nama_ktp" gorm:"column:nama_ktp"`
 	NmMtr               string     `form:"nm_mtr" json:"nm_mtr" gorm:"column:nm_mtr"`
 	Telp1               string     `form:"no_telp1" json:"no_telp1" gorm:"column:no_telp1"`
 	Hp1                 string     `form:"no_hp1" json:"no_hp1" gorm:"column:no_hp1"`
