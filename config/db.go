@@ -54,6 +54,7 @@ func GetConnection() (*gorm.DB, *sql.DB) {
 		PrepareStmt:     true,
 		CreateBatchSize: 50,
 	})
+	// test
 	if err != nil {
 		fmt.Println("Error db users ", err)
 		panic(err)
