@@ -18,7 +18,7 @@ type Manfaat struct {
 func (Manfaat) TableName() string {
 	return "manfaat"
 }
-
+// test
 func (u *Manfaat) BeforeCreate(tx *gorm.DB) (err error) {
 	if u.IdManfaat != "" {
 		return
