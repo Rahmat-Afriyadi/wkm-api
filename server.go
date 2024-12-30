@@ -86,6 +86,13 @@ var (
 	extendBayarRepository repository.ExtendBayarRepository = repository.NewExtendBayarRepository(gormDBWkm)
 	extendBayarService    service.ExtendBayarService       = service.NewExtendBayarService(extendBayarRepository)
 	extendBayarController controller.ExtendBayarController = controller.NewExtendBayarController(extendBayarService)
+
+	ticketSupportRepository repository.TicketSupportRepository = repository.NewTicketSupportRepository(conn)
+	ticketSupportService    service.TicketSupportService       = service.NewTicketSupportService(ticketSupportRepository)
+	ticketSupportController controller.TicketSupportController = controller.NewTicketSupportController(ticketSupportService)
+
+	mstService    service.MstService       = service.NewMstService(userRepository,)
+	mstController controller.MstController = controller.NewMstController(mstService)
 )
 
 func main() {
@@ -160,6 +167,7 @@ func main() {
 	app.Get("/mst-mtr/detail-mst-mtr/:id", middleware.DeserializeUser, mstMtrController.DetailMstMtr)
 	app.Post("/mst-mtr/create-mst-mtr", middleware.DeserializeUser, mstMtrController.CreateMstMtr)
 	app.Post("/mst-mtr/update-mst-mtr", middleware.DeserializeUser, mstMtrController.UpdateMstMtr)
+	app.Get("/mst-user-ts", mstController.ListClientUser)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Post("/asuransi/export-report-asuransi-telesales", middleware.DeserializeUser, asuransiController.ExportReportAsuransiTele)
@@ -238,5 +246,11 @@ func main() {
 	app.Post("/export-data-renewal", tr3Controller.ExportDataRenewal)
 	app.Post("/export-data-plat-plus", tr3Controller.ExportDataPlatinumPlus)
 
+	app.Post("/ticket-support/add", middleware.DeserializeUser, ticketSupportController.CreateTicketSupport)
+	app.Post("/ticket-support/edit/:no_ticket", middleware.DeserializeUser, ticketSupportController.EditTicketSupport)
+	app.Get("/ticket-support/view/:no_ticket", middleware.DeserializeUser, ticketSupportController.ViewTicketSupport)
+	app.Get("/ticket-support/user-ticket", middleware.DeserializeUser, ticketSupportController.ListTicketUser)
+	app.Get("/ticket-support/ticket-queue", middleware.DeserializeUser, ticketSupportController.ListTicketQueue)
+	app.Get("/ticket-support/it-ticket", middleware.DeserializeUser, ticketSupportController.ListTicketIT)
 	app.Listen(":3001")
 }

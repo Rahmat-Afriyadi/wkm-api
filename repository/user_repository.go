@@ -3,6 +3,7 @@ package repository
 import (
 	"wkm/entity"
 	"wkm/request"
+	"wkm/response"
 
 	"gorm.io/gorm"
 )
@@ -11,6 +12,7 @@ type UserRepository interface {
 	FindById(id uint32) entity.User
 	FindByUsername(username string) entity.User
 	ResetPassword(data request.ResetPassword)
+	All() []response.ClientUser
 }
 
 type userRepository struct {
@@ -54,4 +56,18 @@ func (lR *userRepository) FindByUsername(username string) entity.User {
 	}
 
 	return user
+}
+
+func (lR *userRepository) All() []response.ClientUser {
+	var data []response.ClientUser
+	var user []entity.User
+	lR.connUser.Where("role_id", 1).Find(&user)
+
+	for _, v := range user {
+		data = append(data, response.ClientUser{
+            Name : v.Name,
+        })
+	}
+
+	return data
 }
