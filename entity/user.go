@@ -9,6 +9,7 @@ type User struct {
 	Permissions []string `gorm:"type:text;->"`
 	RoleId      uint32   `form:"role_id" json:"role_id" gorm:"column:role_id"`
 	Role        Role     `form:"role_id" json:"role_id" gorm:"->;references:ID;foreignKey:ID`
+	Tier        uint32 	 `form:"tier" json:"tier" gorm:"column:tier"`		 
 }
 
 func (User) TableName() string {

@@ -110,7 +110,7 @@ func (aC *authController) SignInUser(c *fiber.Ctx) error {
 	// 	Domain:   "localhost",
 	// })
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "access_token": accessTokenDetails.Token, "name": user.Name, "refresh_token": refreshTokenDetails.Token})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "success", "access_token": accessTokenDetails.Token, "name": user.Name, "refresh_token": refreshTokenDetails.Token, "tier": user.Tier})
 }
 
 func (aC *authController) SignInUserAsuransi(c *fiber.Ctx) error {
