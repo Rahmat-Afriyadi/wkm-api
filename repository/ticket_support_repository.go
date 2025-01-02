@@ -91,7 +91,6 @@ func (ts *ticketSupportRepository) CreateTicketSupport(data request.TicketReques
 }
 
 func (ts *ticketSupportRepository) AssignTicket() (string, error) {
-
 	query := `
         SELECT kd_user
         FROM it_supports
