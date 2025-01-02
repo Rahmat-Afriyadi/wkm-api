@@ -184,7 +184,7 @@ func (s *tr3Service) ExportPembayaranRenewal(data request.RangeTanggalRequest) e
 
 	// Set headers for the sheet, including the new columns
 	xlsx.SetCellValue(sheetName, "A1", "Laporan Pembayaran Renewal All "+tgl1.Format("02-Jan-2006")+" sd "+tgl2.Format("02-Jan-2006"))
-	headers := []string{"NO", "NAMA MEMBER", "TANGGAL BAYAR", "CARD", "JENIS BAYAR", "KD USER", "CONFIRMER", "KURIR", "NO TANDA TERIMA", "ASURANSI", "ASURANSI MOTOR", "HARGA POKOK", "DPP", "PPN"}
+	headers := []string{"NO", "NAMA MEMBER", "TANGGAL BAYAR", "CARD", "JENIS BAYAR", "KD USER", "CONFIRMER", "KURIR", "NO TANDA TERIMA", "ASURANSI", "ASURANSI MOTOR", "HARGA POKOK", "DPP", "PPN", "DPP 11/12"}
 	for i, header := range headers {
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("%s2", string('A'+i)), header)
 	}
@@ -196,6 +196,10 @@ func (s *tr3Service) ExportPembayaranRenewal(data request.RangeTanggalRequest) e
 			namaCustomer += fmt.Sprintf(" (%s)", record.NamaKtp)
 		}
 		dpp := float64(record.MstCard.HargaPokok) / 1.11
+		var dpp1112 float64  = 0
+		if record.TglBayarRenewalFin.Year() >= 2025 {
+			dpp1112 = dpp*(float64(11)/float64(12))
+		}
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("A%d", i+3), i+1)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("B%d", i+3), namaCustomer)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("C%d", i+3), record.TglBayarRenewalFin.Format("02-Jan-2006"))
@@ -210,13 +214,14 @@ func (s *tr3Service) ExportPembayaranRenewal(data request.RangeTanggalRequest) e
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("L%d", i+3), record.MstCard.HargaPokok)
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("M%d", i+3), math.Round(dpp))
 		xlsx.SetCellValue(sheetName, fmt.Sprintf("N%d", i+3), math.Round(dpp*0.11))
+		xlsx.SetCellValue(sheetName, fmt.Sprintf("O%d", i+3), math.Round(dpp1112))
 		startRow += 1
 	}
 
 	xlsx.MergeCell(sheetName, "A1", "N1")
-	xlsx.SetCellStyle(sheetName, "A1", "N1", headerStyle)
-	xlsx.SetCellStyle(sheetName, "A2", "N2", headerStyle)
-	xlsx.SetCellStyle(sheetName, fmt.Sprintf("A%d", 3), fmt.Sprintf("N%d", startRow-1), borderStyle)
+	xlsx.SetCellStyle(sheetName, "A1", "O1", headerStyle)
+	xlsx.SetCellStyle(sheetName, "A2", "O2", headerStyle)
+	xlsx.SetCellStyle(sheetName, fmt.Sprintf("A%d", 3), fmt.Sprintf("O%d", startRow-1), borderStyle)
 
 	if err := xlsx.SaveAs("./pembayaran-renewal.xlsx"); err != nil {
 		return err
