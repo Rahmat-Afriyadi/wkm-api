@@ -12,7 +12,7 @@ import (
 
 type TicketSupportRepository interface {
 	CreateTicketSupport(data request.TicketRequest, username string, tier uint32) (string, string, error)
-	EditTicketSupport(noTicket string, data request.TicketRequest, username string) (string, error)
+	EditTicketSupport(noTicket string, data request.TicketRequest, username string, role uint32) (string, error)
 	ViewTicketSupport(noTicket string) (entity.TicketSupport, error)
 	ListTicketUser(username string) ([]entity.TicketSupport, error)
 	ListTicketIT(username string) ([]entity.TicketSupport, error)
@@ -91,7 +91,6 @@ func (ts *ticketSupportRepository) CreateTicketSupport(data request.TicketReques
 }
 
 func (ts *ticketSupportRepository) AssignTicket() (string, error) {
-	// Query untuk mencari IT support yang ON (status = 1)
 	query := `
         SELECT kd_user
         FROM it_supports
@@ -127,11 +126,11 @@ func (ts *ticketSupportRepository) AssignTicket() (string, error) {
         t.tier_ticket, t.created
         LIMIT 1
     `
-    var noTicket string
-    row := ts.conn.QueryRow(ticketQuery)
-    err = row.Scan(&noTicket)
+	var noTicket string
+	row := ts.conn.QueryRow(ticketQuery)
+	err = row.Scan(&noTicket)
 
-    if err != nil {
+	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("Tidak ada tiket")
 			return "Tidak ada Tiket", nil
@@ -141,11 +140,10 @@ func (ts *ticketSupportRepository) AssignTicket() (string, error) {
 		return "", fmt.Errorf("failed to query Ticket: %w", err)
 	}
 
-
 	now := time.Now()
 	_, err = ts.conn.Exec(`
         UPDATE ticket_support
-        SET kd_user_it = ?, assign_date = ?
+        SET kd_user_it = ?, assign_date = ?, status = 1
         WHERE no_ticket = ?
     `, kdUser, now, noTicket)
 
@@ -193,7 +191,7 @@ func (ts *ticketSupportRepository) GenerateNoTicket() (string, error) {
 	return noTicket, nil
 }
 
-func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data request.TicketRequest, username string) (string, error) {
+func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data request.TicketRequest, username string, role uint32) (string, error) {
 	// Query untuk memperbarui data tiket
 	query := `
         UPDATE ticket_support
@@ -280,6 +278,19 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 				return "", fmt.Errorf("failed to insert new ticket client: %w", err)
 			}
 		}
+	}
+
+	if role == 7 {
+		query := `UPDATE it_supports SET status = 0, last_activity = NOW() WHERE username = ?`
+		_, err := ts.conn.Exec(query, username) // Pastikan 'db' adalah instance koneksi database Anda
+		if err != nil {
+			return "", fmt.Errorf("failed to update it_supports: %w", err)
+		}
+		message, err := ts.AssignTicket()
+		if err != nil {
+			return "", fmt.Errorf("failed to assign ticket: %w", err)
+		}
+		fmt.Println(message)
 	}
 
 	// Kembalikan nil jika sukses
@@ -428,8 +439,8 @@ ORDER BY
 }
 
 func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([]entity.TicketSupport, error) {
-    // Dasar query tanpa filter
-    query := `
+	// Dasar query tanpa filter
+	query := `
         SELECT 
             t.no_ticket, 
             t.kd_user, 
@@ -449,67 +460,66 @@ func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([
         WHERE 1=1
     `
 
-    // Slice untuk menyimpan parameter query
-    var args []interface{}
+	// Slice untuk menyimpan parameter query
+	var args []interface{}
 
-    // Tambahkan filter bulan jika tersedia
-    if month != "" {
-        query += " AND MONTH(t.created) = ?"
-        args = append(args, month)
-    }
+	// Tambahkan filter bulan jika tersedia
+	if month != "" {
+		query += " AND MONTH(t.created) = ?"
+		args = append(args, month)
+	}
 
-    // Tambahkan filter tahun jika tersedia
-    if year != "" {
-        query += " AND YEAR(t.created) = ?"
-        args = append(args, year)
-    }
+	// Tambahkan filter tahun jika tersedia
+	if year != "" {
+		query += " AND YEAR(t.created) = ?"
+		args = append(args, year)
+	}
 
-    // Tambahkan urutan
-    query += `
+	// Tambahkan urutan
+	query += `
         ORDER BY 
             t.status, t.tier_ticket, t.created
     `
 
-    // Eksekusi query dengan parameter
-    rows, err := ts.conn.Query(query, args...)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	// Eksekusi query dengan parameter
+	rows, err := ts.conn.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    // Slice untuk menyimpan hasil query
-    var tickets []entity.TicketSupport
-    for rows.Next() {
-        var ticket entity.TicketSupport
-        err := rows.Scan(
-            &ticket.NoTicket,
-            &ticket.Kd_user,
-            &ticket.Case,
-            &ticket.Status,
-            &ticket.KdUserIt,
-            &ticket.Created,
-            &ticket.Modified,
-            &ticket.ModiBy,
-            &ticket.AssignDate,
-            &ticket.FinishDate,
-            &ticket.JenisTicket,
-            &ticket.TierTicket,
-            &ticket.Solution,
-        )
-        if err != nil {
-            return nil, err
-        }
-        tickets = append(tickets, ticket)
-    }
+	// Slice untuk menyimpan hasil query
+	var tickets []entity.TicketSupport
+	for rows.Next() {
+		var ticket entity.TicketSupport
+		err := rows.Scan(
+			&ticket.NoTicket,
+			&ticket.Kd_user,
+			&ticket.Case,
+			&ticket.Status,
+			&ticket.KdUserIt,
+			&ticket.Created,
+			&ticket.Modified,
+			&ticket.ModiBy,
+			&ticket.AssignDate,
+			&ticket.FinishDate,
+			&ticket.JenisTicket,
+			&ticket.TierTicket,
+			&ticket.Solution,
+		)
+		if err != nil {
+			return nil, err
+		}
+		tickets = append(tickets, ticket)
+	}
 
-    // Periksa error pada rows
-    if err = rows.Err(); err != nil {
-        return nil, err
-    }
+	// Periksa error pada rows
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
 
-    return tickets, nil
+	return tickets, nil
 }
-	
 
 func (ts *ticketSupportRepository) ListTicketIT(username string) ([]entity.TicketSupport, error) {
 	// Query untuk mengambil tiket berdasarkan kd_user dan mengurutkannya

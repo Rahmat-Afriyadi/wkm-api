@@ -20,6 +20,7 @@ type TicketSupportController interface {
 	ListTicketUser(ctx *fiber.Ctx) error
 	ListTicketQueue(ctx *fiber.Ctx) error
 	ListTicketIT(ctx *fiber.Ctx) error
+	// ExportDataTiketSupport(ctx *fiber.Ctx) error
 }
 
 type ticketSupportController struct {
@@ -99,7 +100,7 @@ func (tS *ticketSupportController) EditTicketSupport(ctx *fiber.Ctx) error {
     }
 
     // Panggil service untuk edit ticket
-    noTicket, err := tS.ticketSupportService.EditTicketSupport(noTicket, ticketRequest, details.Username)
+    noTicket,message, err := tS.ticketSupportService.EditTicketSupport(noTicket, ticketRequest, details.Username, details.RoleId)
     if err != nil {
         return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
             "error":   "Failed to edit ticket",
@@ -109,7 +110,7 @@ func (tS *ticketSupportController) EditTicketSupport(ctx *fiber.Ctx) error {
 
     // Kembalikan response sukses
     return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-        "message": "Ticket edited successfully",
+        "message": message,
 		"no_ticket": noTicket,
     })
 }
@@ -184,3 +185,21 @@ func (tS *ticketSupportController) ListTicketIT(ctx *fiber.Ctx) error {
     return ctx.Status(fiber.StatusOK).JSON(tickets)
 }
 
+// func (tS *ticketSupportController) ExportDataTiketSupport(ctx *fiber.Ctx) error {
+// 	var ticketRequest request.TicketRequest
+// 	if err := ctx.BodyParser(&ticketRequest); err != nil {
+// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+// 			"error":   "Invalid request body",
+// 			"details": err.Error(),
+// 		})
+// 	}
+
+// 	// Memanggil service untuk mengekspor data renewal
+// 	if _, err := tS.ticketSupportService.ExportDataTiketSupport(ticketRequest); err != nil {
+// 		return ctx.Status(500).JSON(fiber.Map{"error": "Failed to export data", "details": err.Error()})
+// 	}
+
+// 	return ctx.Download("./Data_Tiket_Support.xlsx")
+// 	// return ctx.Download("./file1.xlsx")
+
+// }
