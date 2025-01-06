@@ -20,7 +20,8 @@ type TicketSupportController interface {
 	ListTicketUser(ctx *fiber.Ctx) error
 	ListTicketQueue(ctx *fiber.Ctx) error
 	ListTicketIT(ctx *fiber.Ctx) error
-	// ExportDataTiketSupport(ctx *fiber.Ctx) error
+	ListItSupport(ctx *fiber.Ctx) error
+	ExportDataTiketSupport(ctx *fiber.Ctx) error
 }
 
 type ticketSupportController struct {
@@ -123,7 +124,6 @@ func (tS *ticketSupportController) ViewTicketSupport(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(ticket)
 }
-
 func (tS *ticketSupportController) ListTicketUser(ctx *fiber.Ctx) error {
     // Mengambil parameter kd_user dari URL
     user := ctx.Locals("user")
@@ -184,22 +184,39 @@ func (tS *ticketSupportController) ListTicketIT(ctx *fiber.Ctx) error {
     // Mengembalikan hasil daftar tiket dengan status OK
     return ctx.Status(fiber.StatusOK).JSON(tickets)
 }
+func (tS *ticketSupportController) ListItSupport(ctx *fiber.Ctx) error {
+	
+	data, err := tS.ticketSupportService.ListItSupport()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(data)
+}
 
-// func (tS *ticketSupportController) ExportDataTiketSupport(ctx *fiber.Ctx) error {
-// 	var ticketRequest request.TicketRequest
-// 	if err := ctx.BodyParser(&ticketRequest); err != nil {
-// 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"error":   "Invalid request body",
-// 			"details": err.Error(),
-// 		})
-// 	}
+func (tS *ticketSupportController) ExportDataTiketSupport(ctx *fiber.Ctx) error {
+    var ticketRequest request.TicketRequest
+    // Parsing the request body to extract month and year
+    if err := ctx.BodyParser(&ticketRequest); err != nil {
+        return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error":   "Invalid request body",
+            "details": err.Error(),
+        })
+    }
 
-// 	// Memanggil service untuk mengekspor data renewal
-// 	if _, err := tS.ticketSupportService.ExportDataTiketSupport(ticketRequest); err != nil {
-// 		return ctx.Status(500).JSON(fiber.Map{"error": "Failed to export data", "details": err.Error()})
-// 	}
+    // Extract month and year from the request body
+    month := ticketRequest.Month
+    year := ticketRequest.Year
 
-// 	return ctx.Download("./Data_Tiket_Support.xlsx")
-// 	// return ctx.Download("./file1.xlsx")
+    // Memanggil service untuk mengekspor data tiket support
+    fileName, err := tS.ticketSupportService.ExportDataTicketSupport(month, year)
+    if err != nil {
+        return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "error":   "Failed to export data",
+            "details": err.Error(),
+        })
+    }
 
-// }
+    // Returning the generated file for download
+    return ctx.Download(fileName)
+}
+

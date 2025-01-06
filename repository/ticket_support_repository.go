@@ -17,6 +17,9 @@ type TicketSupportRepository interface {
 	ListTicketUser(username string) ([]entity.TicketSupport, error)
 	ListTicketIT(username string) ([]entity.TicketSupport, error)
 	ListTicketQueue(month string, year string) ([]entity.TicketSupport, error)
+	ListItSupport() ([]response.ItSupports, error)
+	ExportDataTicketSupport(month int, year int) ([]entity.TicketSupport, error)
+	ExportDataTicketSupportSheet2(month int, year int) ([]entity.TicketSupport, error)
 }
 
 type ticketSupportRepository struct {
@@ -211,6 +214,12 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		*status = 1
 		finishDate = nil
 		Solution = nil
+		location, err := time.LoadLocation("Asia/Jakarta")
+		if err != nil {
+			return "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
+		}
+		now := time.Now().In(location)
+		assignDate = &now
 	} else {
 		kdUserIt = nil
 		status = new(int)
@@ -218,30 +227,24 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		finishDate = nil
 		Solution = nil
 	}
-	if data.KdUserIt != "" {
+
+	if data.Solution != "" {
+		Solution = &data.Solution
 		location, err := time.LoadLocation("Asia/Jakarta")
 		if err != nil {
 			return "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
 		}
 		now := time.Now().In(location)
-		assignDate = &now
-		finishDate = nil
-		Solution = nil
-		if data.Solution != "" {
-			location, err := time.LoadLocation("Asia/Jakarta")
-			if err != nil {
-				return "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
-			}
-			now := time.Now().In(location)
-			finishDate = &now
-			status = new(int)
-			*status = 3
-		}
-	} else if data.Status == 0 || data.Status == 2 {
+		finishDate = &now
+		status = new(int)
+		*status = 3
+	}
+	if data.Status == 0 {
 		assignDate = nil
 		status = new(int)
 		*status = 2
 		finishDate = nil
+		Solution = nil
 	}
 
 	if data.Status == 4 {
@@ -281,7 +284,7 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 	}
 
 	if role == 7 {
-		query := `UPDATE it_supports SET status = 0, last_activity = NOW() WHERE username = ?`
+		query := `UPDATE it_supports SET status = 0, last_activity = NOW() WHERE kd_user = ?`
 		_, err := ts.conn.Exec(query, username) // Pastikan 'db' adalah instance koneksi database Anda
 		if err != nil {
 			return "", fmt.Errorf("failed to update it_supports: %w", err)
@@ -585,3 +588,247 @@ ORDER BY
 
 	return tickets, nil
 }
+
+func (ts *ticketSupportRepository) ListItSupport() ([]response.ItSupports, error) {
+	query := `
+		SELECT kd_user, name FROM it_supports
+	`
+
+	rows, err := ts.conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var data []response.ItSupports
+	for rows.Next() {
+		var ticket response.ItSupports // Menggunakan satu elemen dari ItSupports
+		err := rows.Scan(
+			&ticket.KdUser, // Memindahkan data ke field KdUser
+			&ticket.Name,   // Memindahkan data ke field Name
+		)
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, ticket) // Menambahkan ke slice data
+	}
+
+	// Memeriksa apakah ada error saat membaca hasil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (ts *ticketSupportRepository) ExportDataTicketSupport(month int, year int) ([]entity.TicketSupport, error) {
+	// Modify the query to use parameterized query with placeholders
+	query := `
+        SELECT 
+    t.tier_ticket,
+    COUNT(*) AS total_tickets,
+    SUM(
+        CASE 
+            WHEN t.tier_ticket = 1 THEN
+                CASE 
+                    -- Kondisi Platinum (tier_ticket = 1)
+                    WHEN DAYOFWEEK(t.assign_date) = 6 AND TIME(t.assign_date) >= '12:00:00' THEN 
+                        CASE 
+                            WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL (3 + 1) DAY, INTERVAL '12:00:00' HOUR_SECOND) THEN 1
+                            ELSE 0
+                        END
+                    WHEN TIME(t.assign_date) < '12:00:00' THEN 
+                        CASE 
+                            WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date), INTERVAL '17:00:00' HOUR_SECOND) THEN 1
+                            ELSE 0
+                        END
+                    WHEN TIME(t.assign_date) >= '12:00:00' THEN 
+                        CASE 
+                            WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 1 DAY, INTERVAL '12:00:00' HOUR_SECOND) THEN 1
+                            ELSE 0
+                        END
+                    ELSE 0
+                END
+            WHEN t.tier_ticket = 2 THEN
+                CASE
+                    -- Kondisi jika assign_date di bawah jam 12 siang
+                    WHEN TIME(t.assign_date) < '12:00:00' THEN 
+                        CASE
+                            -- Jika hari Jumat, selesai Senin sebelum jam 12 siang
+                            WHEN DAYOFWEEK(t.assign_date) = 6 THEN 
+                                CASE
+                                    WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 3 DAY, INTERVAL '12:00:00' HOUR_SECOND) THEN 1
+                                    ELSE 0
+                                END
+                            -- Jika bukan Jumat, selesai besok sebelum jam 12 siang
+                            ELSE
+                                CASE
+                                    WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 1 DAY, INTERVAL '12:00:00' HOUR_SECOND) THEN 1
+                                    ELSE 0
+                                END
+                        END
+                    -- Kondisi jika assign_date di atas jam 12 siang
+                    WHEN TIME(t.assign_date) >= '12:00:00' THEN 
+                        CASE
+                            -- Jika hari Jumat, selesai Senin sebelum jam 5 sore
+                            WHEN DAYOFWEEK(t.assign_date) = 6 THEN 
+                                CASE
+                                    WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 3 DAY, INTERVAL '17:00:00' HOUR_SECOND) THEN 1
+                                    ELSE 0
+                                END
+                            -- Jika bukan Jumat, selesai besok sebelum jam 5 sore
+                            ELSE
+                                CASE
+                                    WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 1 DAY, INTERVAL '17:00:00' HOUR_SECOND) THEN 1
+                                    ELSE 0
+                                END
+                        END
+                    ELSE 0
+                END
+            ELSE 0
+        END
+    ) AS actual_tickets
+FROM 
+    db_wkm.ticket_support t
+WHERE 
+    t.status = 3
+    AND MONTH(t.assign_date) = ?
+    AND YEAR(t.assign_date) = ?
+GROUP BY 
+    t.tier_ticket
+ORDER BY 
+    t.tier_ticket
+    `
+
+	rows, err := ts.conn.Query(query, month, year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tickets []entity.TicketSupport
+	for rows.Next() {
+		var ticket entity.TicketSupport
+		err := rows.Scan(
+			&ticket.TierTicket,
+			&ticket.Plan,
+			&ticket.ActualPlan,
+		)
+		if err != nil {
+			return nil, err
+		}
+		tickets = append(tickets, ticket)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tickets, nil
+}
+
+func (ts *ticketSupportRepository) ExportDataTicketSupportSheet2(month int, year int) ([]entity.TicketSupport, error) {
+	// Query dengan join ke tabel it_supports dan grouping berdasarkan kd_user_it dan tier_ticket
+	query := `
+		SELECT 
+			isupp.name,
+			t.tier_ticket,
+			COUNT(*) AS total_tickets,
+			SUM(
+				CASE 
+					WHEN t.tier_ticket = 1 THEN
+						CASE 
+							-- Kondisi Platinum (tier_ticket = 1)
+							WHEN DAYOFWEEK(t.assign_date) = 6 AND TIME(t.assign_date) >= '12:00:00' THEN 
+								CASE 
+									WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL (3 + 1) DAY, INTERVAL '12:00:00' HOUR_SECOND) THEN 1
+									ELSE 0
+								END
+							WHEN TIME(t.assign_date) < '12:00:00' THEN 
+								CASE 
+									WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date), INTERVAL '17:00:00' HOUR_SECOND) THEN 1
+									ELSE 0
+								END
+							WHEN TIME(t.assign_date) >= '12:00:00' THEN 
+								CASE 
+									WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 1 DAY, INTERVAL '12:00:00' HOUR_SECOND) THEN 1
+									ELSE 0
+								END
+							ELSE 0
+						END
+					WHEN t.tier_ticket = 2 THEN
+						CASE
+							-- Kondisi jika assign_date di bawah jam 12 siang
+							WHEN TIME(t.assign_date) < '12:00:00' THEN 
+								CASE
+									WHEN DAYOFWEEK(t.assign_date) = 6 THEN 
+										CASE
+											WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 3 DAY, INTERVAL '12:00:00' HOUR_SECOND) THEN 1
+											ELSE 0
+										END
+									ELSE
+										CASE
+											WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 1 DAY, INTERVAL '12:00:00' HOUR_SECOND) THEN 1
+											ELSE 0
+										END
+								END
+							WHEN TIME(t.assign_date) >= '12:00:00' THEN 
+								CASE
+									WHEN DAYOFWEEK(t.assign_date) = 6 THEN 
+										CASE
+											WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 3 DAY, INTERVAL '17:00:00' HOUR_SECOND) THEN 1
+											ELSE 0
+										END
+									ELSE
+										CASE
+											WHEN t.finish_date <= DATE_ADD(DATE(t.assign_date) + INTERVAL 1 DAY, INTERVAL '17:00:00' HOUR_SECOND) THEN 1
+											ELSE 0
+										END
+								END
+							ELSE 0
+						END
+					ELSE 0
+				END
+			) AS actual_tickets
+		FROM 
+			db_wkm.ticket_support t
+		LEFT JOIN db_wkm.it_supports isupp
+			ON t.kd_user_it = isupp.kd_user
+		WHERE 
+			t.status = 3
+			AND MONTH(t.assign_date) = ?
+			AND YEAR(t.assign_date) = ?
+		GROUP BY 
+			t.kd_user_it, isupp.name, t.tier_ticket
+		ORDER BY 
+			t.kd_user_it, t.tier_ticket
+	`
+
+	rows, err := ts.conn.Query(query, month, year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tickets []entity.TicketSupport
+	for rows.Next() {
+		var ticket entity.TicketSupport
+		err := rows.Scan(
+			&ticket.Name,
+			&ticket.TierTicket,
+			&ticket.Plan,
+			&ticket.ActualPlan,
+		)
+		if err != nil {
+			return nil, err
+		}
+		tickets = append(tickets, ticket)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tickets, nil
+}
+

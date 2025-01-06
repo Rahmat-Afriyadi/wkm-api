@@ -252,5 +252,7 @@ func main() {
 	app.Get("/ticket-support/user-ticket", middleware.DeserializeUser, ticketSupportController.ListTicketUser)
 	app.Get("/ticket-support/ticket-queue", middleware.DeserializeUser, ticketSupportController.ListTicketQueue)
 	app.Get("/ticket-support/it-ticket", middleware.DeserializeUser, ticketSupportController.ListTicketIT)
+	app.Post("/export-rekap-ticket", middleware.DeserializeUser, ticketSupportController.ExportDataTiketSupport)
+	app.Get("/mst-it-support", middleware.DeserializeUser, ticketSupportController.ListItSupport)
 	app.Listen(":3001")
 }
