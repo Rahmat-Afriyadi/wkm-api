@@ -52,7 +52,8 @@ func (tr *tr3Repository) ExportDataRenewalBasic(data request.DataRenewalRequest)
 	query := `
 	SELECT 
 	    twf.kd_dlr, 
-	    twf.nm_dlr, 
+	    twf.nm_dlr,
+		twf.no_rgk,
 	    twf.no_msn, 
 	    twf.no_kartu, 
 	    twf.nm_customer11, 
@@ -97,7 +98,7 @@ func (tr *tr3Repository) ExportDataRenewalBasic(data request.DataRenewalRequest)
 
 	for rows.Next() {
 		var result entity.DataRenewal
-		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr,&result.NoRgk , &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
 			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
 			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
 			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
@@ -119,6 +120,7 @@ func (tr *tr3Repository) ExportDataRenewalGold(data request.DataRenewalRequest) 
 	SELECT 
 	    twf.kd_dlr, 
 	    twf.nm_dlr, 
+		twf.no_rgk,
 	    twf.no_msn, 
 	    twf.no_kartu, 
 	    twf.nm_customer11, 
@@ -163,7 +165,7 @@ func (tr *tr3Repository) ExportDataRenewalGold(data request.DataRenewalRequest) 
 
 	for rows.Next() {
 		var result entity.DataRenewal
-		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoRgk, &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
 			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
 			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
 			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
@@ -185,6 +187,7 @@ func (tr *tr3Repository) ExportDataRenewalPlatinum(data request.DataRenewalReque
 	SELECT 
 	    twf.kd_dlr, 
 	    twf.nm_dlr, 
+		twf.no_rgk,
 	    twf.no_msn, 
 	    twf.no_kartu, 
 	    twf.nm_customer11, 
@@ -230,7 +233,7 @@ func (tr *tr3Repository) ExportDataRenewalPlatinum(data request.DataRenewalReque
 
 	for rows.Next() {
 		var result entity.DataRenewal
-		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoRgk, &result.NoMsn, &result.NoKartu, &result.NmCustomer, &result.NamaKtp,
 			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
 			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
 			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
@@ -252,6 +255,7 @@ func (tr *tr3Repository) ExportDataRenewalPlatinumPlus(data request.DataRenewalR
 	SELECT 
 	    twf.kd_dlr, 
 	    twf.nm_dlr, 
+		twf.no_rgk,
 	    twf.no_msn, 
 	    twf.no_kartu,
 	    twf.nm_mtr,
@@ -297,7 +301,7 @@ func (tr *tr3Repository) ExportDataRenewalPlatinumPlus(data request.DataRenewalR
 
 	for rows.Next() {
 		var result entity.DataRenewal
-		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoMsn, &result.NoKartu, &result.NmMtr, &result.NmCustomer, &result.NamaKtp,
+		if err := rows.Scan(&result.KdDlr, &result.NmDlr, &result.NoRgk, &result.NoMsn, &result.NoKartu, &result.NmMtr, &result.NmCustomer, &result.NamaKtp,
 			&result.JnsCard, &result.TglMohon, &result.Alamat11, &result.Rt1, &result.Rw1,
 			&result.Kel1, &result.Kec1, &result.Kota1, &result.Kodepos1, &result.Alamat,
 			&result.Rt, &result.Rw, &result.Kel, &result.Kec, &result.Kota, &result.Kodepos,
