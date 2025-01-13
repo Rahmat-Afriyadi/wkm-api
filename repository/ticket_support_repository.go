@@ -45,6 +45,10 @@ func (ts *ticketSupportRepository) CreateTicketSupport(data request.TicketReques
 		return "", "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
 	}
 	created := time.Now().In(location)
+	
+	if len(data.Clients) > 0 {
+		tier = 1 // Set tier ke 1 jika ada data di Clients
+	}
 
 	// Query untuk memasukkan data tiket
 	query := `
