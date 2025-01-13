@@ -222,15 +222,6 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		now := time.Now().In(location)
 		assignDate = &now
 
-		_, err = ts.conn.Exec(`
-        UPDATE it_supports
-        SET last_activity = ?, status = 1
-        WHERE kd_user = ?
-    `, now, data.KdUserIt)
-		if err != nil {
-			return "", fmt.Errorf("failed to update it_supports: %w", err)
-		}
-
 	} else {
 		kdUserIt = nil
 		status = new(int)
@@ -249,6 +240,14 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		finishDate = &now
 		status = new(int)
 		*status = 3
+		_, err = ts.conn.Exec(`
+        UPDATE it_supports
+        SET status = 0
+        WHERE kd_user = ?
+    `, data.KdUserIt)
+		if err != nil {
+			return "", fmt.Errorf("failed to update it_supports: %w", err)
+		}
 	}
 	if data.Status == 0 {
 		assignDate = nil
