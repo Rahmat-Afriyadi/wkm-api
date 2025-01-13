@@ -209,6 +209,7 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 	var Solution *string
 
 	if data.KdUserIt != "" {
+
 		kdUserIt = &data.KdUserIt
 		status = new(int)
 		*status = 1
@@ -220,6 +221,16 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		}
 		now := time.Now().In(location)
 		assignDate = &now
+
+		_, err = ts.conn.Exec(`
+        UPDATE it_supports
+        SET last_activity = ?, status = 1
+        WHERE kd_user = ?
+    `, now, data.KdUserIt)
+		if err != nil {
+			return "", fmt.Errorf("failed to update it_supports: %w", err)
+		}
+
 	} else {
 		kdUserIt = nil
 		status = new(int)
@@ -381,7 +392,7 @@ func (ts *ticketSupportRepository) ListTicketUser(username string) ([]entity.Tic
 	query := `
 		SELECT 
     t.no_ticket, 
-    t.kd_user, 
+    u.name AS kd_user, 
     t.case, 
     t.status, 
     t.kd_user_it, 
@@ -395,6 +406,8 @@ func (ts *ticketSupportRepository) ListTicketUser(username string) ([]entity.Tic
     t.solution
 FROM 
     ticket_support t
+JOIN 
+    users.mst_users u ON t.kd_user = u.username
 WHERE 
     t.kd_user = ?
 ORDER BY 
@@ -446,7 +459,7 @@ func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([
 	query := `
         SELECT 
             t.no_ticket, 
-            t.kd_user, 
+            u.name AS kd_user, 
             t.case, 
             t.status, 
             t.kd_user_it, 
@@ -460,6 +473,8 @@ func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([
             t.solution
         FROM 
             ticket_support t
+		JOIN 
+    		users.mst_users u ON t.kd_user = u.username
         WHERE 1=1
     `
 
@@ -529,7 +544,7 @@ func (ts *ticketSupportRepository) ListTicketIT(username string) ([]entity.Ticke
 	query := `
 		SELECT 
     t.no_ticket, 
-    t.kd_user, 
+    u.name AS kd_user, 
     t.case, 
     t.status, 
     t.kd_user_it, 
@@ -543,6 +558,8 @@ func (ts *ticketSupportRepository) ListTicketIT(username string) ([]entity.Ticke
     t.solution
 FROM 
     ticket_support t
+JOIN 
+    users.mst_users u ON t.kd_user = u.username
 WHERE 
     t.kd_user_it = ?
 ORDER BY 
@@ -831,4 +848,3 @@ func (ts *ticketSupportRepository) ExportDataTicketSupportSheet2(month int, year
 
 	return tickets, nil
 }
-
