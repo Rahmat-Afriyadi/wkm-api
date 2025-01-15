@@ -227,15 +227,6 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		Solution = nil
 	}
 
-	if *status == 1 || data.Status == 1 {
-		location, err := time.LoadLocation("Asia/Jakarta")
-		if err != nil {
-			return "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
-		}
-		now := time.Now().In(location)
-		assignDate = &now
-	}
-
 	if data.Solution != "" {
 		Solution = &data.Solution
 		location, err := time.LoadLocation("Asia/Jakarta")
@@ -254,6 +245,14 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		if err != nil {
 			return "", fmt.Errorf("failed to update it_supports: %w", err)
 		}
+	}
+	if *status == 1 || data.Status == 1 {
+		location, err := time.LoadLocation("Asia/Jakarta")
+		if err != nil {
+			return "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
+		}
+		now := time.Now().In(location)
+		assignDate = &now
 	}
 	if data.Status == 0 {
 		assignDate = nil
