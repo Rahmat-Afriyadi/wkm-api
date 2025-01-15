@@ -45,7 +45,7 @@ func (ts *ticketSupportRepository) CreateTicketSupport(data request.TicketReques
 		return "", "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
 	}
 	created := time.Now().In(location)
-	
+
 	if len(data.Clients) > 0 {
 		tier = 1 // Set tier ke 1 jika ada data di Clients
 	}
@@ -213,18 +213,11 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 	var Solution *string
 
 	if data.KdUserIt != "" {
-
 		kdUserIt = &data.KdUserIt
 		status = new(int)
 		*status = 1
 		finishDate = nil
 		Solution = nil
-		location, err := time.LoadLocation("Asia/Jakarta")
-		if err != nil {
-			return "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
-		}
-		now := time.Now().In(location)
-		assignDate = &now
 
 	} else {
 		kdUserIt = nil
@@ -232,6 +225,15 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		*status = 2
 		finishDate = nil
 		Solution = nil
+	}
+
+	if *status == 1 || data.Status == 1 {
+		location, err := time.LoadLocation("Asia/Jakarta")
+		if err != nil {
+			return "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
+		}
+		now := time.Now().In(location)
+		assignDate = &now
 	}
 
 	if data.Solution != "" {
@@ -411,6 +413,8 @@ FROM
     ticket_support t
 JOIN 
     users.mst_users u ON t.kd_user = u.username
+LEFT JOIN
+	it_supports it ON t.kd_user_it = it.kd_user
 WHERE 
     t.kd_user = ?
 ORDER BY 
@@ -465,7 +469,7 @@ func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([
             u.name AS kd_user, 
             t.case, 
             t.status, 
-            t.kd_user_it, 
+            it.name AS kd_user_it,
             t.created, 
             t.modified, 
             t.modi_by, 
@@ -478,6 +482,8 @@ func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([
             ticket_support t
 		JOIN 
     		users.mst_users u ON t.kd_user = u.username
+		LEFT JOIN
+			it_supports it ON t.kd_user_it = it.kd_user
         WHERE 1=1
     `
 
@@ -563,6 +569,8 @@ FROM
     ticket_support t
 JOIN 
     users.mst_users u ON t.kd_user = u.username
+LEFT JOIN
+			it_supports it ON t.kd_user_it = it.kd_user
 WHERE 
     t.kd_user_it = ?
 ORDER BY 
