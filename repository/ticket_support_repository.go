@@ -203,11 +203,11 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 	query := `
         UPDATE ticket_support
     SET ` + "`case`" + ` = ?, jenis_ticket = ?, kd_user_it = ?, solution = ?, 
-    assign_date = ?, finish_date = ?, 
+    finish_date = ?, 
     status = ?, modified = NOW(), modi_by = ?
     WHERE no_ticket = ?
     `
-	var assignDate, finishDate *time.Time
+	var finishDate *time.Time
 	var status *int
 	var kdUserIt *string
 	var Solution *string
@@ -246,16 +246,8 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 			return "", fmt.Errorf("failed to update it_supports: %w", err)
 		}
 	}
-	if *status == 1 || data.Status == 1 {
-		location, err := time.LoadLocation("Asia/Jakarta")
-		if err != nil {
-			return "", fmt.Errorf("failed to load Jakarta timezone: %w", err)
-		}
-		now := time.Now().In(location)
-		assignDate = &now
-	}
+	
 	if data.Status == 0 {
-		assignDate = nil
 		status = new(int)
 		*status = 2
 		finishDate = nil
@@ -272,7 +264,6 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		data.JenisTicket,
 		kdUserIt,
 		Solution,
-		assignDate,
 		finishDate,
 		status,
 		username,
