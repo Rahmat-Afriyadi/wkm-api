@@ -159,8 +159,9 @@ func (lR *produkRepository) MasterData(search string, jenis_asuransi int, limit 
 	if jenis_asuransi != 0 {
 		query.Where("jns_asuransi = ?", strconv.Itoa(jenis_asuransi))
 	}
-	fmt.Println("ini jenis asuransi yaa ", jenis_asuransi)
-	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
+	query.Preload("Vendor", func(db *gorm.DB) *gorm.DB {    
+		return db.Select("id_vendor, nm_vendor")
+	}).Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Find(&datas)
 	return datas
 }
 

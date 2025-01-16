@@ -490,7 +490,6 @@ WHERE
 func (tr *tr3Repository) DataWABlast(request request.DataWaBlastRequest) []entity.DataWaBlast {
 	// format (table, filterTypeKodeKerja1, filterTypeKodeKerja2)
 	// params (awaltenor, akhirtenor, leas1, leas2, kodekerja1, kodekerja2)
-	fmt.Println("ini request ", request)
 	datas := []entity.DataWaBlast{}
 
 	tables := []string{
@@ -509,7 +508,6 @@ func (tr *tr3Repository) DataWABlast(request request.DataWaBlastRequest) []entit
 			// } else {
 			// 	query = fmt.Sprint("select * from (select no_msn, nm_customer11, kd_user, no_yg_dihub_renewal, case when trim(no_telp2) REGEXP '^[+62]|^[0-9]*$' and no_telp2 is not null and no_telp2 not like '021%' then no_telp2 when trim(no_telp1) REGEXP '^[+62]|^[0-9]*$' and no_telp1 is not null and no_telp1 not like '021%' then no_telp1 when trim(no_hp2) REGEXP '^[+62]|^[0-9]*$' and no_hp2 is not null and no_hp2 not like '021%' then no_hp2 when trim(no_hp1) REGEXP '^[+62]|^[0-9]*$' and no_hp1 is not null and no_hp1 not like '021%' then no_hp1 end as no_wa,tgl_akhir_tenor from ", table, " where tgl_akhir_tenor>=? and tgl_akhir_tenor<=? and (no_leas =? or no_leas2=?) and (kode_kerja ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], ") or kode_kerja2 ", request.KodeKerjaFilterType, " (", kodeKerjaInit[:len(kodeKerjaInit)-1], "))) a where no_wa is not null")
 			// }
-			fmt.Println("ini query yaa ", query)
 			statement, err := tr.conn.PrepareContext(ctx, query)
 			if err != nil {
 				fmt.Println(err)
@@ -716,6 +714,7 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 	return entity.Faktur3{}, nil
 }
 
+
 func (tr *tr3Repository) UpdateTglAkhirTenor() {
 	ctx := context.Background()
 	data := []string{"tr_wms_faktur2", "tr_wms_faktur3", "tr_wms_faktur4"}
@@ -728,30 +727,6 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 		}
 
 	}
-
-	// pisah
-
-	// queries := []struct {
-	// 	Query  string
-	// 	Params []interface{}
-	// }{
-	// 	{"update tr_wms_faktur2 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
-	// 	{"update tr_wms_faktur3 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
-	// 	{"update tr_wms_faktur4 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran2 month) where tgl_akhir_tenor is null and angsuran2 not in ('','0','N')", []interface{}{}},
-	// 	{"update tr_wms_faktur2 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
-	// 	{"update tr_wms_faktur3 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
-	// 	{"update tr_wms_faktur4 set tgl_akhir_tenor= date_add(tgl_mohon, interval angsuran month) where tgl_akhir_tenor is null and angsuran not in ('','0','N')", []interface{}{}},
-	// }
-	// // Execute each query
-	// tx := tr.connGorm.Begin()
-	// for _, q := range queries {
-	// 	result := tx.Exec(q.Query, q.Params...)
-	// 	if result.Error != nil {
-	// 		tx.Rollback()
-	// 		fmt.Println("Error:", result.Error)
-	// 	}
-	// }
-	// tx.Commit()
 }
 
 func (lR *tr3Repository) DataPembayaran(tgl1 string, tgl2 string) []entity.Faktur3 {

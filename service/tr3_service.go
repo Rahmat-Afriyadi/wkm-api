@@ -495,7 +495,6 @@ func (s *tr3Service) SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.
 	return s.trR.SearchNoMsnByWa(t)
 }
 func (s *tr3Service) DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBlast {
-	s.trR.UpdateTglAkhirTenor()
 	datas := s.trR.DataWABlast(t)
 
 	xlsx := excelize.NewFile()
