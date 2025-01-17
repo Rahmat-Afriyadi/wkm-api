@@ -245,6 +245,19 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 		if err != nil {
 			return "", fmt.Errorf("failed to update it_supports: %w", err)
 		}
+
+		if role == 7 {
+			query := `UPDATE it_supports SET status = 0, last_activity = NOW() WHERE kd_user = ?`
+			_, err := ts.conn.Exec(query, username) // Pastikan 'db' adalah instance koneksi database Anda
+			if err != nil {
+				return "", fmt.Errorf("failed to update it_supports: %w", err)
+			}
+			message, err := ts.AssignTicket()
+			if err != nil {
+				return "", fmt.Errorf("failed to assign ticket: %w", err)
+			}
+			fmt.Println(message)
+		}
 	}
 	
 	if data.Status == 0 {
@@ -287,19 +300,6 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 				return "", fmt.Errorf("failed to insert new ticket client: %w", err)
 			}
 		}
-	}
-
-	if role == 7 {
-		query := `UPDATE it_supports SET status = 0, last_activity = NOW() WHERE kd_user = ?`
-		_, err := ts.conn.Exec(query, username) // Pastikan 'db' adalah instance koneksi database Anda
-		if err != nil {
-			return "", fmt.Errorf("failed to update it_supports: %w", err)
-		}
-		message, err := ts.AssignTicket()
-		if err != nil {
-			return "", fmt.Errorf("failed to assign ticket: %w", err)
-		}
-		fmt.Println(message)
 	}
 
 	// Kembalikan nil jika sukses
