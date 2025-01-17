@@ -91,16 +91,24 @@ var (
 	ticketSupportService    service.TicketSupportService       = service.NewTicketSupportService(ticketSupportRepository)
 	ticketSupportController controller.TicketSupportController = controller.NewTicketSupportController(ticketSupportService)
 
-	mstService    service.MstService       = service.NewMstService(userRepository,)
+	mstRepository repository.MstRepository = repository.NewMstRepository(gormDBWkm)
+	mstService    service.MstService       = service.NewMstService(userRepository,mstRepository)
 	mstController controller.MstController = controller.NewMstController(mstService)
+
+	customerMtrRepository repository.CustomerMtrRepository = repository.NewCustomerMtrRepository(conn,gormDBWkm)
+	customerMtrService    service.CustomerMtrService       = service.NewCustomerMtrService(customerMtrRepository)
+	customerMtrController controller.CustomerMtrController = controller.NewCustomerMtrController(customerMtrService)
 )
 
 func main() {
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
-	tr3Service.ExportPembayaranRenewal(request.RangeTanggalRequest{Tgl1: "2024-10-01", Tgl2: "2024-10-31"})
-	fmt.Println("ini data yaa ", tr3Repository.DataPembayaran("2024-10-01", "2024-10-31")[0].User10)
+
+	start := time.Now()
+	tr3Repository.DataWABlast(request.DataWaBlastRequest{AwalTenor:"2022-01-01",AkhirTenor:"2022-10-01",NoLeas:"15",KodeKerjaFilterType:"NOt IN",KodeKerja:[]string{"13","07"}})
+	end := time.Now()
+	fmt.Println(end.Sub(start).Seconds())
 
 	jakartaTime, _ := time.LoadLocation("Asia/Jakarta")
 	scheduler := cron.New(cron.WithLocation(jakartaTime))
@@ -167,7 +175,14 @@ func main() {
 	app.Get("/mst-mtr/detail-mst-mtr/:id", middleware.DeserializeUser, mstMtrController.DetailMstMtr)
 	app.Post("/mst-mtr/create-mst-mtr", middleware.DeserializeUser, mstMtrController.CreateMstMtr)
 	app.Post("/mst-mtr/update-mst-mtr", middleware.DeserializeUser, mstMtrController.UpdateMstMtr)
+
 	app.Get("/mst-user-ts", mstController.ListClientUser)
+	app.Get("/mst-agama", mstController.MasterAgama)
+	app.Get("/mst-pendidikan", mstController.MasterPendidikan)
+	app.Get("/mst-tujuan-pakai", mstController.MasterTujuPak)
+	app.Get("/mst-keluar-bln", mstController.MasterKeluarBln)
+	app.Get("/mst-aktivitas-jual", mstController.MasterAktivitasJual)
+	app.Get("/mst-kodepos", middleware.DeserializeUser, kodeposController.MasterDataAll)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Post("/asuransi/export-report-asuransi-telesales", middleware.DeserializeUser, asuransiController.ExportReportAsuransiTele)
@@ -254,5 +269,10 @@ func main() {
 	app.Get("/ticket-support/it-ticket", middleware.DeserializeUser, ticketSupportController.ListTicketIT)
 	app.Post("/export-rekap-ticket", middleware.DeserializeUser, ticketSupportController.ExportDataTiketSupport)
 	app.Get("/mst-it-support", middleware.DeserializeUser, ticketSupportController.ListItSupport)
+
+	app.Get("/customer-mtr/list-ambil-data", middleware.DeserializeUser, customerMtrController.ListAmbilData)
+	app.Post("/customer-mtr/ambil-data", middleware.DeserializeUser, customerMtrController.AmbilData)
+	app.Get("/customer-mtr/show/:no_msn", middleware.DeserializeUser, customerMtrController.Show)
+	app.Post("/customer-mtr/update", middleware.DeserializeUser, customerMtrController.Update)
 	app.Listen(":3001")
 }
