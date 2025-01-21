@@ -495,7 +495,7 @@ func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([
 	// Tambahkan urutan
 	query += `
         ORDER BY 
-            t.status, t.tier_ticket, t.created
+            t.status ASC, t.tier_ticket ASC, t.created DESC
     `
 
 	// Eksekusi query dengan parameter
@@ -564,7 +564,7 @@ LEFT JOIN
 WHERE 
     t.kd_user_it = ?
 ORDER BY 
-    t.status, t.tier_ticket, t.created;
+    t.status ASC, t.tier_ticket ASC, t.assign_date DESC;
 	`
 
 	// Menjalankan query
