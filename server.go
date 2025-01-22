@@ -5,7 +5,6 @@ import (
 	"time"
 	"wkm/config"
 	"wkm/middleware"
-	"wkm/request"
 
 	"wkm/controller"
 	"wkm/repository"
@@ -105,10 +104,6 @@ func main() {
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
 
-	start := time.Now()
-	tr3Repository.DataWABlast(request.DataWaBlastRequest{AwalTenor:"2022-01-01",AkhirTenor:"2022-10-01",NoLeas:"15",KodeKerjaFilterType:"NOt IN",KodeKerja:[]string{"13","07"}})
-	end := time.Now()
-	fmt.Println(end.Sub(start).Seconds())
 
 	jakartaTime, _ := time.LoadLocation("Asia/Jakarta")
 	scheduler := cron.New(cron.WithLocation(jakartaTime))
@@ -167,6 +162,7 @@ func main() {
 	app.Get("/otr/master-data", middleware.DeserializeUser, otrController.MasterData)
 	app.Get("/otr/master-data-count", middleware.DeserializeUser, otrController.MasterDataCount)
 	app.Get("/otr/detail-otr/:id", middleware.DeserializeUser, otrController.DetailOtr)
+	app.Post("/otr/detail-otr-by-no-mtr", middleware.DeserializeUser, otrController.DetailOtrByNoMtr)
 	app.Post("/otr/create-otr", middleware.DeserializeUser, otrController.CreateOtr)
 	app.Post("/otr/update-otr", middleware.DeserializeUser, otrController.UpdateOtr)
 

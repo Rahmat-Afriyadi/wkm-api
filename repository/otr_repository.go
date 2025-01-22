@@ -25,6 +25,7 @@ type OtrRepository interface {
 	MasterData(search string, limit int, pageParams int) []entity.Otr
 	MasterDataCount(search string) int64
 	DetailOtr(id string) entity.Otr
+	DetailOtrByNoMtr(noMtr string, tahun uint16) entity.Otr
 	Update(body entity.Otr) error
 	ListApi()
 }
@@ -42,6 +43,12 @@ func NewOtrRepository(conn *gorm.DB) OtrRepository {
 func (lR *otrRepository) DetailOtr(id string) entity.Otr {
 	otr := entity.Otr{ID: id}
 	lR.conn.Find(&otr)
+	return otr
+}
+
+func (lR *otrRepository) DetailOtrByNoMtr( noMtr string, tahun uint16) entity.Otr {
+	var otr entity.Otr
+	lR.conn.Where("no_mtr = ? and tahun = ?", noMtr, tahun).First(&otr)
 	return otr
 }
 

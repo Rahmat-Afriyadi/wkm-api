@@ -49,6 +49,7 @@ func (tr *customerMtrController) AmbilData(ctx *fiber.Ctx) error {
 func (tr *customerMtrController) Show(ctx *fiber.Ctx) error {
 	noMsn := ctx.Params("no_msn")
 	data := tr.customerMtrService.Show(noMsn)
+	fmt.Println("sho yaa ", data.NoMsn)
 	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
 }
 

@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type CustomerMtr struct {
-	NoMsn                  string     `gorm:"column:no_msn;" json:"no_msn" form:"no_msn"`
+	NoMsn                  string     `gorm:"primary_key;column:no_msn;" json:"no_msn" form:"no_msn"`
 	NmCustomerFkt          string     `gorm:"column:nm_customer_fkt;" json:"nm_customer_fkt" form:"nm_customer_fkt"`
 	KdDlr                  string     `gorm:"column:kd_dlr;" json:"kd_dlr" form:"kd_dlr"`
 	NmDlr                  string     `gorm:"column:nm_dlr;" json:"nm_dlr" form:"nm_dlr"`

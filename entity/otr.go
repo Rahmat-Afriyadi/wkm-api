@@ -16,7 +16,8 @@ type Otr struct {
 	Otr         uint64     `form:"otr" json:"otr" gorm:"column:otr"`
 	OtrApi      string     `form:"On_The_Road" json:"On_The_Road" gorm:"-"`
 	Tahun       uint16     `form:"tahun" json:"tahun" gorm:"column:tahun;unique_index:idx_model,unique"`
-	MstMtr      MstMtr     `json:"mst_mtr" gorm:"references:KdMdl;foreignKey:KdMdl"`
+	NoMtr      	string     	`form:"no_mtr" json:"no_mtr" gorm:"column:no_mtr;unique_index:idx_model,unique"`
+	MstMtr      MstMtr     `json:"mst_mtr" gorm:"references:NoMtr;foreignKey:NoMtr"`
 	CreatedAt   *time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt   *time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }

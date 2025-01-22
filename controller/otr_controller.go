@@ -20,6 +20,7 @@ type OtrController interface {
 	MasterData(ctx *fiber.Ctx) error
 	MasterDataCount(ctx *fiber.Ctx) error
 	DetailOtr(ctx *fiber.Ctx) error
+	DetailOtrByNoMtr(ctx *fiber.Ctx) error
 }
 
 type otrController struct {
@@ -84,5 +85,16 @@ func (tr *otrController) OtrMstNa(ctx *fiber.Ctx) error {
 func (tr *otrController) DetailOtrNa(ctx *fiber.Ctx) error {
 	tahun, _ := strconv.ParseUint(ctx.Query("tahun"), 10, 32)
 	return ctx.JSON(tr.otrService.DetailOtrNa(ctx.Query("motorprice_kode"), uint16(tahun)))
+
+}
+
+func (tr *otrController) DetailOtrByNoMtr(ctx *fiber.Ctx) error {
+	var otr entity.Otr
+	err := ctx.BodyParser(&otr)
+	if err != nil {
+		fmt.Println("error body parser ", err)
+	}
+	fmt.Println("ni body yaa ", otr.Tahun, otr.NoMtr)
+	return ctx.JSON(tr.otrService.DetailOtrByNoMtr(otr.NoMtr, otr.Tahun))
 
 }
