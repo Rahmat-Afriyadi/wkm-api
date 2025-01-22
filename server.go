@@ -183,6 +183,12 @@ func main() {
 	app.Get("/mst-keluar-bln", mstController.MasterKeluarBln)
 	app.Get("/mst-aktivitas-jual", mstController.MasterAktivitasJual)
 	app.Get("/mst-kodepos", middleware.DeserializeUser, kodeposController.MasterDataAll)
+	app.Post("/mst-script/create", middleware.DeserializeUser, mstController.CreateScript)
+	app.Post("/mst-script/update/:id", middleware.DeserializeUser, mstController.UpdateScript)
+	app.Get("/mst-script/detail/:id", mstController.ViewScript)
+	app.Get("/mst-script/all", mstController.ListAllScript)
+	app.Get("/mst-script/active", mstController.MasterScript)
+
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Post("/asuransi/export-report-asuransi-telesales", middleware.DeserializeUser, asuransiController.ExportReportAsuransiTele)

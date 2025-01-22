@@ -102,7 +102,7 @@ func (ts *ticketSupportRepository) AssignTicket() (string, error) {
         SELECT kd_user
         FROM it_supports
         WHERE status = 0
-        ORDER BY last_activity DESC
+        ORDER BY last_activity ASC
         LIMIT 1
     `
 	var kdUser string
@@ -408,7 +408,7 @@ LEFT JOIN
 WHERE 
     t.kd_user = ?
 ORDER BY 
-    t.status, t.created;
+    t.status ASC, t.created DESC;
 	`
 
 	// Menjalankan query
