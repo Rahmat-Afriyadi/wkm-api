@@ -105,8 +105,9 @@ func (mR *mstRepository) UpdateScript(id string, data entity.MstScript, username
 	}
 	now := time.Now()
 	// Perbarui entitas dengan data baru
-	script.Script = data.Script
-	script.IsActive = data.IsActive
+	script.Title=data.Title
+	script.Script= data.Script
+	script.IsActive= data.IsActive
 	script.Modified= &now
 	script.ModiBy = username
 	

@@ -97,6 +97,10 @@ var (
 	customerMtrRepository repository.CustomerMtrRepository = repository.NewCustomerMtrRepository(conn,gormDBWkm)
 	customerMtrService    service.CustomerMtrService       = service.NewCustomerMtrService(customerMtrRepository)
 	customerMtrController controller.CustomerMtrController = controller.NewCustomerMtrController(customerMtrService)
+
+	asuransiPARepository repository.AsuransiPARepository = repository.NewAsuransiPARepository(conn)
+	asuransiPAService    service.AsuransiPAService       = service.NewAsuransiPAService(asuransiPARepository)
+	asuransiPAController controller.AsuransiPAController = controller.NewAsuransiPAController(asuransiPAService)
 )
 
 func main() {
@@ -276,5 +280,8 @@ func main() {
 	app.Post("/customer-mtr/ambil-data", middleware.DeserializeUser, customerMtrController.AmbilData)
 	app.Get("/customer-mtr/show/:no_msn", middleware.DeserializeUser, customerMtrController.Show)
 	app.Post("/customer-mtr/update", middleware.DeserializeUser, customerMtrController.Update)
+
+	app.Post("asuransi-pa/create", middleware.DeserializeUser, asuransiPAController.CreateAsuransiPA)
+	app.Post("asuransi-pa/update/:id", middleware.DeserializeUser, asuransiPAController.UpdateAsuransiPA)
 	app.Listen(":3001")
 }

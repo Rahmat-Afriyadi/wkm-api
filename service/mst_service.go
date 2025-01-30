@@ -71,6 +71,7 @@ func (ur *mstService) ViewScript(id string) (entity.MstScript, error) {
 	}
 
 	res := entity.MstScript{
+		Id: data.Id,
 		Title:    data.Title,
 		Script:   data.Script,
 		IsActive: data.IsActive,
