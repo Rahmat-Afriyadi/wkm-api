@@ -94,7 +94,6 @@ func (tr *otrController) DetailOtrByNoMtr(ctx *fiber.Ctx) error {
 	if err != nil {
 		fmt.Println("error body parser ", err)
 	}
-	fmt.Println("ni body yaa ", otr.Tahun, otr.NoMtr)
 	return ctx.JSON(tr.otrService.DetailOtrByNoMtr(otr.NoMtr, otr.Tahun))
 
 }

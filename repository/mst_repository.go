@@ -2,10 +2,12 @@ package repository
 
 import (
 	"fmt"
-	"wkm/entity"
 	"time"
 
 	// "wkm/request"
+	"log"
+	"wkm/entity"
+	"wkm/response"
 
 	"gorm.io/gorm"
 )
@@ -21,6 +23,10 @@ type MstRepository interface {
 	MasterScript() []entity.MstScript
 	ListAllScript() []entity.MstScript
 	ViewScript(id string) (entity.MstScript, error)
+	MasterAlasanTdkMembership() []entity.MstAlasanTdkMembership
+	MasterProdukMembership() []response.Choices
+	MasterPromoTransfer() []response.Choices
+	MasterHobbies() []response.Choices
 }
 
 type mstRepository struct {
@@ -118,4 +124,107 @@ func (mR *mstRepository) UpdateScript(id string, data entity.MstScript, username
 	}
 
 	return nil
+}
+func (r *mstRepository) MasterAlasanTdkMembership() []entity.MstAlasanTdkMembership {
+	var data []entity.MstAlasanTdkMembership 
+	r.conn.Find(&data)
+	return data
+}
+
+func (r *mstRepository) MasterProdukMembership() []response.Choices {
+	db, err := r.conn.DB()
+	if err != nil {
+		log.Fatal("Error connecting to database:", err)
+	}
+
+	// Ensure the connection is established
+	if err := db.Ping(); err != nil {
+		log.Fatal("Database not reachable:", err)
+	}
+
+	// Define the query
+	query := "SELECT kd_card AS kode, keterangan AS value FROM db_wkm.mst_card WHERE status = '1' AND cat_card = 'R'"
+
+	// Execute query
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal("Error executing query:", err)
+	}
+
+	// Process query results
+	var cards []response.Choices
+	for rows.Next() {
+		var card response.Choices
+		if err := rows.Scan(&card.Value, &card.Name); err != nil {
+			log.Fatal("Error scanning row:", err)
+		}
+		cards = append(cards, card)
+	}
+	return cards
+}
+
+func (r *mstRepository) MasterPromoTransfer() []response.Choices {
+	db, err := r.conn.DB()
+	if err != nil {
+		log.Fatal("Error connecting to database:", err)
+	}
+
+	// Ensure the connection is established
+	if err := db.Ping(); err != nil {
+		log.Fatal("Database not reachable:", err)
+	}
+
+	// Define the query
+	query := "select id as 'kode',nama_promo as 'value' from db_wkm.mst_promo where sts='1'"
+
+	// Execute query
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal("Error executing query:", err)
+	}
+
+	// Process query results
+	var cards []response.Choices
+	for rows.Next() {
+		var card response.Choices
+		if err := rows.Scan(&card.Value, &card.Name); err != nil {
+			log.Fatal("Error scanning row:", err)
+		}
+		cards = append(cards, card)
+	}
+	return cards
+}
+
+func (r *mstRepository) MasterHobbies() []response.Choices {
+	db, err := r.conn.DB()
+	if err != nil {
+		log.Fatal("Error connecting to database:", err)
+	}
+
+	// Ensure the connection is established
+	if err := db.Ping(); err != nil {
+		log.Fatal("Database not reachable:", err)
+	}
+
+	// Define the query
+	query := "select kode_hobby as 'kode',hobby as 'value' from db_wkm.hobby"
+
+	// Execute query
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal("Error executing query:", err)
+	}
+
+	// Process query results
+	var cards []response.Choices
+	for rows.Next() {
+		var card response.Choices
+		if err := rows.Scan(&card.Value, &card.Name); err != nil {
+			log.Fatal("Error scanning row:", err)
+		}
+		cards = append(cards, card)
+	}
+
+	fmt.Println("ini hobbies yaa ", cards)
+	return cards
 }

@@ -189,6 +189,10 @@ func main() {
 	app.Get("/mst-script/all", mstController.ListAllScript)
 	app.Get("/mst-script/active", mstController.MasterScript)
 
+	app.Get("/mst-alasan-tdk-membership", middleware.DeserializeUser, mstController.MasterAlasanTdkMembership)
+	app.Get("/mst-produk-membership", middleware.DeserializeUser, mstController.MasterProdukMembership)
+	app.Get("/mst-promo-transfer", middleware.DeserializeUser, mstController.MasterPromoTransfer)
+	app.Get("/mst-hobbies", middleware.DeserializeUser, mstController.MasterHobbies)
 
 	app.Post("/asuransi/export-report-asuransi", middleware.DeserializeUser, asuransiController.ExportReportAsuransi)
 	app.Post("/asuransi/export-report-asuransi-telesales", middleware.DeserializeUser, asuransiController.ExportReportAsuransiTele)
@@ -283,5 +287,6 @@ func main() {
 
 	app.Post("asuransi-pa/create", middleware.DeserializeUser, asuransiPAController.CreateAsuransiPA)
 	app.Post("asuransi-pa/update/:id", middleware.DeserializeUser, asuransiPAController.UpdateAsuransiPA)
+	app.Post("/customer-mtr/update/oke", middleware.DeserializeUser, customerMtrController.UpdateOkeMembership)
 	app.Listen(":3001")
 }

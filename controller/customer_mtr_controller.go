@@ -14,6 +14,7 @@ type CustomerMtrController interface {
 	AmbilData(ctx *fiber.Ctx) error
 	Show(ctx *fiber.Ctx) error
 	Update(ctx *fiber.Ctx) error
+	UpdateOkeMembership(ctx *fiber.Ctx) error
 }
 
 type customerMtrController struct {
@@ -60,4 +61,17 @@ func (tr *customerMtrController) Update(ctx *fiber.Ctx) error {
 	}
 	
 	return nil
+}
+
+func (tr *customerMtrController) UpdateOkeMembership(ctx *fiber.Ctx) error {
+	var request entity.CustomerMtr
+	if err := ctx.BodyParser(&request); err != nil {
+		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})
+	}
+	customer, err := tr.customerMtrService.UpdateOkeMembership(request)
+	if err != nil {
+		return  ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})
+ 
+	}
+	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":customer})
 }

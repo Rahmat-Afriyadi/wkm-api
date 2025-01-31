@@ -15,6 +15,10 @@ type MstService interface {
 	MasterPendidikan() []entity.MstPendidikan
 	MasterKeluarBln() []entity.MstKeluarBln
 	MasterAktivitasJual() []entity.MstAktivitasJual
+	MasterAlasanTdkMembership() []entity.MstAlasanTdkMembership
+	MasterProdukMembership() []response.Choices
+	MasterPromoTransfer() []response.Choices
+	MasterHobbies() []response.Choices
 	CreateScript(data entity.MstScript, username string) error
 	UpdateScript(id string, data entity.MstScript, username string) error
 	MasterScript() []entity.MstScript
@@ -101,3 +105,23 @@ func (ur *mstService) UpdateScript(id string, data entity.MstScript, username st
 
 	return nil
 }
+func (ur *mstService) MasterAlasanTdkMembership() []entity.MstAlasanTdkMembership {
+	data:= ur.mR.MasterAlasanTdkMembership()
+	return data 
+}
+
+func (ur *mstService) MasterProdukMembership() []response.Choices {
+	data:= ur.mR.MasterProdukMembership()
+	return data 
+}
+
+func (ur *mstService) MasterPromoTransfer() []response.Choices {
+	data:= ur.mR.MasterPromoTransfer()
+	return data 
+}
+
+func (ur *mstService) MasterHobbies() []response.Choices {
+	data:= ur.mR.MasterHobbies()
+	return data 
+}
+

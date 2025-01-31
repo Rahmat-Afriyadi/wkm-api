@@ -82,23 +82,23 @@ func (aC *authController) SignInUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"status": "fail", "message": err.Error()})
 	}
 
-	c.Cookie(&fiber.Cookie{
-		Name:     "access_token",
-		Value:    *accessTokenDetails.Token,
-		Path:     "/",
-		MaxAge:   15 * 60,
-		Secure:   false,
-		HTTPOnly: true,
-	})
+	// c.Cookie(&fiber.Cookie{
+	// 	Name:     "access_token",
+	// 	Value:    *accessTokenDetails.Token,
+	// 	Path:     "/",
+	// 	MaxAge:   15 * 60,
+	// 	Secure:   false,
+	// 	HTTPOnly: true,
+	// })
 
-	c.Cookie(&fiber.Cookie{
-		Name:     "refresh_token",
-		Value:    *refreshTokenDetails.Token,
-		Path:     "/",
-		MaxAge:   60 * 60,
-		Secure:   false,
-		HTTPOnly: true,
-	})
+	// c.Cookie(&fiber.Cookie{
+	// 	Name:     "refresh_token",
+	// 	Value:    *refreshTokenDetails.Token,
+	// 	Path:     "/",
+	// 	MaxAge:   60 * 60,
+	// 	Secure:   false,
+	// 	HTTPOnly: true,
+	// })
 
 	// c.Cookie(&fiber.Cookie{
 	// 	Name:     "logged_in",

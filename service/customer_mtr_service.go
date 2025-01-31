@@ -9,6 +9,7 @@ type CustomerMtrService interface {
 	ListAmbilData() []entity.Faktur3
 	AmbilData(no_msn string, kd_user string) error
 	Show(no_msn string) entity.CustomerMtr
+	UpdateOkeMembership(customer entity.CustomerMtr) (entity.CustomerMtr,error)
 }
 
 type customerMtrService struct {
@@ -31,5 +32,8 @@ func (cR *customerMtrService) AmbilData(no_msn string, kd_user string) error {
 
 func (cR *customerMtrService) Show(no_msn string) entity.CustomerMtr {
 	return cR.cR.Show(no_msn)
+}
+func (cR *customerMtrService) UpdateOkeMembership(customer entity.CustomerMtr) (entity.CustomerMtr,error) {
+	return cR.cR.UpdateOkeMembership(customer)
 }
 

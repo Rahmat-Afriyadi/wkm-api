@@ -5,6 +5,8 @@ import (
 	// "strconv"
 	"wkm/entity"
 	// "wkm/request"
+	// "wkm/entity"
+
 	"wkm/response"
 	"wkm/service"
 
@@ -23,6 +25,10 @@ type MstController interface {
 	MasterScript(ctx *fiber.Ctx) error
 	ListAllScript(ctx *fiber.Ctx) error
 	ViewScript(ctx *fiber.Ctx) error
+	MasterAlasanTdkMembership(ctx *fiber.Ctx) error
+	MasterProdukMembership(ctx *fiber.Ctx) error
+	MasterPromoTransfer(ctx *fiber.Ctx) error
+	MasterHobbies(ctx *fiber.Ctx) error
 }
 
 type mstController struct {
@@ -201,3 +207,28 @@ func (mS *mstController) ViewScript(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(res)
 }
 
+
+func (mS *mstController) MasterAlasanTdkMembership(ctx *fiber.Ctx) error {
+    data := mS.mstService.MasterAlasanTdkMembership()
+	var res []response.Choices
+	for _, v := range data {
+		res = append(res, response.Choices{Name:v.Alasan, Value:v.AlasanTdkMembership})
+	}
+    return ctx.Status(fiber.StatusOK).JSON(res)
+}
+
+func (mS *mstController) MasterProdukMembership(ctx *fiber.Ctx) error {
+    data := mS.mstService.MasterProdukMembership()
+	
+    return ctx.Status(fiber.StatusOK).JSON(data)
+}
+func (mS *mstController) MasterPromoTransfer(ctx *fiber.Ctx) error {
+    data := mS.mstService.MasterPromoTransfer()
+	
+    return ctx.Status(fiber.StatusOK).JSON(data)
+}
+
+func (mS *mstController) MasterHobbies(ctx *fiber.Ctx) error {
+    data := mS.mstService.MasterHobbies()
+    return ctx.Status(fiber.StatusOK).JSON(data)
+}
