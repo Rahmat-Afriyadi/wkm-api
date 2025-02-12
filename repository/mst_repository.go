@@ -225,6 +225,5 @@ func (r *mstRepository) MasterHobbies() []response.Choices {
 		cards = append(cards, card)
 	}
 
-	fmt.Println("ini hobbies yaa ", cards)
 	return cards
 }

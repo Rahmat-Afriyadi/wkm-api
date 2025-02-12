@@ -94,7 +94,7 @@ var (
 	mstService    service.MstService       = service.NewMstService(userRepository,mstRepository)
 	mstController controller.MstController = controller.NewMstController(mstService)
 
-	customerMtrRepository repository.CustomerMtrRepository = repository.NewCustomerMtrRepository(conn,gormDBWkm)
+	customerMtrRepository repository.CustomerMtrRepository = repository.NewCustomerMtrRepository(conn,gormDBWkm,connGormAsuransi)
 	customerMtrService    service.CustomerMtrService       = service.NewCustomerMtrService(customerMtrRepository)
 	customerMtrController controller.CustomerMtrController = controller.NewCustomerMtrController(customerMtrService)
 
@@ -156,6 +156,7 @@ func main() {
 	app.Post("/edit-jenis-bayar", middleware.DeserializeUser, tr3Controller.EditJenisBayar)
 	app.Get("/leas/master-data", middleware.DeserializeUser, leasController.MasterData)
 	app.Get("/kerja/master-data", middleware.DeserializeUser, kerjaController.MasterData)
+	app.Get("/kerja/master-data/choices", middleware.DeserializeUser, kerjaController.MasterDataChoices)
 
 	app.Post("/approval/update", middleware.DeserializeUser, approvalController.Update)
 	app.Get("/mokita/token", middleware.DeserializeUser, approvalController.MokitaToken)
@@ -280,6 +281,8 @@ func main() {
 	app.Post("/export-rekap-ticket", middleware.DeserializeUser, ticketSupportController.ExportDataTiketSupport)
 	app.Get("/mst-it-support", middleware.DeserializeUser, ticketSupportController.ListItSupport)
 
+	app.Get("/customer-mtr/master-data", middleware.DeserializeUser, customerMtrController.MasterData)
+	app.Get("/customer-mtr/master-data-count", middleware.DeserializeUser, customerMtrController.MasterDataCount)
 	app.Get("/customer-mtr/list-ambil-data", middleware.DeserializeUser, customerMtrController.ListAmbilData)
 	app.Post("/customer-mtr/ambil-data", middleware.DeserializeUser, customerMtrController.AmbilData)
 	app.Get("/customer-mtr/show/:no_msn", middleware.DeserializeUser, customerMtrController.Show)

@@ -13,6 +13,7 @@ type CustomerMtr struct {
 	NoTelpFkt              string     `gorm:"column:no_telp_fkt;" json:"no_telp_fkt" form:"no_telp_fkt"`
 	KetNoTelpFkt           string     `gorm:"column:ket_no_telp_fkt;" json:"ket_no_telp_fkt" form:"ket_no_telp_fkt"`
 	NoHpFkt                string     `gorm:"column:no_hp_fkt;" json:"no_hp_fkt" form:"no_hp_fkt"`
+	
 	KetNoHpFkt             string     `gorm:"column:ket_no_hp_fkt;" json:"ket_no_hp_fkt" form:"ket_no_hp_fkt"`
 	AlamatFkt              string     `gorm:"column:alamat_fkt;" json:"alamat_fkt" form:"alamat_fkt"`
 	KelFkt                 string     `gorm:"column:kel_fkt;" json:"kel_fkt" form:"kel_fkt"`
@@ -71,6 +72,7 @@ type CustomerMtr struct {
 	EmailWkm             string     `gorm:"column:email_wkm;" json:"email_wkm" form:"email_wkm"`
 	AlamatWkm            string     `gorm:"column:alamat_wkm;" json:"alamat_wkm" form:"alamat_wkm"`
 	KetAlamatWkm         string     `gorm:"column:ket_alamat_wkm;" json:"ket_alamat_wkm" form:"ket_alamat_wkm"`
+	KetNoInfo         string     `gorm:"column:ket_wa_info;" json:"ket_wa_info" form:"ket_wa_info"`
 	RtWkm                string     `gorm:"column:rt_wkm;" json:"rt_wkm" form:"rt_wkm"`
 	RwWkm                string     `gorm:"column:rw_wkm;" json:"rw_wkm" form:"rw_wkm"`
 	KelWkm               string     `gorm:"column:kel_wkm;" json:"kel_wkm" form:"kel_wkm"`
@@ -120,12 +122,14 @@ type CustomerMtr struct {
 	AlasanTdkAsuransiMtr  string     `gorm:"column:alasan_tdk_asuransi_mtr;" json:"alasan_tdk_asuransi_mtr" form:"alasan_tdk_asuransi_mtr"`
 	AlasanTdkAsuransiMtrDetail string   `gorm:"column:alasan_tdk_asuransi_mtr_detail;" json:"alasan_tdk_asuransi_mtr_detail" form:"alasan_tdk_asuransi_mtr_detail"`
 	AlasanPendingAsuransiMtr string     `gorm:"column:alasan_pending_asuransi_mtr;" json:"alasan_pending_asuransi_mtr" form:"alasan_pending_asuransi_mtr"`
-	NoYgDihubTs          string     `gorm:"column:no_yg_dihub_ts;" json:"no_yg_d ihub_ts" form:"no_yg_dihub_ts"`
-	RenewalKe             string     `gorm:"column:renewal_ke;" json:"renewal_ke" form:"renewal_ke"`
+	NoYgDihubTs          string     `gorm:"column:no_yg_dihub_ts;" json:"no_yg_dihub_ts" form:"no_yg_dihub_ts"`
+	RenewalKe             uint32     `gorm:"column:renewal_ke;" json:"renewal_ke" form:"renewal_ke"`
 	AngsuranWkm           string     `gorm:"column:angsuran_wkm;" json:"angsuran_wkm" form:"angsuran_wkm"`
 	NoLeasWkm             string     `gorm:"column:no_leas_wkm;" json:"no_leas_wkm" form:"no_leas_wkm"`
 	NmLeasWkm             string     `gorm:"column:nm_leas_wkm;" json:"nm_leas_wkm" form:"nm_leas_wkm"`
 	TglProspectMembership  *time.Time `gorm:"column:tgl_prospect_membership;" json:"tgl_prospect_membership" form:"tgl_prospect_membership"`
+	TglProspectAsuransiPa  *time.Time `gorm:"column:tgl_prospect_asuransi_pa;" json:"tgl_prospect_asuransi_pa" form:"tgl_prospect_asuransi_pa"`
+	TglProspectAsuransiMtr *time.Time `gorm:"column:tgl_prospect_asuransi_mtr;" json:"tgl_prospect_asuransi_mtr" form:"tgl_prospect_asuransi_mtr"`
 	SmFacebookWkm         string     `gorm:"column:sm_facebook_wkm;" json:"sm_facebook_wkm" form:"sm_facebook_wkm"`
 	SmInstagramWkm        string     `gorm:"column:sm_instagram_wkm;" json:"sm_instagram_wkm" form:"sm_instagram_wkm"`
 	SmTwitterWkm          string     `gorm:"column:sm_twitter_wkm;" json:"sm_twitter_wkm" form:"sm_twitter_wkm"`
@@ -134,6 +138,13 @@ type CustomerMtr struct {
 	KdAktivitasJualMembership string  `gorm:"column:kd_aktivitas_jual_membership;" json:"kd_aktivitas_jual_membership" form:"kd_aktivitas_jual_membership"`
 	JmlCallMembership      uint32     `gorm:"column:jml_call_membership;" json:"jml_call_membership" form:"jml_call_membership"`
 	Modified               *time.Time `gorm:"column:modified;" json:"modified" form:"modified"`
+
+
+	Memberships           []Membership    `form:"memberships" json:"memberships" gorm:"foreignKey:NoMSN"`
+	AsuransiPa            AsuransiPA    `form:"asuransi_pa" json:"asuransi_pa" gorm:"foreignKey:NoMSN"`
+	AsuransiMtr           AsuransiMtr    `form:"asuransi_mtr" json:"asuransi_mtr" gorm:"foreignKey:NoMSN"`
+
+
 }
 
 func (CustomerMtr) TableName() string {

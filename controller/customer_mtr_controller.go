@@ -2,7 +2,9 @@ package controller
 
 import (
 	"fmt"
+	"strconv"
 	"wkm/entity"
+	"wkm/request"
 	"wkm/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,6 +12,8 @@ import (
 
 
 type CustomerMtrController interface {
+	MasterData(ctx *fiber.Ctx) error
+	MasterDataCount(ctx *fiber.Ctx) error
 	ListAmbilData(ctx *fiber.Ctx) error
 	AmbilData(ctx *fiber.Ctx) error
 	Show(ctx *fiber.Ctx) error
@@ -27,6 +31,26 @@ func NewCustomerMtrController(aS service.CustomerMtrService) CustomerMtrControll
 	}
 }
 
+func (tr *customerMtrController) MasterData(ctx *fiber.Ctx) error {
+	search := ctx.Query("search")
+	sts := ctx.Query("sts")
+	jns := ctx.Query("jns")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
+	data := tr.customerMtrService.MasterData(search, sts, jns, details.Username, limit, pageParams)
+	return ctx.Status(200).JSON(data)
+}
+func (tr *customerMtrController) MasterDataCount(ctx *fiber.Ctx) error {
+	search := ctx.Query("search")
+	sts := ctx.Query("sts")
+	jns := ctx.Query("jns")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	data := tr.customerMtrService.MasterDataCount(search, sts, jns, details.Username)
+	return ctx.Status(200).JSON(data)
+}
 func (tr *customerMtrController) ListAmbilData(ctx *fiber.Ctx) error {
 	data := tr.customerMtrService.ListAmbilData()
 	return ctx.Status(200).JSON(fiber.Map{"status":"success","data": data})
@@ -36,7 +60,6 @@ func (tr *customerMtrController) AmbilData(ctx *fiber.Ctx) error {
 	var request entity.Faktur3
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	fmt.Println("ini user ", details.RoleId)
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})
 	}
@@ -50,7 +73,6 @@ func (tr *customerMtrController) AmbilData(ctx *fiber.Ctx) error {
 func (tr *customerMtrController) Show(ctx *fiber.Ctx) error {
 	noMsn := ctx.Params("no_msn")
 	data := tr.customerMtrService.Show(noMsn)
-	fmt.Println("sho yaa ", data.NoMsn)
 	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
 }
 
@@ -64,10 +86,15 @@ func (tr *customerMtrController) Update(ctx *fiber.Ctx) error {
 }
 
 func (tr *customerMtrController) UpdateOkeMembership(ctx *fiber.Ctx) error {
-	var request entity.CustomerMtr
+	var request request.CustomerMtr
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})
 	}
+	fmt.Println("ini request ", request.TglProspectMembership)
+	user := ctx.Locals("user")
+	details,_:= user.(entity.User)
+
+	request.KdUserTs = details.Username
 	customer, err := tr.customerMtrService.UpdateOkeMembership(request)
 	if err != nil {
 		return  ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})

@@ -3,13 +3,16 @@ package service
 import (
 	"wkm/entity"
 	"wkm/repository"
+	"wkm/request"
 )
 
 type CustomerMtrService interface {
+	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
+	MasterDataCount(search string, sts string, jns string, username string) int64
 	ListAmbilData() []entity.Faktur3
 	AmbilData(no_msn string, kd_user string) error
 	Show(no_msn string) entity.CustomerMtr
-	UpdateOkeMembership(customer entity.CustomerMtr) (entity.CustomerMtr,error)
+	UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr,error)
 }
 
 type customerMtrService struct {
@@ -22,18 +25,25 @@ func NewCustomerMtrService(cR repository.CustomerMtrRepository) CustomerMtrServi
 	}
 }
 
-func (cR *customerMtrService) ListAmbilData() []entity.Faktur3 {
-	return cR.cR.ListAmbilData()
+func (cS *customerMtrService) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
+	return 	cS.cR.MasterData(search, sts, jns, username, limit, pageParams)
+}
+func (cS *customerMtrService) MasterDataCount(search string, sts string, jns string, username string) int64 {
+	return 	cS.cR.MasterDataCount(search, sts, jns, username)
 }
 
-func (cR *customerMtrService) AmbilData(no_msn string, kd_user string) error {
-	return cR.cR.AmbilData(no_msn, kd_user)
+func (cS *customerMtrService) ListAmbilData() []entity.Faktur3 {
+	return cS.cR.ListAmbilData()
 }
 
-func (cR *customerMtrService) Show(no_msn string) entity.CustomerMtr {
-	return cR.cR.Show(no_msn)
+func (cS *customerMtrService) AmbilData(no_msn string, kd_user string) error {
+	return cS.cR.AmbilData(no_msn, kd_user)
 }
-func (cR *customerMtrService) UpdateOkeMembership(customer entity.CustomerMtr) (entity.CustomerMtr,error) {
-	return cR.cR.UpdateOkeMembership(customer)
+
+func (cS *customerMtrService) Show(no_msn string) entity.CustomerMtr {
+	return cS.cR.Show(no_msn)
+}
+func (cS *customerMtrService) UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr,error) {
+	return cS.cR.UpdateOkeMembership(customer)
 }
 
