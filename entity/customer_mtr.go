@@ -95,7 +95,7 @@ type CustomerMtr struct {
 	KecKtrWkm             string     `gorm:"column:kec_ktr_wkm;" json:"kec_ktr_wkm" form:"kec_ktr_wkm"`
 	KodeposKtrWkm         string     `gorm:"column:kodepos_ktr_wkm;" json:"kodepos_ktr_wkm" form:"kodepos_ktr_wkm"`
 	NmCustomerWkm         string     `gorm:"column:nm_customer_wkm;" json:"nm_customer_wkm" form:"nm_customer_wkm"`
-	KdDlrWkm              string     `gorm:"column:kd_dlr_wkm;;" json:"kd_dlr_wkm" form:"kd_dlr_wkm"`
+	KdDlrWkm              string     `gorm:"column:kd_dlr_wkm;" json:"kd_dlr_wkm" form:"kd_dlr_wkm"`
 	StsValidWkm           string     `gorm:"column:sts_valid_wkm;" json:"sts_valid_wkm" form:"sts_valid_wkm"`
 	StsSource2Wkm         string     `gorm:"column:sts_source2_wkm;default:' '" json:"sts_source2_wkm" form:"sts_source2_wkm"`
 	PicPerusahaanWkm      string     `gorm:"column:pic_perusahaan_wkm;" json:"pic_perusahaan_wkm" form:"pic_perusahaan_wkm"`

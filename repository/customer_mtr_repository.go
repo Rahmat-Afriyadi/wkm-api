@@ -148,6 +148,9 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	if len(jsonMap["tgl_prospect_membership"].(string)) > 10 {
 		jsonMap["tgl_prospect_membership"] = jsonMap["tgl_prospect_membership"].(string)[:10]
 	}
+	if jsonMap["tgl_janji_bayar"] != nil {
+		jsonMap["tgl_janji_bayar"] =jsonMap["tgl_janji_bayar"].(string)[:10]
+	}
 
 	if jsonMap["sts_membership"] == "O" && existCustomerMtr.StsMembership != "O" {
 		err = json.Unmarshal(jsonBytes, &membership)
@@ -155,10 +158,9 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 			fmt.Println("Error decoding JSON Membership:", err)
 			return entity.CustomerMtr{}, err
 		}
-		jsonMap["tgl_janji_bayar"] =jsonMap["tgl_janji_bayar"].(string)[:10]
 		jsonMap["alasan_tdk_membership"] = nil
 		jsonMap["alasan_pending_membership"] = nil
-		jsonMap["tgl_prospect_membership"] = nil
+		jsonMap["tgl_prospect_fembership"] = nil
 		r.connGorm.Save(&membership)
 	}
 	if jsonMap["sts_asuransi_mtr"] == "O" && existCustomerMtr.StsAsuransiMtr != "O" {
@@ -222,10 +224,13 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		log.Fatal("Error getting affected rows:", err)
 	}
 
-	fmt.Printf("Successfully updated %d row(s)\n", rowsAffected)
+	// if customerMtrEntity.KetNoHpFkt == "1" || customerMtrEntity.KetNoTelpFkt == "1" {
+		
+	// }
 	customerMtrEntity.Modified = &now
 	customerMtrEntity.JmlCallMembership += 1
 	r.connGorm.Save(&customerMtrEntity)
-
+	
+	fmt.Printf("Successfully updated %d row(s)\n", rowsAffected)
 	return customerMtrEntity, nil
 }
