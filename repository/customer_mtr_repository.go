@@ -168,6 +168,10 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		jsonMap["alasan_tdk_membership"] = nil
 		jsonMap["alasan_pending_membership"] = nil
 		jsonMap["tgl_prospect_membership"] = nil
+
+		customerMtrEntity.AlasanTdkMembership = ""
+		customerMtrEntity.AlasanPendingMembership = ""
+		customerMtrEntity.TglProspectMembership = nil
 		r.connGorm.Save(&membership)
 	}
 	if jsonMap["sts_asuransi_mtr"] == "O" && existCustomerMtr.StsAsuransiMtr != "O" {
@@ -179,6 +183,9 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		jsonMap["alasan_tdk_asuransi_pa"] = nil
 		jsonMap["alasan_pending_asuransi_pa"] = nil
 		jsonMap["tgl_prospect_asuransi_pa"] = nil
+		customerMtrEntity.AlasanTdkAsuransiMtr = ""
+		customerMtrEntity.AlasanPendingAsuransiMtr = ""
+		customerMtrEntity.TglProspectAsuransiMtr = nil
 
 		u2, err := uuid.NewV4()
 		if err != nil {
@@ -202,6 +209,9 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		jsonMap["alasan_tdk_asuransi_pa"] = nil
 		jsonMap["alasan_pending_asuransi_pa"] = nil
 		jsonMap["tgl_prospect_asuransi_pa"] = nil
+		customerMtrEntity.AlasanTdkAsuransiPa = ""
+		customerMtrEntity.AlasanPendingAsuransiPa = ""
+		customerMtrEntity.TglProspectAsuransiPa = nil
 
 		u2, err := uuid.NewV4()
 		if err != nil {
