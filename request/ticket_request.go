@@ -4,7 +4,7 @@ import "wkm/entity"
 
 type TicketRequest struct {
 	KdUser      string        `json:"kd_user"`
-	Case        string        `json:"case"`
+	Problem        string        `json:"problem"`
 	Status      int           `json:"status"`
 	JenisTicket string        `json:"jenis_ticket"`
 	Solution    string        `json:"solution"`

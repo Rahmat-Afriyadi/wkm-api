@@ -53,7 +53,7 @@ func (ts *ticketSupportRepository) CreateTicketSupport(data request.TicketReques
 	// Query untuk memasukkan data tiket
 	query := `
 		INSERT INTO ticket_support (
-			no_ticket, kd_user, ` + "`case`" + `, status, 
+			no_ticket, kd_user, problem, status, 
 			created, jenis_ticket, tier_ticket
 		) VALUES (?, ?, ?, 2, ?, ?, ?)
 	`
@@ -61,7 +61,7 @@ func (ts *ticketSupportRepository) CreateTicketSupport(data request.TicketReques
 		query,
 		noTicket,
 		username, // Menggunakan username sebagai kd_user
-		data.Case,
+		data.Problem,
 		created,
 		data.JenisTicket,
 		tier,
@@ -202,7 +202,7 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 	// Query untuk memperbarui data tiket
 	query := `
         UPDATE ticket_support
-    SET ` + "`case`" + ` = ?, jenis_ticket = ?, kd_user_it = ?, solution = ?, 
+    SET problem = ?, jenis_ticket = ?, kd_user_it = ?, solution = ?, 
     finish_date = ?, 
     status = ?, modified = NOW(), modi_by = ?
     WHERE no_ticket = ?
@@ -273,7 +273,7 @@ func (ts *ticketSupportRepository) EditTicketSupport(noTicket string, data reque
 
 	_, err := ts.conn.Exec(
 		query,
-		data.Case,
+		data.Problem,
 		data.JenisTicket,
 		kdUserIt,
 		Solution,
@@ -311,7 +311,7 @@ func (ts *ticketSupportRepository) ViewTicketSupport(noTicket string) (entity.Ti
 		SELECT 
     t.no_ticket, 
     u.name AS kd_user, 
-    t.case, 
+    t.problem, 
     t.status, 
     t.kd_user_it, 
     t.created, 
@@ -335,7 +335,7 @@ func (ts *ticketSupportRepository) ViewTicketSupport(noTicket string) (entity.Ti
 	err := ts.conn.QueryRow(query, noTicket).Scan(
 		&ticket.NoTicket,
 		&ticket.Kd_user,
-		&ticket.Case,
+		&ticket.Problem,
 		&ticket.Status,
 		&ticket.KdUserIt,
 		&ticket.Created,
@@ -388,7 +388,7 @@ func (ts *ticketSupportRepository) ListTicketUser(username string) ([]entity.Tic
 		SELECT 
     t.no_ticket, 
     u.name AS kd_user, 
-    t.case, 
+    t.problem, 
     t.status, 
 	it.name AS kd_user_it,
     t.created, 
@@ -425,7 +425,7 @@ ORDER BY
 		err := rows.Scan(
 			&ticket.NoTicket,
 			&ticket.Kd_user,
-			&ticket.Case,
+			&ticket.Problem,
 			&ticket.Status,
 			&ticket.KdUserIt,
 			&ticket.Created,
@@ -457,7 +457,7 @@ func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([
         SELECT 
             t.no_ticket, 
             u.name AS kd_user, 
-            t.case, 
+            t.problem, 
             t.status, 
             it.name AS kd_user_it,
             t.created, 
@@ -512,7 +512,7 @@ func (ts *ticketSupportRepository) ListTicketQueue(month string, year string) ([
 		err := rows.Scan(
 			&ticket.NoTicket,
 			&ticket.Kd_user,
-			&ticket.Case,
+			&ticket.Problem,
 			&ticket.Status,
 			&ticket.KdUserIt,
 			&ticket.Created,
@@ -544,7 +544,6 @@ func (ts *ticketSupportRepository) ListTicketIT(username string) ([]entity.Ticke
 		SELECT 
     t.no_ticket, 
     u.name AS kd_user, 
-    t.case, 
     t.status, 
     it.name AS kd_user_it,
     t.created, 
@@ -581,7 +580,7 @@ ORDER BY
 		err := rows.Scan(
 			&ticket.NoTicket,
 			&ticket.Kd_user,
-			&ticket.Case,
+			// &ticket.Problem,
 			&ticket.Status,
 			&ticket.KdUserIt,
 			&ticket.Created,

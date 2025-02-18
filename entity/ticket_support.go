@@ -8,7 +8,7 @@ import (
 type TicketSupport struct {
 	NoTicket    string                  `json:"no_ticket"`
 	Kd_user     string                  `json:"kd_user"`
-	Case        string                  `json:"case"`
+	Problem       string                  `json:"problem"`
 	Status      int                     `json:"status"`
 	KdUserIt    *string                 `json:"kd_user_it"`
 	Created     *time.Time              `json:"created"`
