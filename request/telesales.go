@@ -43,6 +43,7 @@ type CustomerMtr struct {
 	KecKtrFkt             string     ` json:"kec_ktr_fkt" form:"kec_ktr_fkt"`
 	KodeposKtrFkt         string     ` json:"kodepos_ktr_fkt" form:"kodepos_ktr_fkt"`
 	NoPolFkt              string     ` json:"no_pol_fkt" form:"no_pol_fkt"`
+	NoPolwKM              string     `json:"no_pol_wkm" form:"no_pol_wkm"`
 	HobbyFkt              string     ` json:"hobby_fkt" form:"hobby_fkt"`
 	StsSourceFkt          string     ` json:"sts_source_fkt" form:"sts_source_fkt"`
 	NmSalesFkt            string     ` json:"nm_sales_fkt" form:"nm_sales_fkt"`
@@ -159,6 +160,7 @@ type CustomerMtr struct {
 	Amount                    uint64     `json:"asuransi_mtr_amount" form:"asuransi_mtr_amount"`
 	ThnMtr                    uint32     `json:"asuransi_mtr_tahun" form:"asuransi_mtr_tahun"`
 	
-	// khusus Asuransi Motor
+	// khusus Asuransi Pa
 	IdProdukAsuransIPa          string     `json:"id_produk_asuransi_pa" form:"id_produk_asuransi_pa"`
+	AmountPa                    uint64     `json:"amount_asuransi_pa" form:"amount_asuransi_pa"`
 }

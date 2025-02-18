@@ -43,6 +43,7 @@ type CustomerMtr struct {
 	KecKtrFkt             string     `gorm:"column:kec_ktr_fkt;" json:"kec_ktr_fkt" form:"kec_ktr_fkt"`
 	KodeposKtrFkt         string     `gorm:"column:kodepos_ktr_fkt;" json:"kodepos_ktr_fkt" form:"kodepos_ktr_fkt"`
 	NoPolFkt              string     `gorm:"column:no_pol_fkt;" json:"no_pol_fkt" form:"no_pol_fkt"`
+	NoPolwKM              string     `gorm:"column:no_pol_wkm;" json:"no_pol_wkm" form:"no_pol_wkm"`
 	HobbyFkt              string     `gorm:"column:hobby_fkt;" json:"hobby_fkt" form:"hobby_fkt"`
 	StsSourceFkt          string     `gorm:"column:sts_source_fkt;" json:"sts_source_fkt" form:"sts_source_fkt"`
 	NmSalesFkt            string     `gorm:"column:nm_sales_fkt;" json:"nm_sales_fkt" form:"nm_sales_fkt"`

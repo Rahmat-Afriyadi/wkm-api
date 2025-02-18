@@ -24,9 +24,11 @@ type AsuransiMtr struct {
 	Amount                    uint64     `json:"asuransi_mtr_amount" gorm:"column:amount" form:"asuransi_mtr_amount"`
 	Warna                     string    `json:"warna" gorm:"column:warna" form:"warna"`
 	NoRGK                     string    `json:"no_rgk" gorm:"column:no_rgk" form:"no_rgk"`
-	NoPolFkt                  string    `json:"no_pol_fkt" gorm:"column:no_pol_fkt" form:"no_pol_fkt"`
+	NoPolwKM              string     `gorm:"column:no_pol_wkm;" json:"no_pol_wkm" form:"no_pol_wkm"`
 	ThnMtr                    uint32    `json:"thn_mtr" gorm:"column:thn_mtr" form:"thn_mtr"`
 	NmMtr                     string    `json:"nm_mtr" gorm:"column:nm_mtr" form:"nm_mtr"`
+	KdUserTs              string     `gorm:"column:kd_user_ts;" json:"kd_user_ts" form:"kd_user_ts"`
+
 }
 
 func (AsuransiMtr) TableName() string {

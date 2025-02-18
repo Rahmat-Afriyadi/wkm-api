@@ -14,11 +14,14 @@ type AsuransiPA struct {
 	StsAsuransiPA            string    `json:"sts_asuransi_pa" gorm:"column:sts_asuransi_pa" form:"sts_asuransi_pa"`
 	IDProduk                 string    `json:"id_produk" gorm:"column:id_produk" form:"id_produk"`
 	Produk  				 MasterProduk `json:"produk" gorm:"->;references:KdProduk;foreignKey:IDProduk" form:"produk"`
+	AmountPa                    uint64     `json:"amount_asuransi_pa" gorm:"column:amount" form:"amount_asuransi_pa"`
 	AppTransID               string    `json:"app_trans_id" gorm:"column:app_trans_id" form:"app_trans_id"`
 	TglBeli                  *time.Time `json:"tgl_beli" gorm:"column:tgl_beli" form:"tgl_beli"`
 	NoKtpNpwp                string    `json:"no_ktpnpwp_fkt" gorm:"column:no_ktpnpwp" form:"no_ktpnpwp_fkt"`
 	AlasanPendingAsuransiPA  string    `json:"alasan_pending_asuransi_pa" gorm:"column:alasan_pending_asuransi_pa" form:"alasan_pending_asuransi_pa"`
 	StsPembelian             string    `json:"sts_pembelian" gorm:"column:sts_pembelian" form:"sts_pembelian"`
+	KdUserTs              string     `gorm:"column:kd_user_ts;" json:"kd_user_ts" form:"kd_user_ts"`
+
 
 }
 
