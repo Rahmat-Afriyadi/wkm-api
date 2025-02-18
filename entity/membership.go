@@ -1,6 +1,11 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type Membership struct {
 	Id                      string     `json:"id" gorm:"column:id" form:"id"`
@@ -38,8 +43,14 @@ type Membership struct {
 	AlasanTdkKurirDetail     string     `json:"alasan_tdk_kurir_detail" gorm:"column:alasan_tdk_kurir_detail" form:"alasan_tdk_kurir_detail"`
 	AlasanTdkTsDetail        string    `json:"alasan_tdk_ts_detail" gorm:"column:alasan_tdk_ts_detail" form:"alasan_tdk_ts_detail"`
 	AlasanVoidKonfirmasi     string     `json:"alasan_void_konfirmasi" gorm:"column:alasan_void_konfirmasi" form:"alasan_void_konfirmasi"`
+
+	CustomerMtr               CustomerMtr  `form:"customer_mtr" json:"customer_mtr" gorm:"->;references:NoMsn;foreignKey:NoMSN"`
 }
 
 func (Membership) TableName() string {
 	return "membership"
+}
+func (b *Membership) BeforeCreate(tx *gorm.DB) (err error) {
+	b.Id = uuid.New().String()
+	return
 }

@@ -24,6 +24,7 @@ type MasterProduk struct {
 	Manfaat            []Manfaat    `form:"manfaat" json:"manfaat" gorm:"foreignKey:IdProduk"`
 	Syarat             []Syarat     `form:"syarat" json:"syarat" gorm:"foreignKey:IdProduk"`
 	Paket              []Paket      `form:"paket" json:"paket" gorm:"foreignKey:IdProduk"`
+	AsuransiPa              []AsuransiPA      `form:"asuransi_pa" json:"asuransi_pa" gorm:"foreignKey:IDProduk"`
 	Logo               string       `json:"logo" gorm:"column:logo"`
 	VendorId           string       `form:"vendor_id" json:"vendor_id" gorm:"column:vendor_id"`
 	Vendor             MasterVendor `json:"vendor" gorm:"->;references:KdVendor;foreignKey:VendorId"`
