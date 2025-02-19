@@ -64,7 +64,7 @@ func (cR *customerMtrRepository) MasterDataCount(search string, sts string, jns 
 
 func (r *customerMtrRepository) ListAmbilData() []entity.Faktur3 {
 	data := []entity.Faktur3{}
-	r.connGorm.Select("no_msn").Where("sts_renewal is null").Find(&data)
+	r.connGorm.Select("no_msn").Where("sts_renewal is null and kd_user is null").Find(&data)
 	return data
 }
 
