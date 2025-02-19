@@ -95,7 +95,7 @@ var (
 	mstService    service.MstService       = service.NewMstService(userRepository,mstRepository)
 	mstController controller.MstController = controller.NewMstController(mstService)
 
-	customerMtrRepository repository.CustomerMtrRepository = repository.NewCustomerMtrRepository(conn,gormDBWkmTest,connGormAsuransi)
+	customerMtrRepository repository.CustomerMtrRepository = repository.NewCustomerMtrRepository(connTest,gormDBWkmTest,connGormAsuransi)
 	customerMtrService    service.CustomerMtrService       = service.NewCustomerMtrService(customerMtrRepository)
 	customerMtrController controller.CustomerMtrController = controller.NewCustomerMtrController(customerMtrService)
 
