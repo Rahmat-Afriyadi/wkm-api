@@ -80,7 +80,7 @@ func (mR *mstRepository) MasterScript() []entity.MstScript {
 
 func (mR *mstRepository) ListAllScript() []entity.MstScript {
 	var data []entity.MstScript
-	mR.conn.Debug().Select("id, title, is_active").Find(&data)
+	mR.conn.Debug().Select("id, title, is_active, created").Find(&data)
 	return data
 }
 
@@ -117,7 +117,6 @@ func (mR *mstRepository) UpdateScript(id string, data entity.MstScript, username
 	script.Modified= &now
 	script.ModiBy = username
 	
-
 	// Simpan perubahan ke database
 	if err := mR.conn.Save(&script).Error; err != nil {
 		return fmt.Errorf("failed to update script: %w", err)
