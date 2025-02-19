@@ -19,6 +19,7 @@ import (
 
 var (
 	gormDBWkm, conn                       = config.GetConnection()
+	gormDBWkmTest, connTest                       = config.GetConnectionTest()
 	connUser, sqlConnUser                 = config.GetConnectionUser()
 	connGormAsuransi, sqlConnGormAsuransi = config.NewAsuransiGorm()
 
@@ -94,7 +95,7 @@ var (
 	mstService    service.MstService       = service.NewMstService(userRepository,mstRepository)
 	mstController controller.MstController = controller.NewMstController(mstService)
 
-	customerMtrRepository repository.CustomerMtrRepository = repository.NewCustomerMtrRepository(conn,gormDBWkm,connGormAsuransi)
+	customerMtrRepository repository.CustomerMtrRepository = repository.NewCustomerMtrRepository(conn,gormDBWkmTest,connGormAsuransi)
 	customerMtrService    service.CustomerMtrService       = service.NewCustomerMtrService(customerMtrRepository)
 	customerMtrController controller.CustomerMtrController = controller.NewCustomerMtrController(customerMtrService)
 
