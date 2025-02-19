@@ -146,8 +146,11 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 
 	// cuman ada tgl_prospect_membership karena butuh update di faktur 3
 	// tgl_prospect_asuransi_pa dan tgl_prospect_asuransi_mtr tidak perlu 
-	if len(jsonMap["tgl_prospect_membership"].(string)) > 10 {
-		jsonMap["tgl_prospect_membership"] = jsonMap["tgl_prospect_membership"].(string)[:10]
+	
+	if jsonMap["tgl_prospect_membership"] != nil {
+		if len(jsonMap["tgl_prospect_membership"].(string)) > 10 {
+			jsonMap["tgl_prospect_membership"] = jsonMap["tgl_prospect_membership"].(string)[:10]
+		}
 	}
 	if jsonMap["tgl_janji_bayar"] != nil {
 		jsonMap["tgl_janji_bayar"] =jsonMap["tgl_janji_bayar"].(string)[:10]

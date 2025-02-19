@@ -9,6 +9,8 @@ import (
 	"wkm/entity"
 	"wkm/response"
 
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 	"gorm.io/gorm"
 )
 
@@ -140,9 +142,10 @@ func (r *mstRepository) MasterProdukMembership() []response.Choices {
 	if err := db.Ping(); err != nil {
 		log.Fatal("Database not reachable:", err)
 	}
+	
 
 	// Define the query
-	query := "SELECT kd_card AS kode, keterangan AS value FROM db_wkm.mst_card WHERE status = '1' AND cat_card = 'R'"
+	query := "SELECT kd_card AS kode, keterangan AS value, harga_pokok FROM db_wkm.mst_card WHERE status = '1' AND cat_card = 'R'"
 
 	// Execute query
 	rows, err := db.Query(query)
@@ -152,11 +155,14 @@ func (r *mstRepository) MasterProdukMembership() []response.Choices {
 
 	// Process query results
 	var cards []response.Choices
+	price := 0
+	p := message.NewPrinter(language.Indonesian)
 	for rows.Next() {
 		var card response.Choices
-		if err := rows.Scan(&card.Value, &card.Name); err != nil {
+		if err := rows.Scan(&card.Value, &card.Name, &price); err != nil {
 			log.Fatal("Error scanning row:", err)
 		}
+		card.Name += " - " + p.Sprintf("Rp. %d", price)
 		cards = append(cards, card)
 	}
 	return cards
