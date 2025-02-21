@@ -64,7 +64,7 @@ func (cR *customerMtrRepository) MasterDataCount(search string, sts string, jns 
 
 func (r *customerMtrRepository) ListAmbilData() []entity.Faktur3 {
 	data := []entity.Faktur3{}
-	r.connGorm.Select("no_msn").Where("sts_renewal is null").Find(&data)
+	r.connGorm.Select("no_msn").Order("RAND()").Where("sts_renewal is null").Find(&data)
 	return data
 }
 
@@ -169,6 +169,8 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		if membership.TypeKartu == "E" {
 			print = 1
 		}
+
+		jsonMap["sts_asuransi_pa"] = "M"
 		jsonMap["alasan_tdk_membership"] = nil
 		jsonMap["alasan_pending_membership"] = nil
 		jsonMap["tgl_prospect_membership"] = nil
