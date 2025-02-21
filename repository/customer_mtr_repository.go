@@ -170,11 +170,11 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 			print = 1
 		}
 
-		jsonMap["sts_asuransi_pa"] = "M"
 		jsonMap["alasan_tdk_membership"] = nil
 		jsonMap["alasan_pending_membership"] = nil
 		jsonMap["tgl_prospect_membership"] = nil
-
+		
+		customerMtrEntity.StsAsuransiPa = "M"
 		customerMtrEntity.AlasanTdkMembership = ""
 		customerMtrEntity.AlasanPendingMembership = ""
 		customerMtrEntity.TglProspectMembership = nil
