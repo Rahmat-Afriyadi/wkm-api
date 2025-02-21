@@ -145,7 +145,7 @@ func (r *mstRepository) MasterProdukMembership() []response.Choices {
 	
 
 	// Define the query
-	query := "SELECT kd_card AS kode, keterangan AS value, harga_pokok FROM db_wkm.mst_card WHERE status = '1' AND cat_card = 'R'"
+	query := "SELECT kd_card AS kode, keterangan AS value, harga_pokok + asuransi_motor + asuransi   FROM db_wkm.mst_card WHERE status = '1' AND cat_card = 'R'"
 
 	// Execute query
 	rows, err := db.Query(query)

@@ -64,7 +64,7 @@ func (cR *customerMtrRepository) MasterDataCount(search string, sts string, jns 
 
 func (r *customerMtrRepository) ListAmbilData() []entity.Faktur3 {
 	data := []entity.Faktur3{}
-	r.connGorm.Select("no_msn").Where("sts_renewal is null and kd_user is null").Find(&data)
+	r.connGorm.Select("no_msn").Where("sts_renewal is null").Find(&data)
 	return data
 }
 
@@ -73,7 +73,8 @@ func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 	queryAmbilData := query.NewQueryAmbilData()
 	defer cancel()
 	var kdUser sql.NullString
-	err := r.conn.QueryRowContext(ctx, "select kd_user from tr_wms_faktur3 where no_msn = ? and sts_renewal is null", no_msn).Scan(&kdUser)
+	var stsRenewal sql.NullString
+	err := r.conn.QueryRowContext(ctx, "select kd_user, sts_renewal from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&kdUser, &stsRenewal)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("data tidak ditemukan")
@@ -81,8 +82,8 @@ func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 			return err
 		}
 	}
-	if kdUser.String != "" {
-		return fmt.Errorf("data tersebut telah di ambil oleh kd_user %s", kdUser.String)
+	if stsRenewal.String != "" {
+		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
 	}
 	now := time.Now()
 	r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, tgl_verifikasi = ?, sts_renewal='P' where no_msn = ?", kd_user,now.Format("2006-01-02"),no_msn)
