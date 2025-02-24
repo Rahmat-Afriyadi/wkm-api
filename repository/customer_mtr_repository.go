@@ -44,7 +44,7 @@ func NewCustomerMtrRepository(conn *sql.DB, connGorm *gorm.DB,wandaGorm *gorm.DB
 
 func (cR *customerMtrRepository) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
 	datas := []entity.CustomerMtr{}
-	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? ", "%"+search+"%", "%"+search+"%")
+	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? or nm_customer_fkt like ? ", "%"+search+"%","%"+search+"%", "%"+search+"%")
 	query.Where("kd_user_ts = ?", username)
 	query.Where(fmt.Sprintf("%s = ?", jns),sts)
 
@@ -54,7 +54,7 @@ func (cR *customerMtrRepository) MasterData(search string, sts string, jns strin
 }
 func (cR *customerMtrRepository) MasterDataCount(search string, sts string, jns string, username string) int64 {
 	datas := []entity.CustomerMtr{}
-	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? ", "%"+search+"%", "%"+search+"%")
+	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? or nm_customer_fkt like ? ", "%"+search+"%", "%"+search+"%","%"+search+"%")
 	query.Where("kd_user_ts = ?", username)
 	query.Where(fmt.Sprintf("%s = ?", jns),sts)
 

@@ -12,6 +12,10 @@ type AsuransiPA struct {
 	NoMSN                    string     `json:"no_msn" gorm:"column:no_msn" form:"no_msn"`
 	NmCustomer               string    `json:"nm_customer" gorm:"column:nm_customer" form:"nm_customer"`
 	StsAsuransiPA            string    `json:"sts_asuransi_pa" gorm:"column:sts_asuransi_pa" form:"sts_asuransi_pa"`
+	StsBayar                 string    `json:"sts_bayar" gorm:"column:sts_bayar" form:"sts_bayar"`
+	TglBayar                 *time.Time `json:"tgl_bayar" gorm:"column:tgl_bayar" form:"tgl_bayar"`
+	TglInputBayar            *time.Time `json:"tgl_input_bayar" gorm:"column:tgl_input_bayar" form:"tgl_input_bayar"`
+	KdUserFa                 string    `json:"kd_user_fa" gorm:"column:kd_user_fa" form:"kd_user_fa"`
 	IDProduk                 string    `json:"id_produk" gorm:"column:id_produk" form:"id_produk"`
 	Produk  				 MasterProduk `json:"produk" gorm:"->;references:KdProduk;foreignKey:IDProduk" form:"produk"`
 	AmountPa                    uint64     `json:"amount_asuransi_pa" gorm:"column:amount" form:"amount_asuransi_pa"`

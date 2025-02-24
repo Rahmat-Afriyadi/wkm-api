@@ -264,6 +264,9 @@ func main() {
 	app.Delete("/extend-bayar/delete/:id", middleware.DeserializeUser, extendBayarController.Delete)
 
 	app.Post("/faktur-3/input-bayar", middleware.DeserializeUser, tr3Controller.UpdateInputBayar)
+	app.Post("/faktur-3/input-bayar/membership", middleware.DeserializeUser, tr3Controller.UpdateInputBayarMembership)
+	app.Post("/faktur-3/input-bayar/asuransi-pa", middleware.DeserializeUser, tr3Controller.UpdateInputBayarAsuransiPA)
+	app.Post("/faktur-3/input-bayar/asuransi-mtr", middleware.DeserializeUser, tr3Controller.UpdateInputBayarAsuransiMtr)
 	app.Post("/faktur-3/search/will-bayar", middleware.DeserializeUser, tr3Controller.WillBayar)
 	app.Post("/export-data-pembayaran", middleware.DeserializeUser, tr3Controller.ExportPembayaranRenewal)
 

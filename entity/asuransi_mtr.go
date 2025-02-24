@@ -13,6 +13,10 @@ type AsuransiMtr struct {
 	NoMSN                     string     `json:"no_msn" gorm:"column:no_msn" form:"no_msn"`
 	NmCustomer                string    `json:"nm_customer" gorm:"column:nm_customer" form:"nm_customer"`
 	StsAsuransiMtr            string    `json:"sts_asuransi_mtr" gorm:"column:sts_asuransi_mtr" form:"sts_asuransi_mtr"`
+	StsBayar                 string    `json:"sts_bayar" gorm:"column:sts_bayar" form:"sts_bayar"`
+	TglBayar                 *time.Time `json:"tgl_bayar" gorm:"column:tgl_bayar" form:"tgl_bayar"`
+	TglInputBayar            *time.Time `json:"tgl_input_bayar" gorm:"column:tgl_input_bayar" form:"tgl_input_bayar"`
+	KdUserFa                 string    `json:"kd_user_fa" gorm:"column:kd_user_fa" form:"kd_user_fa"`
 	IDProduk                  string    `json:"id_produk" gorm:"column:id_produk" form:"id_produk"`
 	Produk  				 MasterProduk `json:"produk" gorm:"->;references:KdProduk;foreignKey:IDProduk" form:"produk"`
 	AppTransID                string    `json:"app_trans_id" gorm:"column:app_trans_id" form:"app_trans_id"`

@@ -22,6 +22,9 @@ type Tr3Controller interface {
 	SearchNoMsnByWa(ctx *fiber.Ctx) error
 	EditJenisBayar(ctx *fiber.Ctx) error
 	UpdateInputBayar(ctx *fiber.Ctx) error
+	UpdateInputBayarMembership(ctx *fiber.Ctx) error
+	UpdateInputBayarAsuransiPA(ctx *fiber.Ctx) error
+	UpdateInputBayarAsuransiMtr(ctx *fiber.Ctx) error
 	WillBayar(ctx *fiber.Ctx) error
 	DataRenewal(ctx *fiber.Ctx) error
 	ExportDataRenewal(ctx *fiber.Ctx) error
@@ -191,17 +194,81 @@ func (tr *tr3Controller) UpdateInputBayar(ctx *fiber.Ctx) error {
 	}
 	return ctx.JSON(map[string]interface{}{"data": data, "status": "success"})
 }
+func (tr *tr3Controller) UpdateInputBayarMembership(ctx *fiber.Ctx) error {
+	var body request.InputBayarRequest
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	minLimit, err := time.Parse("2006-01-02", "2024-01-01")
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
+	}
+	if body.TglBayar.Before(minLimit) {
+		return ctx.Status(400).JSON(map[string]string{"message": "Mohon mengisi tanggal bayar", "status": "fail"})
+	}
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	body.KdUserFa = details.Username
+	err = tr.tr3Service.UpdateInputBayarMembership(body)
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
+	}
+	return ctx.JSON(map[string]interface{}{"data": "Berhasil", "status": "success"})
+}
+func (tr *tr3Controller) UpdateInputBayarAsuransiPA(ctx *fiber.Ctx) error {
+	var body request.InputBayarRequest
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	minLimit, err := time.Parse("2006-01-02", "2024-01-01")
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
+	}
+	if body.TglBayar.Before(minLimit) {
+		return ctx.Status(400).JSON(map[string]string{"message": "Mohon mengisi tanggal bayar", "status": "fail"})
+	}
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	body.KdUserFa = details.Username
+	err = tr.tr3Service.UpdateInputBayarAsuransiPA(body)
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
+	}
+	return ctx.JSON(map[string]interface{}{"data": "Berhasil", "status": "success"})
+}
+func (tr *tr3Controller) UpdateInputBayarAsuransiMtr(ctx *fiber.Ctx) error {
+	var body request.InputBayarRequest
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	minLimit, err := time.Parse("2006-01-02", "2024-01-01")
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
+	}
+	if body.TglBayar.Before(minLimit) {
+		return ctx.Status(400).JSON(map[string]string{"message": "Mohon mengisi tanggal bayar", "status": "fail"})
+	}
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	body.KdUserFa = details.Username
+	err = tr.tr3Service.UpdateInputBayarAsuransiMtr(body)
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
+	}
+	return ctx.JSON(map[string]interface{}{"data": "Berhasil", "status": "success"})
+}
 
 func (tr *tr3Controller) WillBayar(ctx *fiber.Ctx) error {
 	var body request.SearchWBRequest
 	if err := ctx.BodyParser(&body); err != nil {
 		return ctx.Status(400).JSON(err)
 	}
-	faktur3, err := tr.tr3Service.WillBayar(body)
+
+	faktur3,bayarApa, err := tr.tr3Service.WillBayar(body)
 	if err != nil {
 		return ctx.Status(400).JSON(map[string]string{"message": err.Error()})
 	}
-	return ctx.JSON(faktur3)
+	return ctx.JSON(map[string]interface{}{"faktur": faktur3, "bayar_apa":bayarApa })
 }
 
 func (tr *tr3Controller) ExportPembayaranRenewal(ctx *fiber.Ctx) error {
