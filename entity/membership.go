@@ -12,7 +12,6 @@ type Membership struct {
 	NoMSN                    string     `json:"no_msn" gorm:"column:no_msn" form:"no_msn"`
 	StsMembership            string    `json:"sts_membership" gorm:"column:sts_membership" form:"sts_membership"`
 	
-	AlasanPendingMembership   string    `json:"alasan_pending_membership" gorm:"column:alasan_pending_membership" form:"alasan_pending_membership"`
 	TypeKartu                string    `json:"type_kartu" gorm:"column:type_kartu" form:"type_kartu"`
 	JnsMembership            string     `json:"jns_membership" gorm:"column:jns_membership" form:"jns_membership"`
 	TglJanjiBayar            *time.Time `json:"tgl_janji_bayar" gorm:"column:tgl_janji_bayar" form:"tgl_janji_bayar"`
@@ -44,6 +43,9 @@ type Membership struct {
 	AlasanTdkKurirDetail     string     `json:"alasan_tdk_kurir_detail" gorm:"column:alasan_tdk_kurir_detail" form:"alasan_tdk_kurir_detail"`
 	AlasanTdkTsDetail        string    `json:"alasan_tdk_ts_detail" gorm:"column:alasan_tdk_ts_detail" form:"alasan_tdk_ts_detail"`
 	AlasanVoidKonfirmasi     string     `json:"alasan_void_konfirmasi" gorm:"column:alasan_void_konfirmasi" form:"alasan_void_konfirmasi"`
+	CreatedAt      *time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt      *time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+
 
 	CustomerMtr               CustomerMtr  `form:"customer_mtr" json:"customer_mtr" gorm:"->;references:NoMsn;foreignKey:NoMSN"`
 }

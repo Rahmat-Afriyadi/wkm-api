@@ -22,9 +22,10 @@ type AsuransiPA struct {
 	AppTransID               string    `json:"app_trans_id" gorm:"column:app_trans_id" form:"app_trans_id"`
 	TglBeli                  *time.Time `json:"tgl_beli" gorm:"column:tgl_beli" form:"tgl_beli"`
 	NoKtpNpwp                string    `json:"no_ktpnpwp_fkt" gorm:"column:no_ktpnpwp" form:"no_ktpnpwp_fkt"`
-	AlasanPendingAsuransiPA  string    `json:"alasan_pending_asuransi_pa" gorm:"column:alasan_pending_asuransi_pa" form:"alasan_pending_asuransi_pa"`
 	StsPembelian             string    `json:"sts_pembelian" gorm:"column:sts_pembelian" form:"sts_pembelian"`
 	KdUserTs              string     `gorm:"column:kd_user_ts;" json:"kd_user_ts" form:"kd_user_ts"`
+	CreatedAt      *time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt      *time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 
 
 }

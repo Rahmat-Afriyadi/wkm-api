@@ -159,7 +159,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	if jsonMap["tgl_call_tele"] != nil {
 		jsonMap["tgl_call_tele"] =jsonMap["tgl_call_tele"].(string)[:10]
 	}
-
+	
 	if jsonMap["sts_membership"] == "O" && existCustomerMtr.StsMembership != "O" {
 		err = json.Unmarshal(jsonBytes, &membership)
 		if err != nil {
@@ -169,12 +169,13 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		if membership.TypeKartu == "E" {
 			print = 1
 		}
-
+		
 		jsonMap["alasan_tdk_membership"] = nil
 		jsonMap["alasan_pending_membership"] = nil
 		jsonMap["tgl_prospect_membership"] = nil
-		
-		customerMtrEntity.StsAsuransiPa = "M"
+		if jsonMap["sts_asuransi_pa"] != "O" {
+			customerMtrEntity.StsAsuransiPa = "M"
+		}
 		customerMtrEntity.AlasanTdkMembership = ""
 		customerMtrEntity.AlasanPendingMembership = ""
 		customerMtrEntity.TglProspectMembership = nil

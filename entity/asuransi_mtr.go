@@ -22,7 +22,6 @@ type AsuransiMtr struct {
 	AppTransID                string    `json:"app_trans_id" gorm:"column:app_trans_id" form:"app_trans_id"`
 	TglBeli                   *time.Time `json:"tgl_beli" gorm:"column:tgl_beli" form:"tgl_beli"`
 	NoKtpNpwp                 string    `json:"no_ktpnpwp_fkt" gorm:"column:no_ktpnpwp" form:"no_ktpnpwp_fkt"`
-	AlasanPendingAsuransiMtr  string    `json:"alasan_pending_asuransi_mtr" gorm:"column:alasan_pending_asuransi_mtr" form:"alasan_pending_asuransi_mtr"`
 	StsPembelian              string    `json:"sts_pembelian" gorm:"column:sts_pembelian" form:"sts_pembelian"`
 	OTR                       uint64     `json:"asuransi_mtr_otr" gorm:"column:otr" form:"asuransi_mtr_otr"`
 	Amount                    uint64     `json:"asuransi_mtr_amount" gorm:"column:amount" form:"asuransi_mtr_amount"`
@@ -32,6 +31,9 @@ type AsuransiMtr struct {
 	ThnMtr                    uint32    `json:"thn_mtr" gorm:"column:thn_mtr" form:"thn_mtr"`
 	NmMtr                     string    `json:"nm_mtr" gorm:"column:nm_mtr" form:"nm_mtr"`
 	KdUserTs              string     `gorm:"column:kd_user_ts;" json:"kd_user_ts" form:"kd_user_ts"`
+	CreatedAt      *time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt      *time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+
 
 }
 
