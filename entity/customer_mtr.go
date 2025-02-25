@@ -13,7 +13,6 @@ type CustomerMtr struct {
 	NoTelpFkt              string     `gorm:"column:no_telp_fkt;" json:"no_telp_fkt" form:"no_telp_fkt"`
 	KetNoTelpFkt           string     `gorm:"column:ket_no_telp_fkt;" json:"ket_no_telp_fkt" form:"ket_no_telp_fkt"`
 	NoHpFkt                string     `gorm:"column:no_hp_fkt;" json:"no_hp_fkt" form:"no_hp_fkt"`
-	
 	KetNoHpFkt             string     `gorm:"column:ket_no_hp_fkt;" json:"ket_no_hp_fkt" form:"ket_no_hp_fkt"`
 	AlamatFkt              string     `gorm:"column:alamat_fkt;" json:"alamat_fkt" form:"alamat_fkt"`
 	KelFkt                 string     `gorm:"column:kel_fkt;" json:"kel_fkt" form:"kel_fkt"`
@@ -139,6 +138,8 @@ type CustomerMtr struct {
 	KdAktivitasJualMembership string  `gorm:"column:kd_aktivitas_jual_membership;" json:"kd_aktivitas_jual_membership" form:"kd_aktivitas_jual_membership"`
 	JmlCallMembership      uint32     `gorm:"column:jml_call_membership;" json:"jml_call_membership" form:"jml_call_membership"`
 	Modified               *time.Time `gorm:"column:modified;" json:"modified" form:"modified"`
+
+	NoKartu2 string `gorm:"column:no_kartu2;" json:"no_kartu2" form:"no_kartu2"`
 
 
 	Memberships           []Membership    `form:"memberships" json:"memberships" gorm:"foreignKey:NoMSN"`
