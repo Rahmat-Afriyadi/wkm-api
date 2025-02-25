@@ -713,6 +713,10 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 	if result.Error != nil {
 		return entity.Faktur3{}, result.Error
 	}
+	err := tr.UpdateInputBayarMembership(data)
+	if err != nil {
+		return entity.Faktur3{}, err
+	}
 	
 	LogBayar(fmt.Sprint(time.Now().Format("2006-01-02 15:04:05"), " - ", data.NoMsn, " - ", data.KdUserFa))
 

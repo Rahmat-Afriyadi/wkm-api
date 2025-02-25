@@ -251,6 +251,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	// if customerMtrEntity.KetNoHpFkt == "1" || customerMtrEntity.KetNoTelpFkt == "1" {
 		
 	// }
+	customerMtrEntity.TglCallTele = &now
 	customerMtrEntity.Modified = &now
 	customerMtrEntity.JmlCallMembership += 1
 	r.connGorm.Save(&customerMtrEntity)
