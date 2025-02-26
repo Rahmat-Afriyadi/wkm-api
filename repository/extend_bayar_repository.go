@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"time"
+	"wkm/config"
 	"wkm/entity"
 
 	"wkm/request"
@@ -108,7 +109,8 @@ func (lR *extendBayarRepository) UpdateLf(data request.ExtendBayarRequest) error
 
 func (lR *extendBayarRepository) UpdateApprovalLf(data request.ExtendBayarApprovalRequest) error {
 	sqlConn, _ := lR.conn.DB()
-	faktur3Repository := NewTr3nRepository(sqlConn, lR.conn)
+	connGormAsuransi, _ := config.NewAsuransiGorm()
+	faktur3Repository := NewTr3nRepository(sqlConn, lR.conn, connGormAsuransi)
 	now := time.Now()
 	for _, v := range data.Datas {
 		extendBayar := entity.ExtendBayar{Id: v.Id}
@@ -205,7 +207,8 @@ func (lR *extendBayarRepository) BulkCreate(datas []entity.ExtendBayar) error {
 	if err != nil {
 		return err
 	}
-	tr3Repository := NewTr3nRepository(sqlDb, lR.conn)
+	connGormAsuransi, _ := config.NewAsuransiGorm()
+	tr3Repository := NewTr3nRepository(sqlDb, lR.conn,connGormAsuransi)
 	for _, value := range datas {
 		_, _, err := tr3Repository.WillBayar(request.SearchWBRequest{Kode: value.NoMsn})
 		if err != nil {

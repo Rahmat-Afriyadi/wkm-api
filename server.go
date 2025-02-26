@@ -23,7 +23,7 @@ var (
 	connUser, sqlConnUser                 = config.GetConnectionUser()
 	connGormAsuransi, sqlConnGormAsuransi = config.NewAsuransiGorm()
 
-	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn, gormDBWkm)
+	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn, gormDBWkm,connGormAsuransi)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
 	tr3Controller controller.Tr3Controller = controller.NewTr3Controller(tr3Service)
 

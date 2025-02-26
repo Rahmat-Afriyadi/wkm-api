@@ -156,9 +156,9 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	if jsonMap["tgl_janji_bayar"] != nil {
 		jsonMap["tgl_janji_bayar"] =jsonMap["tgl_janji_bayar"].(string)[:10]
 	}
-	if jsonMap["tgl_call_tele"] != nil {
-		jsonMap["tgl_call_tele"] =jsonMap["tgl_call_tele"].(string)[:10]
-	}
+
+	jsonMap["tgl_call_tele"] = now.Format("2006-01-02")
+
 	
 	if jsonMap["sts_membership"] == "O" && existCustomerMtr.StsMembership != "O" {
 		err = json.Unmarshal(jsonBytes, &membership)

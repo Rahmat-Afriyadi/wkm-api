@@ -42,12 +42,14 @@ type Tr3Repository interface {
 type tr3Repository struct {
 	conn     *sql.DB
 	connGorm *gorm.DB
+	wandaGorm *gorm.DB
 }
 
-func NewTr3nRepository(conn *sql.DB, connGorm *gorm.DB) Tr3Repository {
+func NewTr3nRepository(conn *sql.DB, connGorm *gorm.DB,wandaGorm *gorm.DB) Tr3Repository {
 	return &tr3Repository{
 		conn:     conn,
 		connGorm: connGorm,
+		wandaGorm:wandaGorm,
 	}
 }
 
@@ -765,7 +767,7 @@ func (tr *tr3Repository) UpdateInputBayarAsuransiPA(data request.InputBayarReque
 		var asuransiPa entity.AsuransiPA
 		stockCard := entity.StockCard{NoKartu: faktur3.NoKartu}
 		tr.connGorm.Find(&stockCard)
-		tr.connGorm.Where("no_msn = ? and sts_bayar is null", faktur3.NoMsn).First(&asuransiPa)
+		tr.connGorm.Where("no_msn = ? and sts_bayar != 'S'", faktur3.NoMsn).First(&asuransiPa)
 		if asuransiPa.Id != "" {
 			asuransiPa.TglBayar = &data.TglBayar
 			asuransiPa.TglInputBayar = &now
@@ -790,7 +792,7 @@ func (tr *tr3Repository) UpdateInputBayarAsuransiMtr(data request.InputBayarRequ
 		var asuransiMtr entity.AsuransiMtr
 		stockCard := entity.StockCard{NoKartu: faktur3.NoKartu}
 		tr.connGorm.Find(&stockCard)
-		tr.connGorm.Where("no_msn = ? and sts_bayar is null", faktur3.NoMsn).First(&asuransiMtr)
+		tr.connGorm.Where("no_msn = ? and sts_bayar != 'S'", faktur3.NoMsn).First(&asuransiMtr)
 		if asuransiMtr.Id != "" {
 			asuransiMtr.TglBayar = &data.TglBayar
 			asuransiMtr.TglInputBayar = &now
@@ -832,45 +834,60 @@ func (lR *tr3Repository) DataPembayaran(tgl1 string, tgl2 string) []entity.Faktu
 
 func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3, []int, error) {
 	var faktur entity.Faktur3
+	var asuransiPa entity.AsuransiPA
+	var asuransiMtr entity.AsuransiMtr
 	var bayarApa []int
 	var afterMembership []int
-	var count int64
 	result := tr.connGorm.Select("no_msn,sts_cetak3, no_tanda_terima,sts_bayar_renewal, nm_mtr, nm_customer11,no_telp1,no_hp1,no_kartu,sts_jenis_bayar,sts_kartu,alamat_bantuan,sts_kirim,kd_card,kode_kurir,sts_asuransi_pa,sts_bayar_asuransi_pa,alamat21,kota2,kec2,kel2,rt2,rw2,kodepos2,kerja_di,alamat_ktr,rt_ktr,rw_ktr,kel_ktr,kec_ktr,kodepos_ktr,kota1, tgl_verifikasi, alamat_srt12,alamat_srt11,kota_srt1,kec_srt1,kel_srt1,kodepos_srt1").Where("(replace(no_kartu, ' ','') = ? OR no_msn = ? or no_tanda_terima = ?)", data.Kode, data.Kode, data.Kode).Preload("Kurir").Preload("Kartu").Preload("MstCard").Find(&faktur)
 	if result.Error != nil {
 		return entity.Faktur3{}, bayarApa,result.Error
 	}
-	tr.connGorm.Model(&entity.AsuransiPA{}).Where("no_msn = ? and sts_bayar != 'S'", faktur.NoMsn).Count(&count)
-	if count > 0 {
+	tr.connGorm.Model(&entity.AsuransiPA{}).Where("no_msn = ? and sts_bayar != 'S'", faktur.NoMsn).First(&asuransiPa)
+	if asuransiPa.Id != "" {
+		var produkPa entity.MasterProduk
+		tr.wandaGorm.Preload("Vendor").Where("id_produk = ?",asuransiPa.IDProduk).Find(&produkPa)
+		faktur.AsuransiPa = entity.DetailAsuransiPA{IdProduk:asuransiPa.IDProduk,NmVendor:produkPa.Vendor.NmVendor,NmProduk:produkPa.NmProduk, AmountPa: asuransiPa.AmountPa}
 		afterMembership = append(afterMembership, 2)
 	}
-	count = 0
-	tr.connGorm.Model(&entity.AsuransiMtr{}).Where("no_msn = ? and sts_bayar != 'S'", faktur.NoMsn).Count(&count)
-	if count > 0 {
+	tr.connGorm.Model(&entity.AsuransiMtr{}).Where("no_msn = ? and sts_bayar != 'S'", faktur.NoMsn).First(&asuransiMtr)
+	if asuransiMtr.Id != "" {
+		var produkMtr entity.MasterProduk
+		tr.wandaGorm.Preload("Vendor").Where("id_produk = ?",asuransiMtr.IDProduk).Find(&produkMtr)
+		faktur.AsuransiMtr = entity.DetailAsuransiMtr{IdProduk:asuransiMtr.IDProduk,NmVendor:produkMtr.Vendor.NmVendor,NmProduk:produkMtr.NmProduk, NmMtr: asuransiMtr.NmMtr, Otr: asuransiMtr.OTR,AmountOtr: asuransiMtr.Amount }
 		afterMembership = append(afterMembership, 3)
 	}
 
-	stockCard := entity.StockCard{}
-	tr.connGorm.Where("no_kartu = ? ", faktur.NoKartu).Find(&stockCard)
+	fmt.Println("ini akan bayar ", afterMembership)
 	if faktur.StsJnsBayar == "T" && faktur.StsBayarRenewal != "S" {
-		return faktur, afterMembership,nil
-	}
-	if faktur.NoKartu == "" && faktur.StsJnsBayar != "T" {
-		return entity.Faktur3{},afterMembership, errors.New("Kartu tidak ditemukan")
-	}
-	if faktur.StsJnsBayar == "C" && stockCard.NoKartu == "" {
-		return entity.Faktur3{},afterMembership, errors.New("Kartu tidak ditemukan di stockCard")
+		bayarApa = append(bayarApa, 1)
+		bayarApa = append(bayarApa, afterMembership...)
+		return faktur, bayarApa,nil
 	}
 
-	if stockCard.StsKartu == "1" {
-		return entity.Faktur3{},afterMembership, errors.New("Belum di barcode bawa")
-	} else if stockCard.StsKartu == "3" || faktur.StsBayarRenewal == "S" {
-		return entity.Faktur3{},afterMembership, errors.New("Sudah dibayar")
-	} else if stockCard.StsKartu == "4" {
-		return entity.Faktur3{},afterMembership, errors.New("Posisi kartu di clear data")
+	if len(afterMembership) < 1 {
+		stockCard := entity.StockCard{}
+		tr.connGorm.Where("no_kartu = ? ", faktur.NoKartu).Find(&stockCard)
+		if faktur.NoKartu == "" && faktur.StsJnsBayar != "T" {
+			return entity.Faktur3{},afterMembership, errors.New("Kartu tidak ditemukan")
+		}
+		if faktur.StsJnsBayar == "C" && stockCard.NoKartu == "" {
+			return entity.Faktur3{},afterMembership, errors.New("Kartu tidak ditemukan di stockCard")
+		}
+		
+		if stockCard.StsKartu == "1" {
+			return entity.Faktur3{},afterMembership, errors.New("Belum di barcode bawa")
+			} else if stockCard.StsKartu == "3" || faktur.StsBayarRenewal == "S" {
+				return entity.Faktur3{},afterMembership, errors.New("Sudah dibayar")
+		} else if stockCard.StsKartu == "4" {
+			return entity.Faktur3{},afterMembership, errors.New("Posisi kartu di clear data")
+		}
+		bayarApa = append(bayarApa, 1)
+		bayarApa = append(bayarApa, afterMembership...)
 	}
-
-	bayarApa = append(bayarApa, 1)
-	bayarApa = append(bayarApa, afterMembership...)
+	
+	if len(bayarApa) < 1  {
+		return faktur, afterMembership, nil
+	}
 
 	return faktur, bayarApa, nil
 }
