@@ -137,6 +137,8 @@ type CustomerMtr struct {
 	DpMtrWkm              uint32     `gorm:"column:dp_mtr_wkm;" json:"dp_mtr_wkm" form:"dp_mtr_wkm"`
 	KdAktivitasJualMembership string  `gorm:"column:kd_aktivitas_jual_membership;" json:"kd_aktivitas_jual_membership" form:"kd_aktivitas_jual_membership"`
 	JmlCallMembership      uint32     `gorm:"column:jml_call_membership;" json:"jml_call_membership" form:"jml_call_membership"`
+	StsStnk      string     `gorm:"column:sts_stnk;" json:"sts_stnk" form:"sts_stnk"`
+
 	Modified               *time.Time `gorm:"column:modified;" json:"modified" form:"modified"`
 
 	NoKartu2 string `gorm:"column:no_kartu2;" json:"no_kartu2" form:"no_kartu2"`
@@ -145,6 +147,14 @@ type CustomerMtr struct {
 	Memberships           []Membership    `form:"memberships" json:"memberships" gorm:"foreignKey:NoMSN"`
 	AsuransiPa            AsuransiPA    `form:"asuransi_pa" json:"asuransi_pa" gorm:"foreignKey:NoMSN"`
 	AsuransiMtr           AsuransiMtr    `form:"asuransi_mtr" json:"asuransi_mtr" gorm:"foreignKey:NoMSN"`
+
+
+	DescDidikFkt string `json:"desc_didik_fkt" gorm:"-;type:json"`
+	DescKerjaFkt string `json:"desc_kerja_fkt" gorm:"-;type:json"`
+	DescAgamaFkt string `json:"desc_agama_fkt" gorm:"-;type:json"`
+	DescKeluarBlnFkt string `json:"desc_bln_fkt" gorm:"-;type:json"`
+	DescTujuanPakaiFkt string `json:"desc_tujuan_pakai_fkt" gorm:"-;type:json"`
+	DescHobbyFkt string `json:"desc_hobby_fkt" gorm:"-;type:json"`
 
 
 }
