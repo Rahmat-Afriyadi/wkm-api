@@ -17,12 +17,15 @@ type Tr3Service interface {
 	DataWABlast(t request.DataWaBlastRequest) []entity.DataWaBlast
 	SearchNoMsnByWa(t request.SearchNoMsnByWaRequest) []entity.SearchNoMsnByWa
 	UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, payment_type string, username string)
-	WillBayar(data request.SearchWBRequest) (entity.Faktur3, error)
+	WillBayar(data request.SearchWBRequest) (entity.Faktur3, []int, error)
 	UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error)
 	DataRenewal(data request.DataRenewalRequest) ([]response.DataRenewalResponse, error)
 	ExportPembayaranRenewal(data request.RangeTanggalRequest) error
 	ExportDataRenewal(data request.DataRenewalRequest) (entity.DataRenewal, error)
 	ExportDataPlatinumPlus(data request.DataRenewalRequest) (entity.DataRenewal, error)
+	UpdateInputBayarMembership(data request.InputBayarRequest)  error
+	UpdateInputBayarAsuransiPA(data request.InputBayarRequest)  error
+	UpdateInputBayarAsuransiMtr(data request.InputBayarRequest)  error
 }
 
 type tr3Service struct {
@@ -535,8 +538,17 @@ func (s *tr3Service) UpdateJenisBayar(data []repository.ParamsUpdateJenisBayar, 
 func (s *tr3Service) UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error) {
 	return s.trR.UpdateInputBayar(data)
 }
+func (s *tr3Service) UpdateInputBayarMembership(data request.InputBayarRequest)  error {
+	return s.trR.UpdateInputBayarMembership(data)
+}
+func (s *tr3Service) UpdateInputBayarAsuransiPA(data request.InputBayarRequest)  error {
+	return s.trR.UpdateInputBayarAsuransiPA(data)
+}
+func (s *tr3Service) UpdateInputBayarAsuransiMtr(data request.InputBayarRequest)  error {
+	return s.trR.UpdateInputBayarAsuransiMtr(data)
+}
 
-func (s *tr3Service) WillBayar(data request.SearchWBRequest) (entity.Faktur3, error) {
+func (s *tr3Service) WillBayar(data request.SearchWBRequest) (entity.Faktur3, []int, error) {
 	data.Kode = strings.ReplaceAll(data.Kode, " ", "")
 	if len(data.Kode) > 16 {
 		data.Kode = data.Kode[:16]

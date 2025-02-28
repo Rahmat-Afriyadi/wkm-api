@@ -82,7 +82,7 @@ func (mR *mstRepository) MasterScript() []entity.MstScript {
 
 func (mR *mstRepository) ListAllScript() []entity.MstScript {
 	var data []entity.MstScript
-	mR.conn.Debug().Select("id, title, is_active, created").Find(&data)
+	mR.conn.Select("id, title, is_active, created").Find(&data)
 	return data
 }
 

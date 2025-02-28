@@ -23,7 +23,7 @@ var (
 	connUser, sqlConnUser                 = config.GetConnectionUser()
 	connGormAsuransi, sqlConnGormAsuransi = config.NewAsuransiGorm()
 
-	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn, gormDBWkm)
+	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn, gormDBWkm,connGormAsuransi)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
 	tr3Controller controller.Tr3Controller = controller.NewTr3Controller(tr3Service)
 
@@ -264,6 +264,8 @@ func main() {
 	app.Delete("/extend-bayar/delete/:id", middleware.DeserializeUser, extendBayarController.Delete)
 
 	app.Post("/faktur-3/input-bayar", middleware.DeserializeUser, tr3Controller.UpdateInputBayar)
+	app.Post("/faktur-3/input-bayar/asuransi-pa", middleware.DeserializeUser, tr3Controller.UpdateInputBayarAsuransiPA)
+	app.Post("/faktur-3/input-bayar/asuransi-mtr", middleware.DeserializeUser, tr3Controller.UpdateInputBayarAsuransiMtr)
 	app.Post("/faktur-3/search/will-bayar", middleware.DeserializeUser, tr3Controller.WillBayar)
 	app.Post("/export-data-pembayaran", middleware.DeserializeUser, tr3Controller.ExportPembayaranRenewal)
 

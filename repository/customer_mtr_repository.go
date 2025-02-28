@@ -49,17 +49,17 @@ func NewCustomerMtrRepository(conn *sql.DB, connGorm *gorm.DB,wandaGorm *gorm.DB
 
 func (cR *customerMtrRepository) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
 	datas := []entity.CustomerMtr{}
-	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? ", "%"+search+"%", "%"+search+"%")
+	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? or nm_customer_fkt like ? ", "%"+search+"%","%"+search+"%", "%"+search+"%")
 	query.Where("kd_user_ts = ?", username)
 	query.Where(fmt.Sprintf("%s = ?", jns),sts)
 
-	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Order("tgl_call_tele desc").Find(&datas)
+	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Order("modified desc").Find(&datas)
 	return datas
 
 }
 func (cR *customerMtrRepository) MasterDataCount(search string, sts string, jns string, username string) int64 {
 	datas := []entity.CustomerMtr{}
-	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? ", "%"+search+"%", "%"+search+"%")
+	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? or nm_customer_fkt like ? ", "%"+search+"%", "%"+search+"%","%"+search+"%")
 	query.Where("kd_user_ts = ?", username)
 	query.Where(fmt.Sprintf("%s = ?", jns),sts)
 
@@ -69,13 +69,14 @@ func (cR *customerMtrRepository) MasterDataCount(search string, sts string, jns 
 
 func (r *customerMtrRepository) ListAmbilData() []entity.Faktur3 {
 	data := []entity.Faktur3{}
-	r.connGorm.Select("no_msn").Order("RAND()").Where("sts_renewal is null").Find(&data)
+	r.connGorm.Select("no_msn").Order("RAND()").Where("sts_renewal is null").Limit(100).Find(&data)
 	return data
 }
 
 func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	queryAmbilData := query.NewQueryAmbilData()
+	queryUpdateAmbilData := query.NewQueryUpdateAmbilData()
 	defer cancel()
 	var kdUser sql.NullString
 	var stsRenewal sql.NullString
@@ -91,21 +92,42 @@ func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
 	}
 	now := time.Now()
-	r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, tgl_verifikasi = ?, sts_renewal='P' where no_msn = ?", kd_user,now.Format("2006-01-02"),no_msn)
-	r.conn.QueryContext(ctx, queryAmbilData, no_msn)
+	_, err =r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, tgl_verifikasi = ?, sts_renewal='P' where no_msn = ?", kd_user,now.Format("2006-01-02"),no_msn)
+	if err != nil {
+		return err
+	}
+
+	var count int64
+	r.connGorm.Model(&entity.CustomerMtr{}).Where("no_msn = ?", no_msn).Count(&count)
+	if count > 0 {
+		r.conn.QueryContext(ctx, queryUpdateAmbilData, no_msn)
+	}else {
+		r.conn.QueryContext(ctx, queryAmbilData, no_msn)
+	}
 	return nil
 }
 
 
 func (r *customerMtrRepository) Show(no_msn string) entity.CustomerMtr {
 	data := entity.CustomerMtr{NoMsn: no_msn}
-	r.connGorm.Preload("Memberships", "renewal_ke = (SELECT renewal_ke FROM customer_mtr WHERE customer_mtr.no_msn = membership.no_msn)").Debug().Preload("AsuransiPa").Preload("AsuransiMtr").Find(&data)
+	r.connGorm.Preload("Memberships", "renewal_ke = (SELECT renewal_ke FROM customer_mtr WHERE customer_mtr.no_msn = membership.no_msn)").Preload("AsuransiPa").Preload("AsuransiMtr").Find(&data)
 	var produkPa entity.MasterProduk
 	var produkMtr entity.MasterProduk
 	r.wandaGorm.Preload("Vendor").Where("id_produk = ?",data.AsuransiMtr.IDProduk).Find(&produkMtr)
 	r.wandaGorm.Preload("Vendor").Where("id_produk = ?",data.AsuransiPa.IDProduk).Find(&produkPa)
 	data.AsuransiPa.Produk = produkPa
 	data.AsuransiMtr.Produk = produkMtr
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err := r.conn.QueryRowContext(ctx, "select c.no_msn, k.nm_kerja, h.hobby, a.agama, t.nm_tujpak, p.nm_pendidikan, kb.nm_keluar_bln2 from customer_mtr c inner join mst_kerja k on k.kode_kerja2 = c.kode_kerja_fkt inner join hobby h on h.kode_hobby = c.hobby_fkt inner join mst_agama a on a.kd_agama = c.agama_fkt inner join mst_tujuanpakai t on c.tujuan_pakai_fkt = t.id inner join mst_pendidikan p on p.kd_pendidikan = c.kode_didik_fkt inner join mst_keluar_bln kb on kb.keluar_bln2 = c.keluar_bln_fkt where c.no_msn = ?", no_msn).Scan(&no_msn, &data.DescKerjaFkt, &data.DescHobbyFkt, &data.DescAgamaFkt, &data.DescTujuanPakaiFkt, &data.DescDidikFkt, &data.DescKeluarBlnFkt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entity.CustomerMtr{}
+		} else {
+			return entity.CustomerMtr{}
+		}
+	}
 
 	return data
 }
@@ -161,10 +183,10 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	if jsonMap["tgl_janji_bayar"] != nil {
 		jsonMap["tgl_janji_bayar"] =jsonMap["tgl_janji_bayar"].(string)[:10]
 	}
-	if jsonMap["tgl_call_tele"] != nil {
-		jsonMap["tgl_call_tele"] =jsonMap["tgl_call_tele"].(string)[:10]
-	}
 
+	jsonMap["tgl_call_tele"] = now.Format("2006-01-02")
+
+	
 	if jsonMap["sts_membership"] == "O" && existCustomerMtr.StsMembership != "O" {
 		err = json.Unmarshal(jsonBytes, &membership)
 		if err != nil {
@@ -174,12 +196,13 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		if membership.TypeKartu == "E" {
 			print = 1
 		}
-
+		
 		jsonMap["alasan_tdk_membership"] = nil
 		jsonMap["alasan_pending_membership"] = nil
 		jsonMap["tgl_prospect_membership"] = nil
-		
-		customerMtrEntity.StsAsuransiPa = "M"
+		if jsonMap["sts_asuransi_pa"] != "O" {
+			customerMtrEntity.StsAsuransiPa = "M"
+		}
 		customerMtrEntity.AlasanTdkMembership = ""
 		customerMtrEntity.AlasanPendingMembership = ""
 		customerMtrEntity.TglProspectMembership = nil
@@ -241,7 +264,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		log.Fatal("Error preparing statement:", err)
 	}
 	defer stmt.Close() // Ensure statement is closed after execution
-	res, err := stmt.Exec(print, jsonMap["agama_wkm"],jsonMap["alamat_bantuan_wkm"],jsonMap["alamat_ktr_wkm"],jsonMap["alamat_wkm"],jsonMap["alasan_pending_membership"],jsonMap["alasan_tdk_membership"],jsonMap["alasan_tdk_membership_detail"],jsonMap["email_wkm"],jsonMap["hobby_wkm"],jsonMap["jns_klm_wkm"],jsonMap["jns_membership"],jsonMap["kd_aktivitas_jual_membership"],jsonMap["kec_ktr_wkm"],jsonMap["kec_wkm"],jsonMap["kel_ktr_wkm"],jsonMap["kel_wkm"],jsonMap["keluar_bln_wkm"],jsonMap["kerja_di_wkm"],jsonMap["ket_alamat_wkm"],jsonMap["ket_no_hp_fkt"],jsonMap["ket_no_telp_fkt"],jsonMap["ket_no_telp_wkm"],jsonMap["kirim_ke"],jsonMap["kode_didik_wkm"],jsonMap["kode_kerja_wkm"],jsonMap["kodepos_ktr_wkm"],jsonMap["kodepos_wkm"],jsonMap["kota_ktr_wkm"],jsonMap["kota_wkm"],jsonMap["nm_customer_wkm"],jsonMap["no_hp_wkm"],jsonMap["no_telp_ktr_wkm"],jsonMap["no_telp_wkm"],jsonMap["ket_hub_ts"],jsonMap["rt_ktr_wkm"],jsonMap["rt_wkm"],jsonMap["rw_ktr_wkm"],jsonMap["rw_wkm"],jsonMap["sts_kawin_wkm"],jsonMap["sts_membership"],jsonMap["tgl_call_tele"],jsonMap["tgl_janji_bayar"],jsonMap["tgl_prospect_membership"],jsonMap["tujuan_pakai_wkm"],jsonMap["jns_bayar"], customer.NoMsn, customer.KdUserTs) // Update user with ID 1 to age 28
+	res, err := stmt.Exec(print, jsonMap["agama_wkm"],jsonMap["alamat_bantuan_wkm"],jsonMap["alamat_ktr_wkm"],jsonMap["alamat_wkm"],jsonMap["alasan_pending_membership"],jsonMap["alasan_tdk_membership"],jsonMap["alasan_tdk_membership_detail"],jsonMap["email_wkm"],jsonMap["hobby_wkm"],jsonMap["jns_klm_wkm"],jsonMap["jns_membership"],jsonMap["kd_aktivitas_jual_membership"],jsonMap["kec_ktr_wkm"],jsonMap["kec_wkm"],jsonMap["kel_ktr_wkm"],jsonMap["kel_wkm"],jsonMap["keluar_bln_wkm"],jsonMap["kerja_di_wkm"],jsonMap["ket_alamat_wkm"],jsonMap["ket_no_hp_fkt"],jsonMap["ket_no_telp_fkt"],jsonMap["ket_no_telp_wkm"],jsonMap["kirim_ke"],jsonMap["kode_didik_wkm"],jsonMap["kode_kerja_wkm"],jsonMap["kodepos_ktr_wkm"],jsonMap["kodepos_wkm"],jsonMap["kota_ktr_wkm"],jsonMap["kota_wkm"],jsonMap["nm_customer_wkm"],jsonMap["no_hp_wkm"],jsonMap["no_telp_ktr_wkm"],jsonMap["no_telp_wkm"],jsonMap["no_yg_dihub_ts"],jsonMap["rt_ktr_wkm"],jsonMap["rt_wkm"],jsonMap["rw_ktr_wkm"],jsonMap["rw_wkm"],jsonMap["sts_kawin_wkm"],jsonMap["sts_membership"],jsonMap["tgl_call_tele"],jsonMap["tgl_janji_bayar"],jsonMap["tgl_prospect_membership"],jsonMap["tujuan_pakai_wkm"],jsonMap["jns_bayar"], customer.NoMsn, customer.KdUserTs) // Update user with ID 1 to age 28
 	if err != nil {
 		log.Fatal("Error executing statement:", err)
 	}
@@ -255,6 +278,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	// if customerMtrEntity.KetNoHpFkt == "1" || customerMtrEntity.KetNoTelpFkt == "1" {
 		
 	// }
+	customerMtrEntity.TglCallTele = &now
 	customerMtrEntity.Modified = &now
 	customerMtrEntity.JmlCallMembership += 1
 	r.connGorm.Save(&customerMtrEntity)

@@ -2,6 +2,24 @@ package entity
 
 import "time"
 
+type DetailAsuransiPA struct {
+	IdProduk string `json:"id_produk"`
+	NmVendor string `json:"nm_vendor"`
+	NmProduk string `json:"nm_produk"`
+	AmountPa uint64 `json:"amount_asuransi_pa"`
+}
+
+type DetailAsuransiMtr struct {
+	IdProduk string `json:"id_produk"`
+	NmVendor string `json:"nm_vendor"`
+	NmProduk string `json:"nm_produk"`
+	NmMtr string 	`json:"nm_mtr"`
+	NoMtr string 	`json:"no_mtr"`
+	Otr uint64 		`json:"otr"`
+	AmountOtr uint64 `json:"amount_otr"`
+}
+
+
 type Faktur3 struct {
 	NoMsn               string     `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
 	NoTandaTerima       string     `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
@@ -68,6 +86,10 @@ type Faktur3 struct {
 	KecSrt1     string `form:"kec_srt1" json:"kec_srt1" gorm:"column:kec_srt1"`
 	KelSrt1     string `form:"kel_srt1" json:"kel_srt1" gorm:"column:kel_srt1"`
 	KodeposSrt1 string `form:"kodepos_srt1" json:"kodepos_srt1" gorm:"column:kodepos_srt1"`
+
+
+	AsuransiPa DetailAsuransiPA `json:"asuransi_pa" gorm:"-;type:json"`
+	AsuransiMtr DetailAsuransiMtr `json:"asuransi_mtr" gorm:"-;type:json"`
 }
 
 func (Faktur3) TableName() string {

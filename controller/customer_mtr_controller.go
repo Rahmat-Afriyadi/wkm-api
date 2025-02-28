@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 	"wkm/entity"
@@ -96,7 +95,6 @@ func (tr *customerMtrController) UpdateOkeMembership(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})
 	}
-	fmt.Println("ini request ", request.TglProspectMembership)
 	user := ctx.Locals("user")
 	details,_:= user.(entity.User)
 

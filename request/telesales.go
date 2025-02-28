@@ -141,6 +141,7 @@ type CustomerMtr struct {
 	DpMtrWkm              uint32     ` json:"dp_mtr_wkm" form:"dp_mtr_wkm"`
 	KdAktivitasJualMembership string  ` json:"kd_aktivitas_jual_membership" form:"kd_aktivitas_jual_membership"`
 	JmlCallMembership      uint32     ` json:"jml_call_membership" form:"jml_call_membership"`
+	StsStnk      string     ` json:"sts_stnk" form:"sts_stnk"`
 	Modified               *time.Time ` json:"modified" form:"modified"`
 
 

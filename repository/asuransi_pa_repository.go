@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+
 	// "time"
 	"wkm/entity"
 	// "wkm/request"
@@ -29,12 +30,12 @@ func NewAsuransiPARepository(conn *sql.DB) AsuransiPARepository {
 func (ar *asuransiPARepository) CreateAsuransiPA(data entity.AsuransiPA) error {
 	data.Id = uuid.New().String()
 	query := `
-		INSERT INTO asuransi_pa (Id, no_msn, nm_customer, sts_asuransi_pa, id_produk, app_trans_id, tgl_beli, no_ktpnpwp, alasan_pending_asuransi_pa, sts_pembelian)
+		INSERT INTO asuransi_pa (Id, no_msn, nm_customer, sts_asuransi_pa, id_produk, app_trans_id, tgl_beli, no_ktpnpwp,sts_pembelian)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	// Execute the SQL statement
-	_, err := ar.conn.Exec(query, data.Id, data.NoMSN, data.NmCustomer, data.StsAsuransiPA, data.IDProduk, data.AppTransID, data.TglBeli, data.NoKtpNpwp, data.AlasanPendingAsuransiPA, data.StsPembelian)
+	_, err := ar.conn.Exec(query, data.Id, data.NoMSN, data.NmCustomer, data.StsAsuransiPA, data.IDProduk, data.AppTransID, data.TglBeli, data.NoKtpNpwp, data.StsPembelian)
 	if err != nil {
 		fmt.Printf("Error creating AsuransiPA: %v", err)
 		return err // Return the error to the caller
@@ -46,11 +47,11 @@ func (ar *asuransiPARepository) CreateAsuransiPA(data entity.AsuransiPA) error {
 func (ar *asuransiPARepository) UpdateAsuransiPA(id string, data entity.AsuransiPA) error {
 	query := `
 		UPDATE asuransi_pa 
-		SET no_msn = ?, nm_customer = ?, sts_asuransi_pa = ?, id_produk = ?, app_trans_id = ?, tgl_beli = ?, no_ktpnpwp = ?, alasan_pending_asuransi_pa = ?, sts_pembelian = ?
+		SET no_msn = ?, nm_customer = ?, sts_asuransi_pa = ?, id_produk = ?, app_trans_id = ?, tgl_beli = ?, no_ktpnpwp = ?, sts_pembelian = ?
 		WHERE Id = ?
 	`
 	// Execute the SQL statement
-	_, err := ar.conn.Exec(query, data.NoMSN, data.NmCustomer, data.StsAsuransiPA, data.IDProduk, data.AppTransID, data.TglBeli, data.NoKtpNpwp, data.AlasanPendingAsuransiPA, data.StsPembelian, id)
+	_, err := ar.conn.Exec(query, data.NoMSN, data.NmCustomer, data.StsAsuransiPA, data.IDProduk, data.AppTransID, data.TglBeli, data.NoKtpNpwp, data.StsPembelian, id)
 	if err != nil {
 		fmt.Printf("Error updating AsuransiPA with ID %s: %v", id, err)
 		return err // Return the error to the caller
