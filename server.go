@@ -287,7 +287,12 @@ func main() {
 	app.Get("/customer-mtr/list-ambil-data", middleware.DeserializeUser, customerMtrController.ListAmbilData)
 	app.Post("/customer-mtr/ambil-data", middleware.DeserializeUser, customerMtrController.AmbilData)
 	app.Get("/customer-mtr/show/:no_msn", middleware.DeserializeUser, customerMtrController.Show)
+	app.Post("/customer-mtr/rekap-tele", middleware.DeserializeUser, customerMtrController.RekapTele)
 	app.Post("/customer-mtr/update", middleware.DeserializeUser, customerMtrController.Update)
+	app.Post("/customer-mtr/list-berminat-membership", middleware.DeserializeUser, customerMtrController.ListBerminatMembership)
+	app.Post("/customer-mtr/list-berminat-asuransi-pa", middleware.DeserializeUser, customerMtrController.ListDataAsuransiPA)
+	app.Post("/customer-mtr/list-berminat-asuransi-mtr", middleware.DeserializeUser, customerMtrController.ListDataAsuransiMtr)
+	app.Post("/customer-mtr/export-rekap-tele", middleware.DeserializeUser, customerMtrController.ExportRekapTele)
 
 	app.Post("asuransi-pa/create", middleware.DeserializeUser, asuransiPAController.CreateAsuransiPA)
 	app.Post("asuransi-pa/update/:id", middleware.DeserializeUser, asuransiPAController.UpdateAsuransiPA)

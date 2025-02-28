@@ -10,6 +10,7 @@ import (
 	"time"
 	"wkm/entity"
 	"wkm/request"
+	"wkm/response"
 	"wkm/utils"
 	"wkm/utils/query"
 
@@ -26,6 +27,10 @@ type CustomerMtrRepository interface {
 	Show(no_msn string)entity.CustomerMtr
 	Update(customer entity.CustomerMtr) (entity.CustomerMtr, error)
 	UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr, error)
+	RekapTele(username string, startDate time.Time, endDate time.Time) (response.RekapTele, error)
+	ListBerminatMembership(username string, startDate time.Time, endDate time.Time) ([]response.MinatMembership, error)
+	ListDataAsuransiPA(username string, startDate time.Time, endDate time.Time) ([]response.ListAsuransi, error)
+	ListDataAsuransiMtr(username string, startDate time.Time, endDate time.Time) ([]response.ListAsuransi, error)
 }
 
 type customerMtrRepository struct {
@@ -257,3 +262,427 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	fmt.Printf("Successfully updated %d row(s)\n", rowsAffected)
 	return customerMtrEntity, nil
 }
+
+func (r *customerMtrRepository) RekapTele(username string, startDate time.Time, endDate time.Time) (response.RekapTele, error) {
+	var rekap response.RekapTele
+
+	// Query untuk jumlah data membership
+	query := `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ?`
+	err := r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.JumlahDataMembership)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching jumlah_data_membership: %v", err)
+	}
+
+	// Query untuk data membership berminat (sts_membership = 'O')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_membership = 'O'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataBerminatMembership)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_berminat_membership: %v", err)
+	}
+
+	// Query untuk data membership sukses (sts_membership = 'O') dan (sts_bayar = 'S' di table membership)
+	query = `
+	SELECT COALESCE(COUNT(*), 0)
+	FROM customer_mtr cm
+	JOIN membership m ON cm.no_msn = m.no_msn
+	WHERE cm.kd_user_ts = ? 
+	AND cm.tgl_call_tele BETWEEN ? AND ? 
+	AND cm.sts_membership = 'O' 
+	AND m.sts_bayar = 'S'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataSuksesMembership)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_sukses_membership: %v", err)
+	}
+
+	// Query untuk data membership prospect (sts_membership = 'F')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_membership = 'F'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataProspectMembership)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_prospect_membership: %v", err)
+	}
+
+	// Query untuk data membership tidak berminat (sts_membership = 'T')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_membership = 'T'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataTidakBerminatMembership)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_tidak_berminat_membership: %v", err)
+	}
+
+	// Query untuk data membership pending (sts_membership = 'P')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_membership = 'P'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataPendingMembership)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_pending_membership: %v", err)
+	}
+	//========================================================
+	// Query untuk data asuransi pa berminat (sts_asuransi_pa = 'O')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_asuransi_pa = 'O'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataBerminatPA)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_berminat_membership: %v", err)
+	}
+
+	// Query untuk data asuransi_pa sukses (sts_asuransi_pa = 'O') dan (sts_bayar = 'S' di table asuransi_pa)
+	query = `
+	SELECT COALESCE(COUNT(*), 0)
+	FROM customer_mtr cm
+	JOIN asuransi_pa a ON cm.no_msn = a.no_msn
+	WHERE cm.kd_user_ts = ? 
+	AND cm.tgl_call_tele BETWEEN ? AND ? 
+	AND cm.sts_asuransi_pa = 'O' 
+	AND a.sts_bayar = 'S'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataSuksesPA)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_sukses_pa: %v", err)
+	}
+
+	// Query untuk data asuransi_pa prospect (sts_asuransi_pa = 'F')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_asuransi_pa = 'F'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataProspectPA)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_prospect_asuransi_pa: %v", err)
+	}
+
+	// Query untuk data Asuransi PA tidak berminat (sts_asuransi_pa = 'T')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_asuransi_pa = 'T'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataTidakBerminatPA)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_tidak_berminat_pa: %v", err)
+	}
+
+	// Query untuk data Asuransi PA pending (sts_asuransi_pa = 'P')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_asuransi_pa = 'P'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataPendingPA)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_pending_PA: %v", err)
+	}
+
+	//===================================================
+
+	// Query untuk data asuransi mtr berminat (sts_asuransi_mtr = 'O')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_asuransi_mtr = 'O'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataBerminatMtr)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_berminat_mtr: %v", err)
+	}
+
+	// Query untuk data asuransi_pa sukses (sts_asuransi_pa = 'O') dan (sts_bayar = 'S' di table asuransi_pa)
+	query = `
+	SELECT COALESCE(COUNT(*), 0)
+	FROM customer_mtr cm
+	JOIN asuransi_mtr a ON cm.no_msn = a.no_msn
+	WHERE cm.kd_user_ts = ? 
+	AND cm.tgl_call_tele BETWEEN ? AND ? 
+	AND cm.sts_asuransi_mtr = 'O' 
+	AND a.sts_bayar = 'S'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataSuksesMtr)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_sukses_pa: %v", err)
+	}
+
+	// Query untuk data asuransi_mtr prospect (sts_asuransi_mtr = 'F')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_asuransi_mtr = 'F'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataProspectMtr)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_prospect_asuransi_mtr: %v", err)
+	}
+
+	// Query untuk data Asuransi Mtr tidak berminat (sts_asuransi_mtr = 'T')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_asuransi_mtr = 'T'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataTidakBerminatMtr)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_tidak_berminat_pa: %v", err)
+	}
+
+	// Query untuk data Asuransi Mtr pending (sts_asuransi_mtr = 'P')
+	query = `SELECT COUNT(*) FROM customer_mtr WHERE kd_user_ts = ? AND tgl_call_tele BETWEEN ? AND ? AND sts_asuransi_mtr = 'P'`
+	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataPendingMtr)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
+	}
+
+	//================================================================
+
+	rekap.DataBerminatMembershipPerBulan = make(map[int]int)
+	for i := 1; i <= 12; i++ {
+		rekap.DataBerminatMembershipPerBulan[i] = 0
+	}
+
+	// Query untuk menghitung data berminat per bulan dalam tahun ini
+	query = `
+	SELECT MONTH(tgl_call_tele) AS bulan, COUNT(*) AS jumlah
+	FROM customer_mtr
+	WHERE kd_user_ts = ? 
+	AND YEAR(tgl_call_tele) = YEAR(NOW()) 
+	AND sts_membership = 'O'
+	GROUP BY MONTH(tgl_call_tele)`
+
+	rows, err := r.conn.Query(query, username)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_berminat_per_bulan: %v", err)
+	}
+	defer rows.Close()
+
+	// Memasukkan hasil query ke dalam map
+	for rows.Next() {
+		var bulan, jumlah int
+		if err := rows.Scan(&bulan, &jumlah); err != nil {
+			return rekap, fmt.Errorf("error scanning data_berminat_per_bulan: %v", err)
+		}
+		rekap.DataBerminatMembershipPerBulan[bulan] = jumlah
+	}
+
+	//Rekap PA
+	rekap.DataBerminatPAPerBulan = make(map[int]int)
+	for i := 1; i <= 12; i++ {
+		rekap.DataBerminatPAPerBulan[i] = 0
+	}
+
+	// Query untuk menghitung data berminat per bulan dalam tahun ini
+	query = `
+	SELECT MONTH(tgl_call_tele) AS bulan, COUNT(*) AS jumlah
+	FROM customer_mtr
+	WHERE kd_user_ts = ? 
+	AND YEAR(tgl_call_tele) = YEAR(NOW()) 
+	AND sts_asuransi_pa = 'O'
+	GROUP BY MONTH(tgl_call_tele)`
+
+	rows, err = r.conn.Query(query, username)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_berminat_per_bulan: %v", err)
+	}
+	defer rows.Close()
+
+	// Memasukkan hasil query ke dalam map
+	for rows.Next() {
+		var bulan, jumlah int
+		if err := rows.Scan(&bulan, &jumlah); err != nil {
+			return rekap, fmt.Errorf("error scanning data_berminat_per_bulan: %v", err)
+		}
+		rekap.DataBerminatPAPerBulan[bulan] = jumlah
+	}
+
+	//Rekap Mtr
+	rekap.DataBerminatMtrPerBulan = make(map[int]int)
+	for i := 1; i <= 12; i++ {
+		rekap.DataBerminatMtrPerBulan[i] = 0
+	}
+
+	// Query untuk menghitung data berminat per bulan dalam tahun ini
+	query = `
+	SELECT MONTH(tgl_call_tele) AS bulan, COUNT(*) AS jumlah
+	FROM customer_mtr
+	WHERE kd_user_ts = ? 
+	AND YEAR(tgl_call_tele) = YEAR(NOW()) 
+	AND sts_asuransi_mtr = 'O'
+	GROUP BY MONTH(tgl_call_tele)`
+
+	rows, err = r.conn.Query(query, username)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_berminat_per_bulan: %v", err)
+	}
+	defer rows.Close()
+
+	// Memasukkan hasil query ke dalam map
+	for rows.Next() {
+		var bulan, jumlah int
+		if err := rows.Scan(&bulan, &jumlah); err != nil {
+			return rekap, fmt.Errorf("error scanning data_berminat_per_bulan: %v", err)
+		}
+		rekap.DataBerminatMtrPerBulan[bulan] = jumlah
+	}
+
+	return rekap, nil
+}
+
+func (r *customerMtrRepository) ListBerminatMembership(username string, startDate time.Time, endDate time.Time) ([]response.MinatMembership, error) {
+	var results []response.MinatMembership
+
+	// Query SQL dengan JOIN ke mst_card untuk mengambil jns_card
+	query := `
+		SELECT 
+			cm.no_msn, 
+			cm.nm_customer11, 
+			cm.sts_jenis_bayar, 
+			cm.tgl_bayar_renewal, 
+			cm.print, 
+			cm.sts_renewal, 
+			cm.sts_kartu, 
+			cm.sts_bayar_renewal, 
+			mc.jns_card AS kd_card
+		FROM tr_wms_faktur3 cm
+		LEFT JOIN mst_card mc ON cm.kd_card = mc.kd_card
+		WHERE cm.kd_user = ? AND cm.sts_renewal = 'O'
+		AND cm.tgl_verifikasi BETWEEN ? AND ?
+	`
+
+	// Menjalankan query
+	rows, err := r.conn.Query(query, username, startDate, endDate)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	// Loop untuk membaca hasil query
+	for rows.Next() {
+		var customer response.MinatMembership
+		err := rows.Scan(
+			&customer.NoMsn,
+			&customer.NmCustomer,
+			&customer.StsJnsBayar,
+			&customer.TglBayarRenewal,
+			&customer.Print,
+			&customer.StsRenewal,
+			&customer.StsKartu,
+			&customer.StsBayarRenewal,
+			&customer.KdCard,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		results = append(results, customer)
+	}
+
+	// Jika ada error saat iterasi
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	return results, nil
+}
+
+func (r *customerMtrRepository) ListDataAsuransiPA(username string, startDate time.Time, endDate time.Time) ([]response.ListAsuransi, error) { 
+	var results []response.ListAsuransi
+	fmt.Println("tanggal", startDate, endDate)
+	// Query SQL dengan JOIN ke asuransi_pa
+	query := `
+		SELECT 
+    		cm.no_msn, 
+    		cm.nm_customer_fkt, 
+    		cm.nm_customer_wkm, 
+    		cm.sts_asuransi_pa AS status_asuransi, 
+    		ap.tgl_beli, 
+    		ap.id_produk AS produk
+		FROM db_wkm.customer_mtr cm
+		LEFT JOIN db_wkm.asuransi_pa ap ON cm.no_msn = ap.no_msn
+		WHERE cm.kd_user_ts = ? 
+  		AND cm.tgl_call_tele BETWEEN ? AND ?;
+	`
+
+	// Menjalankan query pertama
+	rows, err := r.conn.Query(query, username, startDate, endDate)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	// Loop untuk membaca hasil query
+	for rows.Next() {
+		var customer response.ListAsuransi
+		var idProduk sql.NullString // Menyimpan id_produk sementara
+
+		err := rows.Scan(
+			&customer.NoMsn,
+			&customer.NmCustomerFkt,
+			&customer.NmCustomerWkm,
+			&customer.StsAsuransi,
+			&customer.TglBeli,
+			&idProduk, // Ambil id_produk dulu
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		// **Query kedua menggunakan wandaGorm untuk mendapatkan nm_produk**
+		var nmProduk string
+		err = r.wandaGorm.Raw(`
+			SELECT nm_produk FROM wanda_asuransi.produk 
+			WHERE jns_asuransi = 2 AND id_produk = ?
+		`, idProduk).Scan(&nmProduk).Error
+
+		if err != nil {
+			nmProduk = "" // Jika error, kosongkan nama produk
+		}
+
+		// Set nm_produk ke struct hasil
+		customer.IdProduk = nmProduk
+
+		// Tambahkan ke hasil akhir
+		results = append(results, customer)
+	}
+
+	// Jika ada error saat iterasi
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	return results, nil
+}
+
+func (r *customerMtrRepository) ListDataAsuransiMtr(username string, startDate time.Time, endDate time.Time) ([]response.ListAsuransi, error) { 
+	var results []response.ListAsuransi
+	// Query SQL dengan JOIN ke asuransi_pa
+	query := `
+		SELECT 
+    		cm.no_msn, 
+    		cm.nm_customer_fkt, 
+    		cm.nm_customer_wkm, 
+    		cm.sts_asuransi_mtr AS status_asuransi, 
+    		am.tgl_beli, 
+    		am.id_produk AS produk
+		FROM db_wkm.customer_mtr cm
+		LEFT JOIN db_wkm.asuransi_mtr am ON cm.no_msn = am.no_msn
+		WHERE cm.kd_user_ts = ? 
+  		AND cm.tgl_call_tele BETWEEN ? AND ?;
+	`
+
+	// Menjalankan query pertama
+	rows, err := r.conn.Query(query, username, startDate, endDate)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	// Loop untuk membaca hasil query
+	for rows.Next() {
+		var customer response.ListAsuransi
+		var idProduk sql.NullString // Menyimpan id_produk sementara
+
+		err := rows.Scan(
+			&customer.NoMsn,
+			&customer.NmCustomerFkt,
+			&customer.NmCustomerWkm,
+			&customer.StsAsuransi,
+			&customer.TglBeli,
+			&idProduk, // Ambil id_produk dulu
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		// **Query kedua menggunakan wandaGorm untuk mendapatkan nm_produk**
+		var nmProduk string
+		err = r.wandaGorm.Raw(`
+			SELECT nm_produk FROM wanda_asuransi.produk 
+			WHERE jns_asuransi = 1 AND id_produk = ?
+		`, idProduk).Scan(&nmProduk).Error
+
+		if err != nil {
+			nmProduk = "" // Jika error, kosongkan nama produk
+		}
+
+		// Set nm_produk ke struct hasil
+		customer.IdProduk = nmProduk
+
+		// Tambahkan ke hasil akhir
+		results = append(results, customer)
+	}
+
+	// Jika ada error saat iterasi
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	return results, nil
+}
+

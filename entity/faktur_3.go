@@ -21,6 +21,7 @@ type Faktur3 struct {
 	Print               uint8      `form:"print" json:"print" gorm:"column:print"`
 	StsCetak3           string     `form:"sts_cetak3" json:"sts_cetak3" gorm:"column:sts_cetak3"`
 	StsJnsBayar         string     `form:"sts_jenis_bayar" json:"sts_jenis_bayar" gorm:"column:sts_jenis_bayar"`
+	StsRenewal         string     `form:"sts_renewal" json:"sts_renewal" gorm:"column:sts_renewal"`
 	StsKartu            string     `form:"sts_kartu" json:"sts_kartu" gorm:"column:sts_kartu"`
 	StsBawaKartu        string     `form:"sts_bawa_kartu" json:"sts_bawa_kartu" gorm:"column:sts_bawa_kartu"`
 	StsBayarRenewal     string     `form:"sts_bayar_renewal" json:"sts_bayar_renewal" gorm:"column:sts_bayar_renewal"`
