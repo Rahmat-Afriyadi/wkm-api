@@ -60,4 +60,13 @@ AND kd_user=?
 
 
 
+UPDATE tr_wms_faktur3 a
+inner join membership b on a.no_msn=b.no_msn and a.sts_cetak3=b.renewal_ke
+inner join customer_mtr c on a.no_msn = c.no_msn
+SET a.print=0, a.alamat_bantuan=c.alamat_bantuan_wkm,a.alamat_ktr=c.alamat_ktr_wkm,a.alamat21=c.alamat_wkm,a.kd_card=b.jns_membership,a.kd_aktivitas_jual_r=c.kd_aktivitas_jual_membership,a.kec_ktr=c.kec_ktr_wkm,a.kec2=c.kec_wkm,a.kel_ktr=c.kel_ktr_wkm,a.kel2=c.kel_wkm,a.kerja_di=c.kerja_di_wkm,
+a.ket_alamat21=c.ket_alamat_wkm,
+a.ket_no_hp1=c.ket_no_hp_fkt,a.ket_no_telp1=c.ket_no_telp_fkt,a.ket_no_telp2=c.ket_no_telp_wkm,
+a.sts_kirim=b.kirim_ke,a.kodepos_ktr=c.kodepos_ktr_wkm,
+a.kodepos2=c.kodepos_wkm,a.kota_ktr=c.kota_ktr_wkm,a.kota2=c.kota_wkm,a.nama_ktp=c.nama_customer_wkm,a.no_hp2=c.no_hp_wkm,a.no_telp2=c.no_telp_wkm,a.no_yg_dihub_renewal=c.no_yg_dihub_ts,a.rt_ktr=c.rt_ktr_wkm,a.rt2=c.rt_wkm,a.rw_ktr=c.rw_ktr_wkm,a.rw2=c.rw_wkm,a.sts_renewal=c.sts_membership,a.tgl_verifikasi=c.tgl_call_tele,a.tgl_bayar_renewal=b.tgl_janji_bayar,a.sts_jenis_bayar=b.jns_bayar, a.sts_asuransi_pa='O' where a.no_msn = ? and a.kd_user =?
+
 

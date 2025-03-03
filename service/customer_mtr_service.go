@@ -17,6 +17,7 @@ type CustomerMtrService interface {
 	MasterDataCount(search string, sts string, jns string, username string) int64
 	ListAmbilData() []entity.Faktur3
 	AmbilData(no_msn string, kd_user string) error
+	SelfCount(kd_user string) int64
 	Show(no_msn string) entity.CustomerMtr
 	UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr,error)
 	RekapTele(usrname string, startDate time.Time, endDate time.Time) (response.RekapTele, error)
@@ -36,6 +37,9 @@ func NewCustomerMtrService(cR repository.CustomerMtrRepository) CustomerMtrServi
 	}
 }
 
+func (cS *customerMtrService) SelfCount(kd_user string) int64 {
+	return 	cS.cR.SelfCount(kd_user)
+}
 func (cS *customerMtrService) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
 	return 	cS.cR.MasterData(search, sts, jns, username, limit, pageParams)
 }

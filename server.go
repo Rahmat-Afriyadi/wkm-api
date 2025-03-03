@@ -284,6 +284,7 @@ func main() {
 	app.Post("/export-rekap-ticket", middleware.DeserializeUser, ticketSupportController.ExportDataTiketSupport)
 	app.Get("/mst-it-support", middleware.DeserializeUser, ticketSupportController.ListItSupport)
 
+	app.Get("/customer-mtr/self-count", middleware.DeserializeUser, customerMtrController.SelfCount)
 	app.Get("/customer-mtr/master-data", middleware.DeserializeUser, customerMtrController.MasterData)
 	app.Get("/customer-mtr/master-data-count", middleware.DeserializeUser, customerMtrController.MasterDataCount)
 	app.Get("/customer-mtr/list-ambil-data", middleware.DeserializeUser, customerMtrController.ListAmbilData)
