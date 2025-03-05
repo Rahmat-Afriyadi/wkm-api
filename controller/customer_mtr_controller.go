@@ -108,84 +108,78 @@ func (tr *customerMtrController) UpdateOkeMembership(ctx *fiber.Ctx) error {
 }
 
 func (tr *customerMtrController) RekapTele(ctx *fiber.Ctx) error {
-	var rekapReq request.RangeTanggalRequest
+    // Ambil nilai tgl1 dan tgl2 dari query params
+    tgl1 := ctx.Query("tgl1")
+    tgl2 := ctx.Query("tgl2")
 
-	// Parsing request body ke struct
-	if err := ctx.BodyParser(&rekapReq); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Invalid request body",
-			"details": err.Error(),
-		})
-	}
+    // Format tanggal yang digunakan
+    layoutFull := "2006-01-02 15:04:05"
+    layoutDate := "2006-01-02"
 
-	// Format tanggal yang digunakan
-	layoutFull := "2006-01-02 15:04:05"
-	layoutDate := "2006-01-02"
+    // Load lokasi waktu Jakarta
+    loc, _ := time.LoadLocation("Asia/Jakarta")
 
-	// Load lokasi waktu Jakarta
-	loc, _ := time.LoadLocation("Asia/Jakarta")
+    // Default StartDate dan EndDate (tanggal hari ini dalam zona waktu Jakarta)
+    now := time.Now().In(loc)
+    startDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+    endDate := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
 
-	// Default StartDate dan EndDate (tanggal hari ini dalam zona waktu Jakarta)
-	now := time.Now().In(loc)
-	startDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	endDate := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
+    // Parsing Tgl1 jika ada
+    if tgl1 != "" {
+        parsedStart, err := time.ParseInLocation(layoutFull, tgl1, loc)
+        if err != nil {
+            parsedStart, err = time.ParseInLocation(layoutDate, tgl1, loc)
+            if err == nil {
+                parsedStart = time.Date(parsedStart.Year(), parsedStart.Month(), parsedStart.Day(), 0, 0, 0, 0, loc)
+            }
+        }
+        if err == nil {
+            startDate = parsedStart
+        }
+    }
 
-	// Parsing Tgl1 jika ada
-	if rekapReq.Tgl1 != "" {
-		parsedStart, err := time.ParseInLocation(layoutFull, rekapReq.Tgl1, loc)
-		if err != nil {
-			parsedStart, err = time.ParseInLocation(layoutDate, rekapReq.Tgl1, loc)
-			if err == nil {
-				parsedStart = time.Date(parsedStart.Year(), parsedStart.Month(), parsedStart.Day(), 0, 0, 0, 0, loc)
-			}
-		}
-		if err == nil {
-			startDate = parsedStart
-		}
-	}
+    // Parsing Tgl2 jika ada
+    if tgl2 != "" {
+        parsedEnd, err := time.ParseInLocation(layoutFull, tgl2, loc)
+        if err != nil {
+            parsedEnd, err = time.ParseInLocation(layoutDate, tgl2, loc)
+            if err == nil {
+                parsedEnd = time.Date(parsedEnd.Year(), parsedEnd.Month(), parsedEnd.Day(), 23, 59, 59, 0, loc)
+            }
+        }
+        if err == nil {
+            endDate = parsedEnd
+        }
+    }
 
-	// Parsing Tgl2 jika ada
-	if rekapReq.Tgl2 != "" {
-		parsedEnd, err := time.ParseInLocation(layoutFull, rekapReq.Tgl2, loc)
-		if err != nil {
-			parsedEnd, err = time.ParseInLocation(layoutDate, rekapReq.Tgl2, loc)
-			if err == nil {
-				parsedEnd = time.Date(parsedEnd.Year(), parsedEnd.Month(), parsedEnd.Day(), 23, 59, 59, 0, loc)
-			}
-		}
-		if err == nil {
-			endDate = parsedEnd
-		}
-	}
+    // Mengambil informasi user dari context
+    user := ctx.Locals("user")
+    details, ok := user.(entity.User)
+    if !ok {
+        return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "error":   "Unauthorized",
+            "details": "Invalid user context",
+        })
+    }
+    // Memanggil service untuk mendapatkan data rekap
+    rekapData, err := tr.customerMtrService.RekapTele(details.Username, startDate, endDate)
+    if err != nil {
+        return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error":   "Failed to fetch data",
+            "details": err.Error(),
+        })
+    }
 
-	// Mengambil informasi user dari context
-	user := ctx.Locals("user")
-	details, ok := user.(entity.User)
-	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error":   "Unauthorized",
-			"details": "Invalid user context",
-		})
-	}
-
-	// Memanggil service untuk mendapatkan data rekap
-	rekapData, err := tr.customerMtrService.RekapTele(details.Username, startDate, endDate)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Failed to fetch data",
-			"details": err.Error(),
-		})
-	}
-
-	// Response sukses dengan format hanya "YYYY-MM-DD"
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Berhasil",
-		"user":    details.Username,
-		"data":    rekapData,
-		"Dari":    startDate.Format(layoutDate),
-		"Sampai":  endDate.Format(layoutDate),
-	})
+    // Response sukses dengan format hanya "YYYY-MM-DD"
+    return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+        "message": "Berhasil",
+        "user":    details.Username,
+        "data":    rekapData,
+        "Dari":    startDate.Format(layoutDate),
+        "Sampai":  endDate.Format(layoutDate),
+    })
 }
+
 
 func (tr *customerMtrController) ExportRekapTele(ctx *fiber.Ctx) error {
 	var rekapReq request.RangeTanggalRequest
@@ -249,7 +243,7 @@ func (tr *customerMtrController) ExportRekapTele(ctx *fiber.Ctx) error {
 	}
 
 	// Memanggil service untuk mendapatkan file Excel
-	fileName, err := tr.customerMtrService.ExportRekapTele(details.Username, startDate, endDate)
+	_, err := tr.customerMtrService.ExportRekapTele(details.Username, startDate, endDate)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Failed to generate report",
@@ -257,37 +251,28 @@ func (tr *customerMtrController) ExportRekapTele(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Download(fileName)
+	return ctx.Download("./Export_Rekap_Tele.xlsx")
 }
 
 func (tr *customerMtrController) ListBerminatMembership(ctx *fiber.Ctx) error {
-	var rekapReq request.RangeTanggalRequest
-
-	// Parsing request body ke struct
-	if err := ctx.BodyParser(&rekapReq); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Invalid request body",
-			"details": err.Error(),
-		})
-	}
-
 	// Format tanggal yang digunakan
 	layoutFull := "2006-01-02 15:04:05"
 	layoutDate := "2006-01-02"
 
 	// Load lokasi waktu Jakarta
 	loc, _ := time.LoadLocation("Asia/Jakarta")
-
-	// Default StartDate dan EndDate (tanggal hari ini dalam zona waktu Jakarta)
 	now := time.Now().In(loc)
 	startDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	endDate := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
+	tgl1 := ctx.Query("tgl1", "") // Default kosong jika tidak ada
+	tgl2 := ctx.Query("tgl2", "")
+	search := ctx.Query("search", "")
 
-	// Parsing Tgl1 jika ada
-	if rekapReq.Tgl1 != "" {
-		parsedStart, err := time.ParseInLocation(layoutFull, rekapReq.Tgl1, loc)
+	// Parsing tgl1 jika ada
+	if tgl1 != "" {
+		parsedStart, err := time.ParseInLocation(layoutFull, tgl1, loc)
 		if err != nil {
-			parsedStart, err = time.ParseInLocation(layoutDate, rekapReq.Tgl1, loc)
+			parsedStart, err = time.ParseInLocation(layoutDate, tgl1, loc)
 			if err == nil {
 				parsedStart = time.Date(parsedStart.Year(), parsedStart.Month(), parsedStart.Day(), 0, 0, 0, 0, loc)
 			}
@@ -297,11 +282,11 @@ func (tr *customerMtrController) ListBerminatMembership(ctx *fiber.Ctx) error {
 		}
 	}
 
-	// Parsing Tgl2 jika ada
-	if rekapReq.Tgl2 != "" {
-		parsedEnd, err := time.ParseInLocation(layoutFull, rekapReq.Tgl2, loc)
+	// Parsing tgl2 jika ada
+	if tgl2 != "" {
+		parsedEnd, err := time.ParseInLocation(layoutFull, tgl2, loc)
 		if err != nil {
-			parsedEnd, err = time.ParseInLocation(layoutDate, rekapReq.Tgl2, loc)
+			parsedEnd, err = time.ParseInLocation(layoutDate, tgl2, loc)
 			if err == nil {
 				parsedEnd = time.Date(parsedEnd.Year(), parsedEnd.Month(), parsedEnd.Day(), 23, 59, 59, 0, loc)
 			}
@@ -320,9 +305,10 @@ func (tr *customerMtrController) ListBerminatMembership(ctx *fiber.Ctx) error {
 			"details": "Invalid user context",
 		})
 	}
-
+	limit, _ := strconv.Atoi(ctx.Query("limit", "10")) // Default limit 10 jika tidak ada
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams", "1"))
 	// Memanggil service untuk mendapatkan data rekap
-	data, err := tr.customerMtrService.ListBerminatMembership(details.Username, startDate, endDate)
+	data, totalPages,totalRecords, err := tr.customerMtrService.ListBerminatMembership(details.Username, startDate, endDate, limit, pageParams,search)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "Failed to fetch data",
@@ -335,39 +321,32 @@ func (tr *customerMtrController) ListBerminatMembership(ctx *fiber.Ctx) error {
 		"message": "Berhasil",
 		"user":    details.Username,
 		"data":    data,
+		"pages": pageParams,
+		"total_pages": totalPages,
+		"total_records": totalRecords,
 		"Dari":    startDate.Format(layoutDate),
 		"Sampai":  endDate.Format(layoutDate),
 	})
 }
 
 func (tr *customerMtrController) ListDataAsuransiPA(ctx *fiber.Ctx) error {
-	var rekapReq request.RangeTanggalRequest
-
-	// Parsing request body ke struct
-	if err := ctx.BodyParser(&rekapReq); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Invalid request body",
-			"details": err.Error(),
-		})
-	}
-
 	// Format tanggal yang digunakan
 	layoutFull := "2006-01-02 15:04:05"
 	layoutDate := "2006-01-02"
 
 	// Load lokasi waktu Jakarta
 	loc, _ := time.LoadLocation("Asia/Jakarta")
-
-	// Default StartDate dan EndDate (tanggal hari ini dalam zona waktu Jakarta)
 	now := time.Now().In(loc)
 	startDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	endDate := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
+	tgl1 := ctx.Query("tgl1", "") // Default kosong jika tidak ada
+	tgl2 := ctx.Query("tgl2", "")
 
-	// Parsing Tgl1 jika ada
-	if rekapReq.Tgl1 != "" {
-		parsedStart, err := time.ParseInLocation(layoutFull, rekapReq.Tgl1, loc)
+	// Parsing tgl1 jika ada
+	if tgl1 != "" {
+		parsedStart, err := time.ParseInLocation(layoutFull, tgl1, loc)
 		if err != nil {
-			parsedStart, err = time.ParseInLocation(layoutDate, rekapReq.Tgl1, loc)
+			parsedStart, err = time.ParseInLocation(layoutDate, tgl1, loc)
 			if err == nil {
 				parsedStart = time.Date(parsedStart.Year(), parsedStart.Month(), parsedStart.Day(), 0, 0, 0, 0, loc)
 			}
@@ -377,11 +356,11 @@ func (tr *customerMtrController) ListDataAsuransiPA(ctx *fiber.Ctx) error {
 		}
 	}
 
-	// Parsing Tgl2 jika ada
-	if rekapReq.Tgl2 != "" {
-		parsedEnd, err := time.ParseInLocation(layoutFull, rekapReq.Tgl2, loc)
+	// Parsing tgl2 jika ada
+	if tgl2 != "" {
+		parsedEnd, err := time.ParseInLocation(layoutFull, tgl2, loc)
 		if err != nil {
-			parsedEnd, err = time.ParseInLocation(layoutDate, rekapReq.Tgl2, loc)
+			parsedEnd, err = time.ParseInLocation(layoutDate, tgl2, loc)
 			if err == nil {
 				parsedEnd = time.Date(parsedEnd.Year(), parsedEnd.Month(), parsedEnd.Day(), 23, 59, 59, 0, loc)
 			}
@@ -400,9 +379,11 @@ func (tr *customerMtrController) ListDataAsuransiPA(ctx *fiber.Ctx) error {
 			"details": "Invalid user context",
 		})
 	}
-
+	limit, _ := strconv.Atoi(ctx.Query("limit", "10")) // Default limit 10 jika tidak ada
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams", "1"))
+	search := ctx.Query("search", "")
 	// Memanggil service untuk mendapatkan data rekap
-	data, err := tr.customerMtrService.ListDataAsuransiPA(details.Username, startDate, endDate)
+	data, totalPages,totalRecords, err := tr.customerMtrService.ListDataAsuransiPA(details.Username, startDate, endDate, limit, pageParams, search)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "Failed to fetch data",
@@ -415,39 +396,32 @@ func (tr *customerMtrController) ListDataAsuransiPA(ctx *fiber.Ctx) error {
 		"message": "Berhasil",
 		"user":    details.Username,
 		"data":    data,
+		"pages": pageParams,
+		"total_pages": totalPages,
+		"total_records": totalRecords,
 		"Dari":    startDate.Format(layoutDate),
 		"Sampai":  endDate.Format(layoutDate),
 	})
 }
 
 func (tr *customerMtrController) ListDataAsuransiMtr(ctx *fiber.Ctx) error {
-	var rekapReq request.RangeTanggalRequest
-
-	// Parsing request body ke struct
-	if err := ctx.BodyParser(&rekapReq); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Invalid request body",
-			"details": err.Error(),
-		})
-	}
-
 	// Format tanggal yang digunakan
 	layoutFull := "2006-01-02 15:04:05"
 	layoutDate := "2006-01-02"
 
 	// Load lokasi waktu Jakarta
 	loc, _ := time.LoadLocation("Asia/Jakarta")
-
-	// Default StartDate dan EndDate (tanggal hari ini dalam zona waktu Jakarta)
 	now := time.Now().In(loc)
 	startDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 	endDate := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
+	tgl1 := ctx.Query("tgl1", "") // Default kosong jika tidak ada
+	tgl2 := ctx.Query("tgl2", "")
 
-	// Parsing Tgl1 jika ada
-	if rekapReq.Tgl1 != "" {
-		parsedStart, err := time.ParseInLocation(layoutFull, rekapReq.Tgl1, loc)
+	// Parsing tgl1 jika ada
+	if tgl1 != "" {
+		parsedStart, err := time.ParseInLocation(layoutFull, tgl1, loc)
 		if err != nil {
-			parsedStart, err = time.ParseInLocation(layoutDate, rekapReq.Tgl1, loc)
+			parsedStart, err = time.ParseInLocation(layoutDate, tgl1, loc)
 			if err == nil {
 				parsedStart = time.Date(parsedStart.Year(), parsedStart.Month(), parsedStart.Day(), 0, 0, 0, 0, loc)
 			}
@@ -457,11 +431,11 @@ func (tr *customerMtrController) ListDataAsuransiMtr(ctx *fiber.Ctx) error {
 		}
 	}
 
-	// Parsing Tgl2 jika ada
-	if rekapReq.Tgl2 != "" {
-		parsedEnd, err := time.ParseInLocation(layoutFull, rekapReq.Tgl2, loc)
+	// Parsing tgl2 jika ada
+	if tgl2 != "" {
+		parsedEnd, err := time.ParseInLocation(layoutFull, tgl2, loc)
 		if err != nil {
-			parsedEnd, err = time.ParseInLocation(layoutDate, rekapReq.Tgl2, loc)
+			parsedEnd, err = time.ParseInLocation(layoutDate, tgl2, loc)
 			if err == nil {
 				parsedEnd = time.Date(parsedEnd.Year(), parsedEnd.Month(), parsedEnd.Day(), 23, 59, 59, 0, loc)
 			}
@@ -470,7 +444,6 @@ func (tr *customerMtrController) ListDataAsuransiMtr(ctx *fiber.Ctx) error {
 			endDate = parsedEnd
 		}
 	}
-
 	// Mengambil informasi user dari context
 	user := ctx.Locals("user")
 	details, ok := user.(entity.User)
@@ -480,9 +453,11 @@ func (tr *customerMtrController) ListDataAsuransiMtr(ctx *fiber.Ctx) error {
 			"details": "Invalid user context",
 		})
 	}
-
+	limit, _ := strconv.Atoi(ctx.Query("limit", "10")) // Default limit 10 jika tidak ada
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams", "1"))
+	search := ctx.Query("search", "")
 	// Memanggil service untuk mendapatkan data rekap
-	data, err := tr.customerMtrService.ListDataAsuransiMtr(details.Username, startDate, endDate)
+	data, totalPages,totalRecords, err := tr.customerMtrService.ListDataAsuransiMtr(details.Username, startDate, endDate, limit, pageParams, search)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":   "Failed to fetch data",
@@ -495,6 +470,9 @@ func (tr *customerMtrController) ListDataAsuransiMtr(ctx *fiber.Ctx) error {
 		"message": "Berhasil",
 		"user":    details.Username,
 		"data":    data,
+		"pages": pageParams,
+		"total_pages": totalPages,
+		"total_records": totalRecords,
 		"Dari":    startDate.Format(layoutDate),
 		"Sampai":  endDate.Format(layoutDate),
 	})

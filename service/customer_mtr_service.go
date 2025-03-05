@@ -2,12 +2,12 @@ package service
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 	"wkm/entity"
 	"wkm/repository"
 	"wkm/request"
 	"wkm/response"
-	"strconv"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 )
@@ -18,12 +18,12 @@ type CustomerMtrService interface {
 	ListAmbilData() []entity.Faktur3
 	AmbilData(no_msn string, kd_user string) error
 	Show(no_msn string) entity.CustomerMtr
-	UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr,error)
+	UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr, error)
 	RekapTele(usrname string, startDate time.Time, endDate time.Time) (response.RekapTele, error)
-	ListBerminatMembership(usrname string, startDate time.Time, endDate time.Time) ([]response.MinatMembership, error)
-	ListDataAsuransiPA(usrname string, startDate time.Time, endDate time.Time) ([]response.ListAsuransi, error)
-	ListDataAsuransiMtr(usrname string, startDate time.Time, endDate time.Time) ([]response.ListAsuransi, error)
-	ExportRekapTele(usrname string, startDate time.Time, endDate time.Time)(string, error)
+	ListBerminatMembership(usrname string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.MinatMembership, int, int, error)
+	ListDataAsuransiPA(usrname string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error)
+	ListDataAsuransiMtr(usrname string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error)
+	ExportRekapTele(usrname string, startDate time.Time, endDate time.Time) (string, error)
 }
 
 type customerMtrService struct {
@@ -32,15 +32,15 @@ type customerMtrService struct {
 
 func NewCustomerMtrService(cR repository.CustomerMtrRepository) CustomerMtrService {
 	return &customerMtrService{
-		cR:     cR,
+		cR: cR,
 	}
 }
 
 func (cS *customerMtrService) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
-	return 	cS.cR.MasterData(search, sts, jns, username, limit, pageParams)
+	return cS.cR.MasterData(search, sts, jns, username, limit, pageParams)
 }
 func (cS *customerMtrService) MasterDataCount(search string, sts string, jns string, username string) int64 {
-	return 	cS.cR.MasterDataCount(search, sts, jns, username)
+	return cS.cR.MasterDataCount(search, sts, jns, username)
 }
 
 func (cS *customerMtrService) ListAmbilData() []entity.Faktur3 {
@@ -54,7 +54,7 @@ func (cS *customerMtrService) AmbilData(no_msn string, kd_user string) error {
 func (cS *customerMtrService) Show(no_msn string) entity.CustomerMtr {
 	return cS.cR.Show(no_msn)
 }
-func (cS *customerMtrService) UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr,error) {
+func (cS *customerMtrService) UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr, error) {
 	return cS.cR.UpdateOkeMembership(customer)
 }
 
@@ -77,38 +77,38 @@ func (cS *customerMtrService) RekapTele(username string, startDate time.Time, en
 	return rekap, nil
 }
 
-func (cS *customerMtrService) ListBerminatMembership(username string, startDate time.Time, endDate time.Time) ([]response.MinatMembership, error) {
+func (cS *customerMtrService) ListBerminatMembership(username string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.MinatMembership, int, int, error) {
 	// Memanggil repository untuk mengambil data
-	data, err := cS.cR.ListBerminatMembership(username, startDate, endDate)
+	data, totalPages, totalRecords, err := cS.cR.ListBerminatMembership(username, startDate, endDate, limit, pageParams, search)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
-	return data, nil
+	return data, totalPages, totalRecords, nil
 }
 
-func (cS *customerMtrService) ListDataAsuransiPA(username string, startDate time.Time, endDate time.Time) ([]response.ListAsuransi, error) {
+func (cS *customerMtrService) ListDataAsuransiPA(username string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error) {
 	// Memanggil repository untuk mengambil data
-	data, err := cS.cR.ListDataAsuransiPA(username, startDate, endDate)
+	data, totalPages, totalRecords, err := cS.cR.ListDataAsuransiPA(username, startDate, endDate, limit, pageParams, search)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
-	return data, nil
+	return data, totalPages, totalRecords, nil
 }
 
-func (cS *customerMtrService) ListDataAsuransiMtr(username string, startDate time.Time, endDate time.Time) ([]response.ListAsuransi, error) {
+func (cS *customerMtrService) ListDataAsuransiMtr(username string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error) {
 	// Memanggil repository untuk mengambil data
-	data, err := cS.cR.ListDataAsuransiMtr(username, startDate, endDate)
+	data, totalPages, totalRecords, err := cS.cR.ListDataAsuransiMtr(username, startDate, endDate, limit, pageParams, search)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
-	return data, nil
+	return data, totalPages, totalRecords, nil
 }
 
 func (cS *customerMtrService) ExportRekapTele(username string, startDate time.Time, endDate time.Time) (string, error) {
-	data, err := cS.cR.ListBerminatMembership(username, startDate, endDate)
+	data, totalPages, totalRecords, err := cS.cR.ListBerminatMembership(username, startDate, endDate, -1, 1, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch data: %v", err)
 	}
@@ -132,18 +132,25 @@ func (cS *customerMtrService) ExportRekapTele(username string, startDate time.Ti
 			stsKartuInt = 0 // Set default jika error
 		}
 
+		stsJnsBayarStr := "Tidak ada data"
+		if record.StsJnsBayar == "C" {
+			stsJnsBayarStr = "Cash"
+		} else if record.StsJnsBayar == "T" {
+			stsJnsBayarStr = "Transfer"
+		}
+
 		status := determineStatus(int(record.Print), record.StsRenewal, stsKartuInt, record.StsBayarRenewal)
 
 		file.SetCellValue(sheetName1, fmt.Sprintf("A%d", rowIdx+2), record.NoMsn)
 		file.SetCellValue(sheetName1, fmt.Sprintf("B%d", rowIdx+2), record.NmCustomer)
-		file.SetCellValue(sheetName1, fmt.Sprintf("C%d", rowIdx+2), record.StsJnsBayar)
-		file.SetCellValue(sheetName1, fmt.Sprintf("D%d", rowIdx+2), record.TglBayarRenewal.Format("02-01-2006"))
+		file.SetCellValue(sheetName1, fmt.Sprintf("C%d", rowIdx+2), stsJnsBayarStr)
+		file.SetCellValue(sheetName1, fmt.Sprintf("D%d", rowIdx+2), record.TglBayarRenewal.Format("02-January-2006"))
 		file.SetCellValue(sheetName1, fmt.Sprintf("E%d", rowIdx+2), status)
 		file.SetCellValue(sheetName1, fmt.Sprintf("F%d", rowIdx+2), record.KdCard)
 	}
 
 	// Fetch data for Insurance PA
-	insuranceDataPA, err := cS.cR.ListDataAsuransiPA(username, startDate, endDate)
+	insuranceDataPA, totalPages, totalRecords, err := cS.cR.ListDataAsuransiPA(username, startDate, endDate, -1, 1, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch insurance PA data: %v", err)
 	}
@@ -167,19 +174,35 @@ func (cS *customerMtrService) ExportRekapTele(username string, startDate time.Ti
 		}
 		tglBeliStr := ""
 		if record.TglBeli != nil {
-    		tglBeliStr = record.TglBeli.Format("02-01-2006")
+			tglBeliStr = record.TglBeli.Format("02-January-2006")
 		}
 
+		idProdukStr := ""
+		if record.IdProduk != "" {
+			idProdukStr = record.IdProduk
+		}
+
+		stsAsuransiStr := "Tidak ada data"
+		switch record.StsAsuransi {
+		case "P":
+			stsAsuransiStr = "Pending"
+		case "T":
+			stsAsuransiStr = "Tidak Minat"
+		case "F":
+			stsAsuransiStr = "Prospect"
+		case "O":
+			stsAsuransiStr = "Oke"
+		}
 
 		file.SetCellValue(sheetName2, fmt.Sprintf("A%d", rowIdx+2), record.NoMsn)
 		file.SetCellValue(sheetName2, fmt.Sprintf("B%d", rowIdx+2), namaCustomer)
-		file.SetCellValue(sheetName2, fmt.Sprintf("C%d", rowIdx+2), record.StsAsuransi)
+		file.SetCellValue(sheetName2, fmt.Sprintf("C%d", rowIdx+2), stsAsuransiStr)
 		file.SetCellValue(sheetName2, fmt.Sprintf("D%d", rowIdx+2), tglBeliStr)
-		file.SetCellValue(sheetName2, fmt.Sprintf("E%d", rowIdx+2), record.IdProduk)
+		file.SetCellValue(sheetName2, fmt.Sprintf("E%d", rowIdx+2), idProdukStr)
 	}
 
 	// Fetch data for Insurance MTR
-	insuranceDataMTR, err := cS.cR.ListDataAsuransiMtr(username, startDate, endDate)
+	insuranceDataMTR, totalPages, totalRecords, err := cS.cR.ListDataAsuransiMtr(username, startDate, endDate, -1, 1, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch insurance MTR data: %v", err)
 	}
@@ -203,14 +226,31 @@ func (cS *customerMtrService) ExportRekapTele(username string, startDate time.Ti
 		}
 		tglBeliStr := ""
 		if record.TglBeli != nil {
-    		tglBeliStr = record.TglBeli.Format("02-01-2006")
+			tglBeliStr = record.TglBeli.Format("02-January-2006")
+		}
+
+		idProdukStr := ""
+		if record.IdProduk != "" {
+			idProdukStr = record.IdProduk
+		}
+
+		stsAsuransiStr := "Tidak ada data"
+		switch record.StsAsuransi {
+		case "P":
+			stsAsuransiStr = "Pending"
+		case "T":
+			stsAsuransiStr = "Tidak Minat"
+		case "F":
+			stsAsuransiStr = "Prospect"
+		case "O":
+			stsAsuransiStr = "Oke"
 		}
 
 		file.SetCellValue(sheetName3, fmt.Sprintf("A%d", rowIdx+2), record.NoMsn)
 		file.SetCellValue(sheetName3, fmt.Sprintf("B%d", rowIdx+2), namaCustomer)
-		file.SetCellValue(sheetName3, fmt.Sprintf("C%d", rowIdx+2), record.StsAsuransi)
+		file.SetCellValue(sheetName3, fmt.Sprintf("C%d", rowIdx+2), stsAsuransiStr)
 		file.SetCellValue(sheetName3, fmt.Sprintf("D%d", rowIdx+2), tglBeliStr)
-		file.SetCellValue(sheetName3, fmt.Sprintf("E%d", rowIdx+2), record.IdProduk)
+		file.SetCellValue(sheetName3, fmt.Sprintf("E%d", rowIdx+2), idProdukStr)
 	}
 
 	// Save file
@@ -218,11 +258,14 @@ func (cS *customerMtrService) ExportRekapTele(username string, startDate time.Ti
 	if err := file.SaveAs(fileName); err != nil {
 		return "", fmt.Errorf("failed to save Excel file: %v", err)
 	}
-
+	if totalPages == 0 {
+		return fileName, nil
+	}
+	if totalRecords == 0 {
+		return fileName, nil
+	}
 	return fileName, nil
 }
-
-
 
 func setHeaderStyle(f *excelize.File) int {
 	style, _ := f.NewStyle(`{
