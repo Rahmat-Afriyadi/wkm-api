@@ -12,6 +12,7 @@ import (
 
 
 type CustomerMtrController interface {
+	SelfCount(ctx *fiber.Ctx) error
 	MasterData(ctx *fiber.Ctx) error
 	MasterDataCount(ctx *fiber.Ctx) error
 	ListAmbilData(ctx *fiber.Ctx) error
@@ -36,6 +37,12 @@ func NewCustomerMtrController(aS service.CustomerMtrService) CustomerMtrControll
 	}
 }
 
+func (tr *customerMtrController) SelfCount(ctx *fiber.Ctx) error {
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	data := tr.customerMtrService.SelfCount(details.Username)
+	return ctx.Status(200).JSON(data)
+}
 func (tr *customerMtrController) MasterData(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
 	sts := ctx.Query("sts")

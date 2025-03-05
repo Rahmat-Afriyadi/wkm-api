@@ -23,6 +23,7 @@ type CustomerMtrRepository interface {
 	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
 
 	MasterDataCount(search string, sts string, jns string, username string) int64
+	SelfCount(kd_user string) int64
 	ListAmbilData() []entity.Faktur3
 	AmbilData(no_msn string, kd_user string) error
 	Show(no_msn string) entity.CustomerMtr
@@ -48,15 +49,26 @@ func NewCustomerMtrRepository(conn *sql.DB, connGorm *gorm.DB, wandaGorm *gorm.D
 	}
 }
 
+func (cR *customerMtrRepository) SelfCount(kd_user string) int64 {
+	now := time.Now()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	var count int64
+	defer cancel()
+	err := cR.conn.QueryRowContext(ctx,"select count(*) from customer_mtr where tgl_call_tele=? and kd_user_ts = ?",now.Format("2006-01-02"), kd_user).Scan(&count)
+	if err != nil {
+		fmt.Println("ini error yaa ", err.Error())	
+	}
+	return count
+}
+
 func (cR *customerMtrRepository) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
 	datas := []entity.CustomerMtr{}
-	query := cR.connGorm.Where("no_msn like ? or nm_customer_wkm like ? or nm_customer_fkt like ? ", "%"+search+"%", "%"+search+"%", "%"+search+"%")
+	query := cR.connGorm.Select("no_msn, nm_customer_fkt, kd_user_ts, alasan_pending_membership, alasan_pending_asuransi_pa, alasan_pending_asuransi_mtr,tgl_prospect_membership,tgl_prospect_asuransi_pa,tgl_prospect_asuransi_mtr, tgl_call_tele").Where("no_msn like ? or nm_customer_wkm like ? or nm_customer_fkt like ? ", "%"+search+"%","%"+search+"%", "%"+search+"%")
 	query.Where("kd_user_ts = ?", username)
 	query.Where(fmt.Sprintf("%s = ?", jns), sts)
 
 	query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Order("modified desc").Find(&datas)
 	return datas
-
 }
 func (cR *customerMtrRepository) MasterDataCount(search string, sts string, jns string, username string) int64 {
 	datas := []entity.CustomerMtr{}
@@ -89,7 +101,7 @@ func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 			return err
 		}
 	}
-	if stsRenewal.String != "" {
+	if stsRenewal.String != ""  {
 		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
 	}
 	now := time.Now()
