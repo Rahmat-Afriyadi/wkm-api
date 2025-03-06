@@ -320,30 +320,36 @@ func (r *customerMtrRepository) RekapTele(username string, startDate time.Time, 
 	}
 
 	// Query untuk data membership berminat (sts_membership = 'O')
-	query = `SELECT COUNT(c.no_msn) FROM 
-        customer_mtr c
-    JOIN 
-        membership m ON c.no_msn = m.no_msn
-    WHERE 
-        c.kd_user_ts = ? 
-        AND c.tgl_call_tele BETWEEN ? AND ? 
-        AND c.sts_membership = 'O'
-        AND m.jns_bayar = 'C'`
+	query = `SELECT COUNT(DISTINCT c.no_msn) 
+				FROM customer_mtr c
+				JOIN membership m 
+    				ON c.no_msn = m.no_msn
+			WHERE c.kd_user_ts = ? 
+    			AND c.tgl_call_tele BETWEEN ? AND ? 
+    			AND c.sts_membership = 'O'
+    			AND m.jns_bayar = 'C'
+    			AND m.renewal_ke = (
+        			SELECT MAX(m2.renewal_ke)
+        			FROM membership m2
+        			WHERE m2.no_msn = m.no_msn)`
 	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataBerminatMembershipCash)
 	if err != nil {
 		return rekap, fmt.Errorf("error fetching data_berminat_membership: %v", err)
 	}
 
 	// Query untuk data membership berminat (sts_membership = 'O')
-	query = `SELECT COUNT(c.no_msn) FROM 
-        customer_mtr c
-    JOIN 
-        membership m ON c.no_msn = m.no_msn
-    WHERE 
-        c.kd_user_ts = ? 
-        AND c.tgl_call_tele BETWEEN ? AND ? 
-        AND c.sts_membership = 'O'
-        AND m.jns_bayar = 'T'`
+	query = `SELECT COUNT(DISTINCT c.no_msn) 
+				FROM customer_mtr c
+				JOIN membership m 
+    				ON c.no_msn = m.no_msn
+			WHERE c.kd_user_ts = ? 
+    			AND c.tgl_call_tele BETWEEN ? AND ? 
+    			AND c.sts_membership = 'O'
+    			AND m.jns_bayar = 'T'
+    			AND m.renewal_ke = (
+        			SELECT MAX(m2.renewal_ke)
+        			FROM membership m2
+        			WHERE m2.no_msn = m.no_msn)`
 	err = r.conn.QueryRow(query, username, startDate, endDate).Scan(&rekap.DataBerminatMembershipTransfer)
 	if err != nil {
 		return rekap, fmt.Errorf("error fetching data_berminat_membership: %v", err)
