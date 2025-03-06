@@ -24,7 +24,7 @@ type CustomerMtrService interface {
 	SelfCount(kd_user string) int64
 	Show(no_msn string) entity.CustomerMtr
 	UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr, error)
-	RekapTele(usrname string, startDate time.Time, endDate time.Time) (response.RekapTele, error)
+	RekapTele(username string, startDate time.Time, endDate time.Time) (response.RekapTele, error)
 	ListBerminatMembership(usrname string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.MinatMembership, int, int, error)
 	ListDataAsuransiPA(usrname string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error)
 	ListDataAsuransiMtr(usrname string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error)

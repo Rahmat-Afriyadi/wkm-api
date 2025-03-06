@@ -79,7 +79,6 @@ func (cR *customerMtrRepository) MasterDataCount(search string, sts string, jns 
 	query.Select("no_msn").Find(&datas)
 	return int64(len(datas))
 }
-
 func (r *customerMtrRepository) ListAmbilData() []entity.Faktur3 {
 	data := []entity.Faktur3{}
 	r.connGorm.Select("no_msn").Order("RAND()").Where("sts_renewal is null").Limit(100).Find(&data)
@@ -184,9 +183,6 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		return entity.CustomerMtr{}, err
 	}
 
-	// cuman ada tgl_prospect_membership karena butuh update di faktur 3
-	// tgl_prospect_asuransi_pa dan tgl_prospect_asuransi_mtr tidak perlu
-
 	if jsonMap["tgl_prospect_membership"] != nil {
 		if len(jsonMap["tgl_prospect_membership"].(string)) > 10 {
 			jsonMap["tgl_prospect_membership"] = jsonMap["tgl_prospect_membership"].(string)[:10]
@@ -244,9 +240,6 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		asuransiMtr.ThnMtr = customer.ThnMtr
 		r.connGorm.Save(&asuransiMtr)
 	}
-	if jsonMap["sts_asuransi_pa"] == "O" && existCustomerMtr.StsAsuransiPa != "O" {
-		fmt.Println("kesini gk sih ")
-	fmt.Println("ini test pa ", jsonMap["sts_asuransi_pa"], existCustomerMtr.StsAsuransiPa)
 	if jsonMap["sts_asuransi_pa"] == "O" &&  existCustomerMtr.StsAsuransiPa != "O"{
 		err = json.Unmarshal(jsonBytes, &asuransiPa)
 		if err != nil {
