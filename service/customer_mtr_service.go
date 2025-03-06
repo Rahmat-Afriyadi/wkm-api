@@ -258,7 +258,7 @@ func (cS *customerMtrService) ExportRekapTele(username string, startDate time.Ti
 	}
 
 	// Save file
-	fileName := fmt.Sprintf("Rekap_Tele_%s_to_%s.xlsx", startDate.Format("02-01-2006"), endDate.Format("02-01-2006"))
+	fileName := fmt.Sprintf("Export_Rekap_Tele.xlsx")
 	if err := file.SaveAs(fileName); err != nil {
 		return "", fmt.Errorf("failed to save Excel file: %v", err)
 	}

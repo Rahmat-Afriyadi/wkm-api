@@ -250,7 +250,7 @@ func (tr *customerMtrController) ExportRekapTele(ctx *fiber.Ctx) error {
 	}
 
 	// Memanggil service untuk mendapatkan file Excel
-	_, err := tr.customerMtrService.ExportRekapTele(details.Username, startDate, endDate)
+	fileName, err := tr.customerMtrService.ExportRekapTele(details.Username, startDate, endDate)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":   "Failed to generate report",
@@ -258,7 +258,7 @@ func (tr *customerMtrController) ExportRekapTele(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Download("./Export_Rekap_Tele.xlsx")
+	return ctx.Download(fileName)
 }
 
 func (tr *customerMtrController) ListBerminatMembership(ctx *fiber.Ctx) error {
