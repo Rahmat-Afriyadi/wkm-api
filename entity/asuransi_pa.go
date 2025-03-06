@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,9 +25,9 @@ type AsuransiPA struct {
 	NoKtpNpwp                string    `json:"no_ktpnpwp_fkt" gorm:"column:no_ktpnpwp" form:"no_ktpnpwp_fkt"`
 	StsPembelian             string    `json:"sts_pembelian" gorm:"column:sts_pembelian" form:"sts_pembelian"`
 	KdUserTs              string     `gorm:"column:kd_user_ts;" json:"kd_user_ts" form:"kd_user_ts"`
+	NoPolis 		string 	`gorm:"column:no_polis" json:"no_polis" form:"no_polis"`
 	CreatedAt      *time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt      *time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
-
 
 }
 
@@ -37,4 +38,38 @@ func (AsuransiPA) TableName() string {
 func (b *AsuransiPA) BeforeCreate(tx *gorm.DB) (err error) {
 	b.Id = uuid.New().String()
 	return
+}
+
+func GeneratePolisPAID(db *gorm.DB) (string, error) {
+	now := time.Now()
+	year := now.Year()
+	month := int(now.Month())
+	formattedMonth := fmt.Sprintf("%02d", month)
+
+	var lastPolis AsuransiPA
+	if err := db.Model(&AsuransiPA{}).
+		Where("year(tgl_bayar) = ? and month(tgl_bayar) = ? and sts_bayar = 'S'",  year, month).
+		Order("no_polis DESC").
+		Limit(1).
+		Find(&lastPolis).Error; err != nil && err != gorm.ErrRecordNotFound {
+		return "", err
+	}
+
+	var newCounter int
+	if lastPolis.NoPolis == "" {
+		newCounter = 1
+	} else {
+		fmt.Sscanf(lastPolis.NoPolis[len(lastPolis.NoPolis)-4:], "%04d", &newCounter)
+		newCounter++
+	}
+
+	formattedCounter := fmt.Sprintf("%04d", newCounter)
+	polisID := fmt.Sprintf("POLIS-%d%s%s%s", year, formattedMonth, "01", formattedCounter)
+
+	polis := AsuransiPA{NoPolis: polisID}
+	if err := db.Create(&polis).Error; err != nil {
+		return "", err
+	}
+
+	return polisID, nil
 }

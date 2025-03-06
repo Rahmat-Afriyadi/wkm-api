@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 	"wkm/config"
+	"wkm/entity"
 	"wkm/middleware"
 
 	"wkm/controller"
@@ -18,14 +20,19 @@ import (
 )
 
 var (
-	gormDBWkm, conn                       = config.GetConnection()
-	gormDBWkmTest, connTest                       = config.GetConnectionTest()
-	connUser, sqlConnUser                 = config.GetConnectionUser()
+	gormDBWkm, conn = config.GetConnection()
+	gormECardplus, connECardplus = config.GetConnectionECardPlus()
+	gormDBWkmTest, connTest = config.GetConnectionTest()
+	connUser, sqlConnUser = config.GetConnectionUser()
 	connGormAsuransi, sqlConnGormAsuransi = config.NewAsuransiGorm()
 
+	eCardplusRepository repository.ECardplusRepository = repository.NewECardplusRepository(conn, gormDBWkm ,connECardplus, gormECardplus)
+	eCardplusService    service.ECardplusService       = service.NewECardplusService(eCardplusRepository)
+	eCardplusController controller.ECardplusController = controller.NewECardplusController(eCardplusService)
+	
 	tr3Repository repository.Tr3Repository = repository.NewTr3nRepository(conn, gormDBWkm,connGormAsuransi)
 	tr3Service    service.Tr3Service       = service.NewTr3Service(tr3Repository)
-	tr3Controller controller.Tr3Controller = controller.NewTr3Controller(tr3Service)
+	tr3Controller controller.Tr3Controller = controller.NewTr3Controller(tr3Service, eCardplusService)
 
 	kerjaRepository repository.KerjaRepository = repository.NewKerjanRepository(conn)
 	kerjaService    service.KerjaService       = service.NewKerjaService(kerjaRepository)
@@ -108,6 +115,20 @@ func main() {
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
+
+
+	z, x := entity.GeneratePolisPAID(gormDBWkm)
+	fmt.Println("ini z yaa ", z, x)
+
+	// eCardplusService.InputBayarEMembership(request.InputBayarRequest{NoMsn: "JM01E1620692"})
+
+	counter:=0
+	fmt.Sscanf("T0910046"[1:], "%d", &counter)
+	fmt.Sscanf(strings.ReplaceAll(strings.TrimSpace("0230 0123"), " ", ""), "%d", &counter)
+	a := fmt.Sprintf("T%09d", 99789)
+	fmt.Println("ini a ", a)
+	fmt.Println("ini counter ", counter)
+	// customerMtrService.WelcomeMessage(request.WelcomeMessage{NoHp:"082124744961",Fullname: "Rahmat Afriyadi", Password: "wkm12345", Link:"https://www.e-cardplus.co.id/"})
 
 
 	jakartaTime, _ := time.LoadLocation("Asia/Jakarta")
@@ -264,6 +285,7 @@ func main() {
 	app.Delete("/extend-bayar/delete/:id", middleware.DeserializeUser, extendBayarController.Delete)
 
 	app.Post("/faktur-3/input-bayar", middleware.DeserializeUser, tr3Controller.UpdateInputBayar)
+	app.Post("/ecardplus/input-bayar", middleware.DeserializeUser, eCardplusController.InputBayarEMembership)
 	app.Post("/faktur-3/input-bayar/asuransi-pa", middleware.DeserializeUser, tr3Controller.UpdateInputBayarAsuransiPA)
 	app.Post("/faktur-3/input-bayar/asuransi-mtr", middleware.DeserializeUser, tr3Controller.UpdateInputBayarAsuransiMtr)
 	app.Post("/faktur-3/search/will-bayar", middleware.DeserializeUser, tr3Controller.WillBayar)

@@ -74,7 +74,6 @@ func ValidateToken(token string, publicKey string) (*TokenDetails, error) {
 	if !ok || !parsedToken.Valid {
 		return nil, fmt.Errorf("validate: invalid token")
 	}
-
 	return &TokenDetails{
 		UserID: uint32(claims["sub"].(float64)),
 	}, nil

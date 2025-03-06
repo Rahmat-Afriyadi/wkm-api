@@ -88,6 +88,7 @@ type Faktur3 struct {
 	KodeposSrt1 string `form:"kodepos_srt1" json:"kodepos_srt1" gorm:"column:kodepos_srt1"`
 
 
+	TypeKartu string `json:"type_kartu" gorm:"-;type:json"`
 	AsuransiPa DetailAsuransiPA `json:"asuransi_pa" gorm:"-;type:json"`
 	AsuransiMtr DetailAsuransiMtr `json:"asuransi_mtr" gorm:"-;type:json"`
 }

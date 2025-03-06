@@ -34,11 +34,13 @@ type Tr3Controller interface {
 
 type tr3Controller struct {
 	tr3Service service.Tr3Service
+	eCardplus service.ECardplusService
 }
 
-func NewTr3Controller(aS service.Tr3Service) Tr3Controller {
+func NewTr3Controller(aS service.Tr3Service, eCardplus service.ECardplusService) Tr3Controller {
 	return &tr3Controller{
 		tr3Service: aS,
+		eCardplus: eCardplus,
 	}
 }
 
@@ -213,6 +215,8 @@ func (tr *tr3Controller) UpdateInputBayarMembership(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
 	}
+
+
 	return ctx.JSON(map[string]interface{}{"data": "Berhasil", "status": "success"})
 }
 func (tr *tr3Controller) UpdateInputBayarAsuransiPA(ctx *fiber.Ctx) error {
@@ -263,7 +267,6 @@ func (tr *tr3Controller) WillBayar(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&body); err != nil {
 		return ctx.Status(400).JSON(err)
 	}
-
 	faktur3,bayarApa, err := tr.tr3Service.WillBayar(body)
 	if err != nil {
 		return ctx.Status(400).JSON(map[string]string{"message": err.Error()})

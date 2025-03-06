@@ -1,7 +1,11 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 	"wkm/entity"
@@ -110,6 +114,36 @@ func (cS *customerMtrService) ListDataAsuransiMtr(username string, startDate tim
 
 	return data, totalPages, totalRecords, nil
 }
+
+func (cS *customerMtrService) ConsumeFonnte(body request.OtpCheck) (map[string]interface{}, error) {
+	var client = &http.Client{}
+	var data map[string]any
+	var param = url.Values{}
+	param.Set("target", body.NoHp)
+	param.Set("message", fmt.Sprintf("%s%d", "Berikut kode OTP ", body.Otp))
+	param.Set("schedule", "0")
+	param.Set("delay", "2")
+	param.Set("countryCode", "62")
+	var payload = bytes.NewBufferString(param.Encode())
+	request, err := http.NewRequest("POST", "https://api.fonnte.com/send", payload)
+	if err != nil {
+		return map[string]any{}, err
+	}
+
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Authorization", "k!ph_r+apphR8kJY@+gS")
+	response, err := client.Do(request)
+	if err != nil {
+		return map[string]any{}, err
+	}
+	defer response.Body.Close()
+	err = json.NewDecoder(response.Body).Decode(&data)
+	if err != nil {
+		return map[string]any{}, err
+	}
+	return data, nil
+}
+
 
 func (cS *customerMtrService) ExportRekapTele(username string, startDate time.Time, endDate time.Time) (string, error) {
 	data, totalPages, totalRecords, err := cS.cR.ListBerminatMembership(username, startDate, endDate, -1, 1, "")

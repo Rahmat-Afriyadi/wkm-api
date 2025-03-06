@@ -46,6 +46,7 @@ type Membership struct {
 	CreatedAt      *time.Time `form:"created_at" json:"created_at" gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt      *time.Time `form:"updated_at" json:"updated_at" gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 
+	MstCard             MstCard    `json:"mst_card" gorm:"->;references:KdCard;foreignKey:JnsMembership"`
 
 	CustomerMtr               CustomerMtr  `form:"customer_mtr" json:"customer_mtr" gorm:"->;references:NoMsn;foreignKey:NoMSN"`
 }

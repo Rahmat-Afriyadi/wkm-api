@@ -246,6 +246,8 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	}
 	if jsonMap["sts_asuransi_pa"] == "O" && existCustomerMtr.StsAsuransiPa != "O" {
 		fmt.Println("kesini gk sih ")
+	fmt.Println("ini test pa ", jsonMap["sts_asuransi_pa"], existCustomerMtr.StsAsuransiPa)
+	if jsonMap["sts_asuransi_pa"] == "O" &&  existCustomerMtr.StsAsuransiPa != "O"{
 		err = json.Unmarshal(jsonBytes, &asuransiPa)
 		if err != nil {
 			fmt.Println("Error decoding JSON Membership:", err)
