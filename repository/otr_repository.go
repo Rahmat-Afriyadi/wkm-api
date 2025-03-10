@@ -159,29 +159,38 @@ func (lR *otrRepository) ListApi() {
 	json.Unmarshal(body, &responseObject)
 	for _, data := range responseObject.Data {
 		parts := strings.Split(data.OtrApi, ".")
-		num, err := strconv.ParseUint(parts[0], 10, 64)
+		num, err := strconv.ParseFloat(parts[0], 64)
 		if num == 0 {
 			continue
 		}
-		var otr entity.Otr
-		lR.conn.Where("motorprice_kode = ? and tahun = ?", data.KdMdl, tahun).First(&otr)
 		if err != nil {
-			fmt.Println("Error converting string to int:", err)
-			return
+			continue
 		}
-		now := time.Now()
-		otr.UpdatedAt = &now
-		if otr.ID != "" {
-			otr.Otr = num
-			lR.conn.Save(&otr)
-		} else {
-			data.Tahun = uint16(tahun)
-			data.Otr = num
-			result := lR.conn.Create(&data)
-			if result.Error != nil {
-				fmt.Println("ini error create yaa ", result.Error)
+		willExcecute := []entity.Otr{}
+		whileI := 0
+		for whileI < 5{
+			willExcecute = append(willExcecute, entity.Otr{KdMdl: data.KdMdl, Tahun: uint16(tahun), Otr: uint64(num)})
+			tahun = tahun - 1
+			num = (num * 0.9) + 500000
+			whileI++
+		}
+		for _, v := range willExcecute {
+			var otr entity.Otr
+			lR.conn.Where("motorprice_kode = ? and tahun = ?", v.KdMdl, v.Tahun).First(&otr)
+			now := time.Now()
+			otr.UpdatedAt = &now
+			if otr.ID != "" {
+				otr.Otr = v.Otr
+				lR.conn.Save(&otr)
 			} else {
-				fmt.Println("ini berhasil create yaa")
+				data.Tahun = v.Tahun
+				data.Otr = v.Otr
+				result := lR.conn.Create(&data)
+				if result.Error != nil {
+					fmt.Println("ini error create yaa ", result.Error)
+				} else {
+					fmt.Println("ini berhasil create yaa")
+				}
 			}
 		}
 	}

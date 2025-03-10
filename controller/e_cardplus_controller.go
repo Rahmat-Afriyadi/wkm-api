@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"wkm/request"
 	"wkm/service"
 
@@ -29,6 +30,7 @@ func (tr *eCardplusController) InputBayarEMembership(ctx *fiber.Ctx) error {
 	
 	err := tr.eCardplusService.InputBayarEMembership(body)
 	if err != nil {
+		fmt.Println("ini error yaa ", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "fail", "errors": err})
 	}
 	return ctx.JSON(map[string]any{"data": "data", "status": "success"})

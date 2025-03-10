@@ -14,6 +14,7 @@ type OtpCheck struct {
 
 type WelcomeMessage struct {
 	NoHp     string `json:"no_hp"`
+	NoMsn    string `json:"no_msn"`
 	Fullname string `json:"fullname"`
 	Password string `json:"password"`
 	Link     string `json:"link"`

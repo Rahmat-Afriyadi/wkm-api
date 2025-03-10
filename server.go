@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"time"
 	"wkm/config"
-	"wkm/entity"
 	"wkm/middleware"
 
 	"wkm/controller"
@@ -112,24 +110,10 @@ var (
 )
 
 func main() {
+
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
-
-
-	z, x := entity.GeneratePolisPAID(gormDBWkm)
-	fmt.Println("ini z yaa ", z, x)
-
-	// eCardplusService.InputBayarEMembership(request.InputBayarRequest{NoMsn: "JM01E1620692"})
-
-	counter:=0
-	fmt.Sscanf("T0910046"[1:], "%d", &counter)
-	fmt.Sscanf(strings.ReplaceAll(strings.TrimSpace("0230 0123"), " ", ""), "%d", &counter)
-	a := fmt.Sprintf("T%09d", 99789)
-	fmt.Println("ini a ", a)
-	fmt.Println("ini counter ", counter)
-	// customerMtrService.WelcomeMessage(request.WelcomeMessage{NoHp:"082124744961",Fullname: "Rahmat Afriyadi", Password: "wkm12345", Link:"https://www.e-cardplus.co.id/"})
-
 
 	jakartaTime, _ := time.LoadLocation("Asia/Jakarta")
 	scheduler := cron.New(cron.WithLocation(jakartaTime))

@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"wkm/config"
 	"wkm/entity"
 	"wkm/request"
 	"wkm/response"
@@ -649,12 +650,50 @@ func (tr *tr3Repository) UpdateJenisBayar(data []ParamsUpdateJenisBayar, payment
 }
 
 func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entity.Faktur3, error) {
+	var membership entity.Membership
 	faktur3 := entity.Faktur3{NoMsn: data.NoMsn}
 	customerMtr := entity.CustomerMtr{NoMsn: data.NoMsn}
 	tr.connGorm.Find(&faktur3)
 	tr.connGorm.Find(&customerMtr)
+	if customerMtr.NmCustomerFkt != "" {
+		tr.connGorm.Where("no_msn = ? and renewal_ke = ?", faktur3.NoMsn, faktur3.StsCetak3).Preload("MstCard").First(&membership)
+	}
+	now := time.Now()
+	tglExpired := now.AddDate(1,0,0)
+
+
 	if faktur3.NmCustomer == "" {
 		return entity.Faktur3{}, errors.New("data tidak ditemukan")
+	}
+	noTT := faktur3.NoTandaTerima
+	if membership.TypeKartu == "E" {
+		noTT, err :=  entity.GenerateNoTT()
+		if err != nil {
+			return entity.Faktur3{}, err
+		}
+		noKartu, err := entity.GenerateEcardNumber(membership.MstCard.JnsCard)
+		if err != nil {
+			return entity.Faktur3{}, err
+		}
+
+		faktur3.NoTandaTerima = noTT
+		faktur3.TglCetakTandaTerima = now
+		faktur3.TglExpired = &tglExpired
+		faktur3.NoKartu = noKartu
+
+		stockCard := entity.StockCard{NoKartu: noKartu}
+		tr.connGorm.Find(&stockCard)
+		stockCard.StsKartu = "3"
+		stockCard.TglExpired = tglExpired
+		stockCard.NoMsn = faktur3.NoMsn
+		stockCard.TglUpdate = time.Now()
+		stockCard.TglCetak = time.Now()
+		stockCard.KdUser4 = data.KdUserFa
+		result := tr.connGorm.Save(&stockCard)
+		if result.Error != nil {
+			return entity.Faktur3{}, result.Error
+		}
+
 	}
 	kotaTrPembayaranRenewal := ""
 	if faktur3.StsKirim == "1" {
@@ -674,7 +713,7 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		KdCard:              faktur3.KdCard,
 		KdUserTs:            faktur3.KdUser,
 		NoKartu:             faktur3.NoKartu,
-		NoTandaTerima:       faktur3.NoTandaTerima,
+		NoTandaTerima:       noTT,
 		KdUserFa:            data.KdUserFa,
 		TglCetakTandaTerima: faktur3.TglCetakTandaTerima,
 		KdUserSS:            faktur3.KdUser2,
@@ -683,7 +722,6 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		TglInsert:           time.Now(),
 		TglJualan:           faktur3.TglVerifikasi,
 	}
-	now := time.Now()
 	faktur3.TglBayarRenewalFin = &data.TglBayar
 	faktur3.TglBayarRenewalFinKeyIn = &now
 	faktur3.KdUser2 = data.KdUserFa
@@ -693,7 +731,7 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 	faktur3.StsBayarAsuransiPa = "S"
 	faktur3.StsBayarRenewal = "S"
 
-	if faktur3.StsJnsBayar == "C" {
+	if faktur3.StsJnsBayar == "C" && membership.TypeKartu != "E" {
 		stockCard := entity.StockCard{NoKartu: faktur3.NoKartu}
 		tr.connGorm.Find(&stockCard)
 		faktur3.TglExpired = &stockCard.TglExpired
@@ -705,6 +743,8 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		if result.Error != nil {
 			return entity.Faktur3{}, result.Error
 		}
+		gormE,_ := config.GetConnectionECardPlus()
+		gormE.Save(&entity.ECardPlusMember{NoKartu: faktur3.NoKartu,NmCustomer: faktur3.NmCustomer,  NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
 	}
 
 	result := tr.connGorm.Save(&trPembayaranRenewal)
@@ -783,6 +823,10 @@ func (tr *tr3Repository) UpdateInputBayarAsuransiPA(data request.InputBayarReque
 			asuransiPa.KdUserFa = data.KdUserFa
 			asuransiPa.StsBayar = "S"
 			tr.connGorm.Save(&asuransiPa)
+
+			gormE,_ := config.GetConnectionECardPlus()
+			gormE.Save(&entity.ECardPlusMember{NoKartu: asuransiPa.NoPolis,NmCustomer: faktur3.NmCustomer,  NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
+
 		}
 	}
 
@@ -814,6 +858,11 @@ func (tr *tr3Repository) UpdateInputBayarAsuransiMtr(data request.InputBayarRequ
 			asuransiMtr.KdUserFa = data.KdUserFa
 			asuransiMtr.StsBayar = "S"
 			tr.connGorm.Save(&asuransiMtr)
+
+
+			gormE,_ := config.GetConnectionECardPlus()
+			gormE.Debug().Create(&entity.ECardPlusMember{NoKartu: asuransiMtr.NoPolis,NmCustomer: faktur3.NmCustomer, NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
+
 		}
 	}
 	return nil
@@ -887,18 +936,18 @@ func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3
 	var errorValidasiMembership error
 	stockCard := entity.StockCard{}
 	tr.connGorm.Where("no_kartu = ? ", faktur.NoKartu).Find(&stockCard)
-	if faktur.NoKartu == "" && faktur.StsJnsBayar != "T" {
+	if faktur.NoKartu == "" && faktur.StsJnsBayar != "T" && (membership.Id != "" && faktur.TypeKartu != "E") {
 		errorValidasiMembership =  errors.New("Kartu tidak ditemukan")
 	}
-	if faktur.StsJnsBayar == "C" && stockCard.NoKartu == "" {
+	if faktur.StsJnsBayar == "C" && stockCard.NoKartu == "" && (membership.Id != "" && faktur.TypeKartu != "E") {
 		errorValidasiMembership = errors.New("Kartu tidak ditemukan di stockCard")
 	}
 	
-	if stockCard.StsKartu == "1" {
+	if stockCard.StsKartu == "1" && (membership.Id != "" && faktur.TypeKartu != "E") {
 		errorValidasiMembership = errors.New("Belum di barcode bawa")
 		} else if stockCard.StsKartu == "3" || faktur.StsBayarRenewal == "S" {
 			errorValidasiMembership = errors.New("Sudah dibayar")
-	} else if stockCard.StsKartu == "4" {
+	} else if stockCard.StsKartu == "4" && (membership.Id != "" && faktur.TypeKartu != "E") {
 		errorValidasiMembership =  errors.New("Posisi kartu di clear data")
 	}
 	

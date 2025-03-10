@@ -41,7 +41,7 @@ func (eC *eCardplusService) InputBayarEMembership(data request.InputBayarRequest
 	if err != nil {
 		return err
 	}
-	_, err = eC.WelcomeMessage(request.WelcomeMessage{NoHp: customer.NoWa,Fullname: customer.NmCustomerWkm, Password: tempPass, Link: "http://localhost:3002/activation-by-token/"+token.Token})
+	_, err = eC.WelcomeMessage(request.WelcomeMessage{NoHp: customer.NoWa,NoMsn: data.NoMsn, Fullname: customer.NmCustomerWkm, Password: tempPass, Link: "https://www.e-cardplus.co.id/activation-by-token/"+token.Token})
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (eC *eCardplusService) InputBayarEMembership(data request.InputBayarRequest
 
 
 func (eC *eCardplusService) WelcomeMessage(body request.WelcomeMessage) (map[string]interface{}, error) {
-	customer := eC.cR.FindCustomer(body.NoHp)
+	customer := eC.cR.FindCustomer(body.NoMsn)
 	var client = &http.Client{}
 	var data map[string]any
 	var param = url.Values{}

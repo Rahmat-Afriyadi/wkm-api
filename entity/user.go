@@ -1,5 +1,10 @@
 package entity
 
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
 type User struct {
 	ID          uint32   `form:"id" json:"id" gorm:"primary_key;column:id"`
 	Name        string   `form:"name" json:"name" gorm:"column:name"`
@@ -48,4 +53,9 @@ type UserECardPlus struct {
 
 func (UserECardPlus) TableName() string {
 	return "users"
+}
+
+func (b *UserECardPlus) BeforeCreate(tx *gorm.DB) (err error) {
+	b.ID = uuid.New().String()
+	return
 }

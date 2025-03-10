@@ -54,8 +54,8 @@ func GeneratePolisMtrID(db *gorm.DB) (string, error) {
 	month := int(now.Month())
 	formattedMonth := fmt.Sprintf("%02d", month)
 
-	var lastPolis AsuransiPA
-	if err := db.Model(&AsuransiPA{}).
+	var lastPolis AsuransiMtr
+	if err := db.Model(&AsuransiMtr{}).
 		Where("year(tgl_bayar) = ? and month(tgl_bayar) = ? and sts_bayar = 'S'",  year, month).
 		Order("no_polis DESC").
 		Limit(1).
@@ -74,7 +74,7 @@ func GeneratePolisMtrID(db *gorm.DB) (string, error) {
 	formattedCounter := fmt.Sprintf("%04d", newCounter)
 	polisID := fmt.Sprintf("POLIS-%d%s%s%s", year, formattedMonth, "01", formattedCounter)
 
-	polis := AsuransiPA{NoPolis: polisID}
+	polis := AsuransiMtr{NoPolis: polisID}
 	if err := db.Create(&polis).Error; err != nil {
 		return "", err
 	}

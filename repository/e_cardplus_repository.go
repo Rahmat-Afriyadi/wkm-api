@@ -3,13 +3,12 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"math/rand"
-	"strings"
 	"time"
 	"wkm/entity"
 	"wkm/request"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -26,7 +25,7 @@ func RandomString(length int) string {
 
 type ECardplusRepository interface {
 	CreateToken(no_hp string) entity.Token
-	FindCustomer(no_hp string) entity.CustomerMtr
+	FindCustomer(no_msn string) entity.CustomerMtr
 	GetFakturByNoMsn(no_msn string) entity.Faktur3
 	GetCustomerByNoMsn(no_msn string) entity.CustomerMtr
 	CreateUser(data request.CreateECardplusUserRequest) (entity.UserECardPlus, error)
@@ -69,7 +68,6 @@ func (ec *eCardplusRepository) GetCustomerByNoMsn(no_msn string) entity.Customer
 
 func (ec *eCardplusRepository)	GenerateEMembership(no_msn string, user_id string) (entity.Membership, error) {
 	var membership entity.Membership
-	var jnsMembership string
 	faktur3 := entity.Faktur3{NoMsn: no_msn}
 	customerMtr := entity.CustomerMtr{NoMsn: no_msn}
 	ec.connGorm.Find(&faktur3)
@@ -82,59 +80,30 @@ func (ec *eCardplusRepository)	GenerateEMembership(no_msn string, user_id string
 	if customerMtr.NmCustomerFkt != "" {
 		ec.connGorm.Where("no_msn = ? and renewal_ke = ?", faktur3.NoMsn, faktur3.StsCetak3).Preload("MstCard").First(&membership)
 	}
-	if strings.Contains(membership.MstCard.JnsCard, "BASIC") {
-		jnsMembership = "01"
-	}else if strings.Contains(membership.MstCard.JnsCard, "GOLD") {
-		jnsMembership = "02"
-	}else if strings.Contains(membership.MstCard.JnsCard, "PLATINUM") {
-		jnsMembership = "03"
-	}else if strings.Contains(membership.MstCard.JnsCard, "PLATINUM PLUS") {
-		jnsMembership = "23"
-	}
 
+	noKartu, err := entity.GenerateEcardNumber(membership.MstCard.JnsCard)
+	if err != nil {
+		return entity.Membership{}, err
+	}
+	
 	if membership.StsBayar == "S" && membership.TypeKartu == "E" {
-		var lastNoTT string
-		nextNoTT := 0
-		err := ec.conn.QueryRow("select VAL_CHAR from mst_runnum WHERE VAL_ID = 'tr_wms_faktur3' and VAL_TAG = 'no_tanda_terima'").Scan(&lastNoTT)
+		nextNoTTF, err := entity.GenerateNoTT()
 		if err != nil {
-			return membership, err
-		}
-		fmt.Sscanf(lastNoTT[1:], "%d", &nextNoTT)
-		nextNoTTF := fmt.Sprintf("T%09d", nextNoTT+1)
-		_, err = ec.conn.Exec("UPDATE mst_runnum SET VAL_CHAR = ? WHERE VAL_ID = 'tr_wms_faktur3' and VAL_TAG = 'no_tanda_terima'", nextNoTTF)
-		if err != nil {
-			return membership, err
+			return entity.Membership{}, err
 		}
 		membership.NoTandaTerima = nextNoTTF
 		membership.TglCetakTandaTerima = &now
-		
-		formatKartuSekarang := fmt.Sprintf("11%s %s", jnsMembership, now.Format("0601"))
-		var nomorKartuSekarang string
-		nomorUrutKartuSekarang :=0
-		err = ec.connECardplus.QueryRow("select no_kartu from member where no_kartu like ? order by no_kartu desc", formatKartuSekarang+"%").Scan(&nomorKartuSekarang)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				membership.NoKartu =  formatKartuSekarang + " 0000 0001"
-				membership.TglExpired =  &tglExpired
-			}else {
-				return membership, err
-			}
-		}
-		if nomorKartuSekarang != "" {
-			fmt.Sscanf(strings.ReplaceAll(strings.TrimSpace(nomorKartuSekarang[10:]), " ", ""), "%d", &nomorUrutKartuSekarang)
-			formatUrut := fmt.Sprintf("%08d", nomorUrutKartuSekarang+1) 
-			membership.NoKartu = fmt.Sprintf("%s %s %s", formatKartuSekarang, formatUrut[:4], formatUrut[4:]) 
-			membership.TglExpired = &tglExpired
-		}
+		membership.NoKartu = noKartu
+		membership.TglExpired = &tglExpired
 		ec.connGorm.Save(&membership)
 		ec.gormECardplus.Save(&entity.ECardPlusMember{NoMsn: membership.NoMSN, NmCustomer: customerMtr.NmCustomerWkm, NoKartu: membership.NoKartu, TglExpired: now.AddDate(1,0,0), UserId: &user_id})
 	}
 	return membership, nil
 }
 
-func (ec *eCardplusRepository) FindCustomer(no_hp string) entity.CustomerMtr {
+func (ec *eCardplusRepository) FindCustomer(no_msn string) entity.CustomerMtr {
 	var customer entity.CustomerMtr
-	ec.connGorm.Select("no_msn, nm_customer_wkm, no_wa").Where("no_wa = ? ", no_hp).First(&customer)
+	ec.connGorm.Select("no_msn, nm_customer_wkm, no_wa").Where("no_msn = ? ", no_msn).First(&customer)
 	return customer
 }
 
@@ -144,9 +113,10 @@ func (ec *eCardplusRepository) CreateUser(data request.CreateECardplusUserReques
 	if user.ID != "" {
 		return user, nil
 	}
+	password, _ := bcrypt.GenerateFromPassword([]byte(data.Password), 8)
 	user.Name = data.Fullname
-	user.Password = data.Password
-	result := ec.gormECardplus.Create(&user)
+	user.Password = string(password)
+	result := ec.gormECardplus.Save(&user)
 	if result.Error != nil {
 		return user, result.Error
 	}

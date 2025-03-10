@@ -131,14 +131,7 @@ func (r *customerMtrRepository) Show(no_msn string) entity.CustomerMtr {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := r.conn.QueryRowContext(ctx, "select c.no_msn, k.nm_kerja, h.hobby, a.agama, t.nm_tujpak, p.nm_pendidikan, kb.nm_keluar_bln2 from customer_mtr c inner join mst_kerja k on k.kode_kerja2 = c.kode_kerja_fkt inner join hobby h on h.kode_hobby = c.hobby_fkt inner join mst_agama a on a.kd_agama = c.agama_fkt inner join mst_tujuanpakai t on c.tujuan_pakai_fkt = t.id inner join mst_pendidikan p on p.kd_pendidikan = c.kode_didik_fkt inner join mst_keluar_bln kb on kb.keluar_bln2 = c.keluar_bln_fkt where c.no_msn = ?", no_msn).Scan(&no_msn, &data.DescKerjaFkt, &data.DescHobbyFkt, &data.DescAgamaFkt, &data.DescTujuanPakaiFkt, &data.DescDidikFkt, &data.DescKeluarBlnFkt)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return entity.CustomerMtr{}
-		} else {
-			return entity.CustomerMtr{}
-		}
-	}
+	r.conn.QueryRowContext(ctx, "select c.no_msn, k.nm_kerja, h.hobby, a.agama, t.nm_tujpak, p.nm_pendidikan, kb.nm_keluar_bln2 from customer_mtr c inner join mst_kerja k on k.kode_kerja2 = c.kode_kerja_fkt inner join hobby h on h.kode_hobby = c.hobby_fkt inner join mst_agama a on a.kd_agama = c.agama_fkt inner join mst_tujuanpakai t on c.tujuan_pakai_fkt = t.id inner join mst_pendidikan p on p.kd_pendidikan = c.kode_didik_fkt inner join mst_keluar_bln kb on kb.keluar_bln2 = c.keluar_bln_fkt where c.no_msn = ?", no_msn).Scan(&no_msn, &data.DescKerjaFkt, &data.DescHobbyFkt, &data.DescAgamaFkt, &data.DescTujuanPakaiFkt, &data.DescDidikFkt, &data.DescKeluarBlnFkt)
 
 	return data
 }
@@ -166,11 +159,9 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		fmt.Println("Error encoding JSON:", err)
 		return entity.CustomerMtr{}, err
 	}
-
+		
 	// Decode JSON bytes into a map
 	var customerMtrEntity entity.CustomerMtr
-	var existCustomerMtr entity.CustomerMtr
-	r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&existCustomerMtr)
 	var jsonMap map[string]interface{}
 	err = json.Unmarshal(jsonBytes, &jsonMap)
 	if err != nil {
@@ -194,77 +185,91 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 
 	jsonMap["tgl_call_tele"] = now.Format("2006-01-02")
 
-	if jsonMap["sts_membership"] == "O" && existCustomerMtr.StsMembership != "O" {
-		err = json.Unmarshal(jsonBytes, &membership)
-		if err != nil {
-			fmt.Println("Error decoding JSON Membership:", err)
-			return entity.CustomerMtr{}, err
-		}
-		if membership.TypeKartu == "E" {
-			print = 1
-		}
+	if jsonMap["sts_membership"] == "O" {
+		result := r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&entity.Membership{});
+		if result.Error == gorm.ErrRecordNotFound {
+			err = json.Unmarshal(jsonBytes, &membership)
+			if err != nil {
+				fmt.Println("Error decoding JSON Membership:", err)
+				return entity.CustomerMtr{}, err
+			}
+			if membership.TypeKartu == "E" {
+				print = 1
+			}
 
-		jsonMap["alasan_tdk_membership"] = nil
-		jsonMap["alasan_pending_membership"] = nil
-		jsonMap["tgl_prospect_membership"] = nil
-		if jsonMap["sts_asuransi_pa"] != "O" {
-			customerMtrEntity.StsAsuransiPa = "M"
+			jsonMap["alasan_tdk_membership"] = nil
+			jsonMap["alasan_pending_membership"] = nil
+			jsonMap["tgl_prospect_membership"] = nil
+			if jsonMap["sts_asuransi_pa"] != "O" {
+				customerMtrEntity.StsAsuransiPa = "M"
+			}
+			customerMtrEntity.AlasanTdkMembership = ""
+			customerMtrEntity.AlasanPendingMembership = ""
+			customerMtrEntity.TglProspectMembership = nil
+			r.connGorm.Save(&membership)
 		}
-		customerMtrEntity.AlasanTdkMembership = ""
-		customerMtrEntity.AlasanPendingMembership = ""
-		customerMtrEntity.TglProspectMembership = nil
-		r.connGorm.Save(&membership)
 	}
-	if jsonMap["sts_asuransi_mtr"] == "O" && existCustomerMtr.StsAsuransiMtr != "O" {
-		err = json.Unmarshal(jsonBytes, &asuransiMtr)
-		if err != nil {
-			fmt.Println("Error decoding JSON Membership:", err)
-			return entity.CustomerMtr{}, err
-		}
-		jsonMap["alasan_tdk_asuransi_pa"] = nil
-		jsonMap["alasan_pending_asuransi_pa"] = nil
-		jsonMap["tgl_prospect_asuransi_pa"] = nil
-		customerMtrEntity.AlasanTdkAsuransiMtr = ""
-		customerMtrEntity.AlasanPendingAsuransiMtr = ""
-		customerMtrEntity.TglProspectAsuransiMtr = nil
+	
+	if jsonMap["sts_asuransi_mtr"] == "O" {
+		result := r.connGorm.Where("no_msn = ? ", customer.NoMsn).First(&entity.AsuransiMtr{});
+		if result.Error == gorm.ErrRecordNotFound {
+			err = json.Unmarshal(jsonBytes, &asuransiMtr)
+			if err != nil {
+				fmt.Println("Error decoding JSON Membership:", err)
+				return entity.CustomerMtr{}, err
+			}
+			jsonMap["alasan_tdk_asuransi_pa"] = nil
+			jsonMap["alasan_pending_asuransi_pa"] = nil
+			jsonMap["tgl_prospect_asuransi_pa"] = nil
+			customerMtrEntity.AlasanTdkAsuransiMtr = ""
+			customerMtrEntity.AlasanPendingAsuransiMtr = ""
+			customerMtrEntity.TglProspectAsuransiMtr = nil
 
-		u2, err := uuid.NewV4()
-		if err != nil {
-			fmt.Println("ini error uuid ", err)
+			u2, err := uuid.NewV4()
+			if err != nil {
+				fmt.Println("ini error uuid ", err)
+			}
+			asuransiMtr.AppTransID = u2.String()
+			asuransiMtr.NmCustomer = customer.NmCustomerWkm
+			asuransiMtr.IDProduk = customer.IdProdukAsuransIMotor
+			asuransiMtr.TglBeli = &now
+			asuransiMtr.StsPembelian = "1"
+			asuransiMtr.ThnMtr = customer.ThnMtr
+			r.connGorm.Save(&asuransiMtr)
 		}
-		asuransiMtr.AppTransID = u2.String()
-		asuransiMtr.NmCustomer = customer.NmCustomerWkm
-		asuransiMtr.IDProduk = customer.IdProdukAsuransIMotor
-		asuransiMtr.TglBeli = &now
-		asuransiMtr.StsPembelian = "1"
-		asuransiMtr.ThnMtr = customer.ThnMtr
-		r.connGorm.Save(&asuransiMtr)
+		
 	}
-	if jsonMap["sts_asuransi_pa"] == "O" &&  existCustomerMtr.StsAsuransiPa != "O"{
-		err = json.Unmarshal(jsonBytes, &asuransiPa)
-		if err != nil {
-			fmt.Println("Error decoding JSON Membership:", err)
-			return entity.CustomerMtr{}, err
-		}
-		jsonMap["alasan_tdk_asuransi_pa"] = nil
-		jsonMap["alasan_pending_asuransi_pa"] = nil
-		jsonMap["tgl_prospect_asuransi_pa"] = nil
-		customerMtrEntity.AlasanTdkAsuransiPa = ""
-		customerMtrEntity.AlasanPendingAsuransiPa = ""
-		customerMtrEntity.TglProspectAsuransiPa = nil
+	if jsonMap["sts_asuransi_pa"] == "O"{
+		result := r.connGorm.Where("no_msn = ? ", customer.NoMsn).First(&entity.AsuransiPA{});
+		if result.Error == gorm.ErrRecordNotFound {
+			err = json.Unmarshal(jsonBytes, &asuransiPa)
+			if err != nil {
+				fmt.Println("Error decoding JSON Membership:", err)
+				return entity.CustomerMtr{}, err
+			}
+			jsonMap["alasan_tdk_asuransi_pa"] = nil
+			jsonMap["alasan_pending_asuransi_pa"] = nil
+			jsonMap["tgl_prospect_asuransi_pa"] = nil
+			customerMtrEntity.AlasanTdkAsuransiPa = ""
+			customerMtrEntity.AlasanPendingAsuransiPa = ""
+			customerMtrEntity.TglProspectAsuransiPa = nil
 
-		u2, err := uuid.NewV4()
-		if err != nil {
-			fmt.Println("ini error uuid ", err)
+			u2, err := uuid.NewV4()
+			if err != nil {
+				fmt.Println("ini error uuid ", err)
+			}
+			asuransiPa.AppTransID = u2.String()
+			asuransiPa.NmCustomer = customer.NmCustomerWkm
+			asuransiPa.IDProduk = customer.IdProdukAsuransIPa
+			asuransiPa.TglBeli = &now
+			asuransiPa.StsPembelian = "1"
+			r.connGorm.Save(&asuransiPa)
 		}
-		asuransiPa.AppTransID = u2.String()
-		asuransiPa.NmCustomer = customer.NmCustomerWkm
-		asuransiPa.IDProduk = customer.IdProdukAsuransIPa
-		asuransiPa.TglBeli = &now
-		asuransiPa.StsPembelian = "1"
-		r.connGorm.Save(&asuransiPa)
 	}
 
+	if jsonMap["nm_customer_fkt"] == jsonMap["nm_customer_wkm"] {
+		jsonMap["nm_customer_wkm"] = ""
+	}
 	stmt, err := r.conn.Prepare("UPDATE tr_wms_faktur3 SET print=?, agama2=?,alamat_bantuan=?,alamat_ktr=?,alamat21=?,alasan_pending_renewal=?,alasan_tdk_renewal=?,alasan_tdk_renewal2=?,email2=?,hobby2=?,jns_klm2=?,kd_card=?,kd_aktivitas_jual_r=?,kec_ktr=?,kec2=?,kel_ktr=?,kel2=?,keluar_bln2=?,kerja_di=?,ket_alamat21=?,ket_no_hp1=?,ket_no_telp1=?,ket_no_telp2=?,sts_kirim=?,kode_didik2=?,kode_kerja2=?,kodepos_ktr=?,kodepos2=?,kota_ktr=?,kota2=?,nama_ktp=?,no_hp2=?,no_telp_ktr2=?,no_telp2=?,no_yg_dihub_renewal=?,rt_ktr=?,rt2=?,rw_ktr=?,rw2=?,sts_kawin=?,sts_renewal=?,tgl_verifikasi=?,tgl_bayar_renewal=?,tgl_prospect=?,tujuan_pakai2=?,sts_jenis_bayar=?, sts_asuransi_pa='O' where no_msn = ? and kd_user =?")
 	if err != nil {
 		log.Fatal("Error preparing statement:", err)
