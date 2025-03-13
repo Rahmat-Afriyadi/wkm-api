@@ -4,6 +4,8 @@ import (
 	"fmt"
 	// "strconv"
 	"wkm/entity"
+	"wkm/request"
+
 	// "wkm/request"
 	// "wkm/entity"
 
@@ -15,6 +17,7 @@ import (
 
 type MstController interface {
 	ListClientUser(ctx *fiber.Ctx) error
+	UpdateState(ctx *fiber.Ctx) error
 	MasterAgama(ctx *fiber.Ctx) error
 	MasterTujuPak(ctx *fiber.Ctx) error
 	MasterPendidikan(ctx *fiber.Ctx) error
@@ -29,6 +32,7 @@ type MstController interface {
 	MasterProdukMembership(ctx *fiber.Ctx) error
 	MasterPromoTransfer(ctx *fiber.Ctx) error
 	MasterHobbies(ctx *fiber.Ctx) error
+	GetState(ctx *fiber.Ctx) error
 }
 
 type mstController struct {
@@ -101,6 +105,26 @@ func (mS *mstController) MasterScript(ctx *fiber.Ctx) error {
 func (mS *mstController) ListAllScript(ctx *fiber.Ctx) error {
     data := mS.mstService.ListAllScript()
     return ctx.Status(fiber.StatusOK).JSON(data)
+}
+
+func (mS *mstController) GetState(ctx *fiber.Ctx) error {
+	tipe := ctx.Params("tipe")
+    data := mS.mstService.GetState(tipe)
+    return ctx.Status(fiber.StatusOK).JSON(data)
+}
+func (mS *mstController) UpdateState(ctx *fiber.Ctx) error {
+	var body request.UpdateState
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(400).JSON(err)
+	}
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	body.KdUser = details.Username
+    data, err := mS.mstService.UpdateState(body.Type, body.KdUser)
+	if err != nil {
+		return ctx.Status(400).JSON(map[string]string{"message": err.Error(), "status": "fail"})
+	}
+    return ctx.Status(fiber.StatusOK).JSON(map[string]interface{}{"message": "Berhasil", "status": "success", "data": data})
 }
 func (mS *mstController) CreateScript(ctx *fiber.Ctx) error {
 	// Dekode request JSON menjadi struct
@@ -209,8 +233,9 @@ func (mS *mstController) ViewScript(ctx *fiber.Ctx) error {
 
 
 func (mS *mstController) MasterAlasanTdkMembership(ctx *fiber.Ctx) error {
-    data := mS.mstService.MasterAlasanTdkMembership()
-	var res []response.Choices
+	tipe := ctx.Params("tipe")
+    data := mS.mstService.MasterAlasanTdkMembership(tipe)
+	res := []response.Choices{}
 	for _, v := range data {
 		res = append(res, response.Choices{Name:v.Alasan, Value:v.AlasanTdkMembership})
 	}

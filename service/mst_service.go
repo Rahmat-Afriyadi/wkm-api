@@ -15,7 +15,7 @@ type MstService interface {
 	MasterPendidikan() []entity.MstPendidikan
 	MasterKeluarBln() []entity.MstKeluarBln
 	MasterAktivitasJual() []entity.MstAktivitasJual
-	MasterAlasanTdkMembership() []entity.MstAlasanTdkMembership
+	MasterAlasanTdkMembership(tipe string) []entity.MstAlasanTdkMembership
 	MasterProdukMembership() []response.Choices
 	MasterPromoTransfer() []response.Choices
 	MasterHobbies() []response.Choices
@@ -24,6 +24,8 @@ type MstService interface {
 	MasterScript() []entity.MstScript
 	ListAllScript() []entity.MstScript
 	ViewScript(id string) (entity.MstScript, error)
+	UpdateState(tipe string, kd_user string) (bool, error)
+	GetState(tipe string) bool
 }
 
 type mstService struct {
@@ -47,6 +49,12 @@ func (ur *mstService) ListClientUser() ([]response.ClientUser, error) {
 func (ur *mstService) MasterAgama() []entity.MstAgama {
 	data := ur.mR.MasterAgama()
 	return data
+}
+func (ur *mstService) UpdateState(tipe string, kd_user string) (bool, error) {
+	return ur.mR.UpdateState(tipe, kd_user)
+}
+func (ur *mstService) GetState(tipe string) bool {
+	return ur.mR.GetState(tipe)
 }
 func (ur *mstService) MasterTujuPak() []entity.MstTujuPak {
 	data := ur.mR.MasterTujuPak()
@@ -105,8 +113,8 @@ func (ur *mstService) UpdateScript(id string, data entity.MstScript, username st
 
 	return nil
 }
-func (ur *mstService) MasterAlasanTdkMembership() []entity.MstAlasanTdkMembership {
-	data:= ur.mR.MasterAlasanTdkMembership()
+func (ur *mstService) MasterAlasanTdkMembership(tipe string) []entity.MstAlasanTdkMembership {
+	data:= ur.mR.MasterAlasanTdkMembership(tipe)
 	return data 
 }
 

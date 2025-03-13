@@ -19,10 +19,13 @@ import (
 type CustomerMtrService interface {
 	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
 	MasterDataCount(search string, sts string, jns string, username string) int64
+	MasterDataBalikan(search string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList
+	MasterDataBalikanCount(search string, username string) int64
 	ListAmbilData() []entity.Faktur3
+	AmbilDataBalikan(no_msn string, kd_user string) error
 	AmbilData(no_msn string, kd_user string) error
 	SelfCount(kd_user string) int64
-	Show(no_msn string) entity.CustomerMtr
+	Show(no_msn string) response.TelesalesResponse
 	UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr, error)
 	RekapTele(username string, startDate time.Time, endDate time.Time) (response.RekapTele, error)
 	ListBerminatMembership(usrname string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.MinatMembership, int, int, error)
@@ -44,6 +47,12 @@ func NewCustomerMtrService(cR repository.CustomerMtrRepository) CustomerMtrServi
 func (cS *customerMtrService) SelfCount(kd_user string) int64 {
 	return 	cS.cR.SelfCount(kd_user)
 }
+func (cS *customerMtrService) MasterDataBalikan(search string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList {
+	return cS.cR.MasterDataBalikan(search, username, limit, pageParams)
+}
+func (cS *customerMtrService) MasterDataBalikanCount(search string, username string) int64 {
+	return cS.cR.MasterDataBalikanCount(search, username)
+}
 func (cS *customerMtrService) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
 	return cS.cR.MasterData(search, sts, jns, username, limit, pageParams)
 }
@@ -55,11 +64,14 @@ func (cS *customerMtrService) ListAmbilData() []entity.Faktur3 {
 	return cS.cR.ListAmbilData()
 }
 
+func (cS *customerMtrService) AmbilDataBalikan(no_msn string, kd_user string) error {
+	return cS.cR.AmbilDataBalikan(no_msn, kd_user)
+}
 func (cS *customerMtrService) AmbilData(no_msn string, kd_user string) error {
 	return cS.cR.AmbilData(no_msn, kd_user)
 }
 
-func (cS *customerMtrService) Show(no_msn string) entity.CustomerMtr {
+func (cS *customerMtrService) Show(no_msn string) response.TelesalesResponse{
 	return cS.cR.Show(no_msn)
 }
 func (cS *customerMtrService) UpdateOkeMembership(customer request.CustomerMtr) (entity.CustomerMtr, error) {

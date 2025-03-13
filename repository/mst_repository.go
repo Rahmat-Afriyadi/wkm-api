@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -25,10 +26,12 @@ type MstRepository interface {
 	MasterScript() []entity.MstScript
 	ListAllScript() []entity.MstScript
 	ViewScript(id string) (entity.MstScript, error)
-	MasterAlasanTdkMembership() []entity.MstAlasanTdkMembership
+	MasterAlasanTdkMembership(tipe string) []entity.MstAlasanTdkMembership
 	MasterProdukMembership() []response.Choices
 	MasterPromoTransfer() []response.Choices
 	MasterHobbies() []response.Choices
+	UpdateState(tipe string, kd_user string) (bool, error)
+	GetState(tipe string) bool
 }
 
 type mstRepository struct {
@@ -126,9 +129,10 @@ func (mR *mstRepository) UpdateScript(id string, data entity.MstScript, username
 
 	return nil
 }
-func (r *mstRepository) MasterAlasanTdkMembership() []entity.MstAlasanTdkMembership {
+func (r *mstRepository) MasterAlasanTdkMembership(tipe string) []entity.MstAlasanTdkMembership {
 	var data []entity.MstAlasanTdkMembership 
-	r.conn.Find(&data)
+	fmt.Println("test ", tipe)
+	r.conn.Where("jns_alasan = ?", tipe).Find(&data)
 	return data
 }
 
@@ -200,6 +204,32 @@ func (r *mstRepository) MasterPromoTransfer() []response.Choices {
 	return cards
 }
 
+func (r *mstRepository) GetState(tipe string) bool {
+	db, _ := r.conn.DB()
+	var state bool
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	db.QueryRowContext(ctx, "select switch from state where type = 'confirmer_masuk'").Scan(&state)
+
+
+	return state
+}
+func (r *mstRepository) UpdateState(tipe string, kd_user string) (bool, error) {
+	db, _ := r.conn.DB()
+	
+	query := "UPDATE state SET switch = NOT switch, updated_by = ? WHERE type = ?"
+	
+	_, err := db.Exec(query, kd_user, tipe)
+	if err != nil {
+		fmt.Println("error yaa ", err)
+	}
+
+	var state bool
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	db.QueryRowContext(ctx, "select switch from state where type = 'confirmer_masuk'").Scan(&state)
+	return state, nil
+}
 func (r *mstRepository) MasterHobbies() []response.Choices {
 	db, err := r.conn.DB()
 	if err != nil {

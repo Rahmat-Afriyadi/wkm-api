@@ -24,7 +24,9 @@ type Faktur3 struct {
 	NoMsn               string     `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
 	NoTandaTerima       string     `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
 	TglCetakTandaTerima time.Time  `form:"tgl_cetak_tanda_terima" json:"tgl_cetak_tanda_terima" gorm:"column:tgl_cetak_tanda_terima"`
+	TglUpdateKartuBalikan       time.Time  `form:"tgl_update_kartu_balikan" json:"tgl_update_kartu_balikan" gorm:"column:tgl_update_kartu_balikan"`
 	TglVerifikasi       time.Time  `form:"tgl_verifikasi" json:"tgl_verifikasi" gorm:"column:tgl_verifikasi"`
+	AlasanBelumBayar2 string	 `form:"alasan_belum_bayar2" json:"alasan_belum_bayar2" gorm:"column:alasan_belum_bayar2"`
 	TglExpired          *time.Time `form:"tgl_expired" json:"tgl_expired" gorm:"column:tgl_expired"`
 	NmCustomer          string     `form:"nm_customer11" json:"nm_customer11" gorm:"column:nm_customer11"`
 	NamaKtp             string     `form:"nama_ktp" json:"nama_ktp" gorm:"column:nama_ktp"`

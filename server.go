@@ -195,8 +195,10 @@ func main() {
 	app.Get("/mst-script/detail/:id", mstController.ViewScript)
 	app.Get("/mst-script/all", mstController.ListAllScript)
 	app.Get("/mst-script/active", mstController.MasterScript)
-
-	app.Get("/mst-alasan-tdk-membership", middleware.DeserializeUser, mstController.MasterAlasanTdkMembership)
+	app.Get("/mst-get-state/:id",middleware.DeserializeUser, mstController.GetState)
+	app.Post("/mst-update-state",middleware.DeserializeUser, mstController.UpdateState)
+	
+	app.Get("/mst-alasan-tdk-membership/:tipe", middleware.DeserializeUser, mstController.MasterAlasanTdkMembership)
 	app.Get("/mst-produk-membership", middleware.DeserializeUser, mstController.MasterProdukMembership)
 	app.Get("/mst-promo-transfer", middleware.DeserializeUser, mstController.MasterPromoTransfer)
 	app.Get("/mst-hobbies", middleware.DeserializeUser, mstController.MasterHobbies)
@@ -293,6 +295,8 @@ func main() {
 	app.Get("/customer-mtr/self-count", middleware.DeserializeUser, customerMtrController.SelfCount)
 	app.Get("/customer-mtr/master-data", middleware.DeserializeUser, customerMtrController.MasterData)
 	app.Get("/customer-mtr/master-data-count", middleware.DeserializeUser, customerMtrController.MasterDataCount)
+	app.Get("/customer-mtr/master-data-balikan", middleware.DeserializeUser, customerMtrController.MasterDataBalikan)
+	app.Get("/customer-mtr/master-data-balikan-count", middleware.DeserializeUser, customerMtrController.MasterDataBalikanCount)
 	app.Get("/customer-mtr/list-ambil-data", middleware.DeserializeUser, customerMtrController.ListAmbilData)
 	app.Post("/customer-mtr/ambil-data", middleware.DeserializeUser, customerMtrController.AmbilData)
 	app.Get("/customer-mtr/show/:no_msn", middleware.DeserializeUser, customerMtrController.Show)

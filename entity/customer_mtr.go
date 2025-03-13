@@ -140,23 +140,7 @@ type CustomerMtr struct {
 	StsStnk      string     `gorm:"column:sts_stnk;" json:"sts_stnk" form:"sts_stnk"`
 
 	Modified               *time.Time `gorm:"column:modified;" json:"modified" form:"modified"`
-
 	NoKartu2 string `gorm:"column:no_kartu2;" json:"no_kartu2" form:"no_kartu2"`
-
-
-	Memberships           []Membership    `form:"memberships" json:"memberships" gorm:"foreignKey:NoMSN"`
-	AsuransiPa            AsuransiPA    `form:"asuransi_pa" json:"asuransi_pa" gorm:"foreignKey:NoMSN"`
-	AsuransiMtr           AsuransiMtr    `form:"asuransi_mtr" json:"asuransi_mtr" gorm:"foreignKey:NoMSN"`
-
-
-	DescDidikFkt string `json:"desc_didik_fkt" gorm:"-;type:json"`
-	DescKerjaFkt string `json:"desc_kerja_fkt" gorm:"-;type:json"`
-	DescAgamaFkt string `json:"desc_agama_fkt" gorm:"-;type:json"`
-	DescKeluarBlnFkt string `json:"desc_bln_fkt" gorm:"-;type:json"`
-	DescTujuanPakaiFkt string `json:"desc_tujuan_pakai_fkt" gorm:"-;type:json"`
-	DescHobbyFkt string `json:"desc_hobby_fkt" gorm:"-;type:json"`
-
-
 }
 
 func (CustomerMtr) TableName() string {

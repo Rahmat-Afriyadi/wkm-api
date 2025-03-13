@@ -15,6 +15,8 @@ type CustomerMtrController interface {
 	SelfCount(ctx *fiber.Ctx) error
 	MasterData(ctx *fiber.Ctx) error
 	MasterDataCount(ctx *fiber.Ctx) error
+	MasterDataBalikan(ctx *fiber.Ctx) error
+	MasterDataBalikanCount(ctx *fiber.Ctx) error
 	ListAmbilData(ctx *fiber.Ctx) error
 	AmbilData(ctx *fiber.Ctx) error
 	Show(ctx *fiber.Ctx) error
@@ -41,6 +43,22 @@ func (tr *customerMtrController) SelfCount(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	data := tr.customerMtrService.SelfCount(details.Username)
+	return ctx.Status(200).JSON(data)
+}
+func (tr *customerMtrController) MasterDataBalikan(ctx *fiber.Ctx) error {
+	search := ctx.Query("search")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
+	data := tr.customerMtrService.MasterDataBalikan(search, details.Username, limit, pageParams)
+	return ctx.Status(200).JSON(data)
+}
+func (tr *customerMtrController) MasterDataBalikanCount(ctx *fiber.Ctx) error {
+	search := ctx.Query("search")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	data := tr.customerMtrService.MasterDataBalikanCount(search, details.Username)
 	return ctx.Status(200).JSON(data)
 }
 func (tr *customerMtrController) MasterData(ctx *fiber.Ctx) error {
@@ -84,6 +102,22 @@ func (tr *customerMtrController) AmbilData(ctx *fiber.Ctx) error {
 
 func (tr *customerMtrController) Show(ctx *fiber.Ctx) error {
 	noMsn := ctx.Params("no_msn")
+	data := tr.customerMtrService.Show(noMsn)
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	if data.KdUserTs != details.Username {
+		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+	}
+	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
+}
+
+func (tr *customerMtrController) ShowBalikan(ctx *fiber.Ctx) error {
+	noMsn := ctx.Params("no_msn")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	if condition := tr.customerMtrService.AmbilDataBalikan(noMsn, details.Username); condition != nil {
+		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+	}
 	data := tr.customerMtrService.Show(noMsn)
 	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
 }
