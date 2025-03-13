@@ -85,6 +85,7 @@ type CustomerMtr struct {
 	KetAktifJualWkm       string     ` json:"ket_aktif_jual_wkm" form:"ket_aktif_jual_wkm"`
 	NoKtpnpwpWkm          string     ` json:"no_ktpnpwp_wkm" form:"no_ktpnpwp_wkm"`
 	KdUserTs              string     ` json:"kd_user_ts" form:"kd_user_ts"`
+	KdUserKonfirmer              string     ` json:"kd_user_konfirmer" form:"kd_user_konfirmer"`
 	KerjaDiWkm            string     ` json:"kerja_di_wkm" form:"kerja_di_wkm"`
 	JabatanWkm            string     ` json:"jabatan_wkm" form:"jabatan_wkm"`
 	AlamatKtrWkm          string     ` json:"alamat_ktr_wkm" form:"alamat_ktr_wkm"`
@@ -114,6 +115,9 @@ type CustomerMtr struct {
 	AlasanTdkMembership    string     ` json:"alasan_tdk_membership" form:"alasan_tdk_membership"`
 	AlasanTdkMembershipDetail string   ` json:"alasan_tdk_membership_detail" form:"alasan_tdk_membership_detail"`
 	AlasanPendingMembership string     ` json:"alasan_pending_membership" form:"alasan_pending_membership"`
+	AlasanTdkTsDetail        string    `json:"alasan_tdk_ts_detail" form:"alasan_tdk_ts_detail"`
+	AlasanVoidKonfirmasi     string     `json:"alasan_void_konfirmasi" form:"alasan_void_konfirmasi"`
+
 	StsAsuransiPa         string     ` json:"sts_asuransi_pa" form:"sts_asuransi_pa"`
 	AlasanTdkAsuransiPa   string     ` json:"alasan_tdk_asuransi_pa" form:"alasan_tdk_asuransi_pa"`
 	AlasanTdkAsuransiPaDetail string   ` json:"alasan_tdk_asuransi_pa_detail" form:"alasan_tdk_asuransi_pa_detail"`

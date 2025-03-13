@@ -185,6 +185,7 @@ func main() {
 
 	app.Get("/mst-user-ts", mstController.ListClientUser)
 	app.Get("/mst-agama", mstController.MasterAgama)
+	app.Get("/mst-alasan-void-konfirmasi", mstController.AlasanVoidKonfirmasi)
 	app.Get("/mst-pendidikan", mstController.MasterPendidikan)
 	app.Get("/mst-tujuan-pakai", mstController.MasterTujuPak)
 	app.Get("/mst-keluar-bln", mstController.MasterKeluarBln)
@@ -300,6 +301,7 @@ func main() {
 	app.Get("/customer-mtr/list-ambil-data", middleware.DeserializeUser, customerMtrController.ListAmbilData)
 	app.Post("/customer-mtr/ambil-data", middleware.DeserializeUser, customerMtrController.AmbilData)
 	app.Get("/customer-mtr/show/:no_msn", middleware.DeserializeUser, customerMtrController.Show)
+	app.Get("/customer-mtr/show-balikan/:no_msn", middleware.DeserializeUser, customerMtrController.ShowBalikan)
 	app.Get("/customer-mtr/rekap-tele", middleware.DeserializeUser, customerMtrController.RekapTele)
 	app.Post("/customer-mtr/update", middleware.DeserializeUser, customerMtrController.Update)
 	app.Get("/customer-mtr/list-berminat-membership", middleware.DeserializeUser, customerMtrController.ListBerminatMembership)

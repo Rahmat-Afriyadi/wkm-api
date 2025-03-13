@@ -28,7 +28,9 @@ type Membership struct {
 	TglExpired               *time.Time `json:"tgl_expired" gorm:"column:tgl_expired" form:"tgl_expired"`
 	KodeKurir                string    `json:"kode_kurir" gorm:"column:kode_kurir" form:"kode_kurir"`
 	TglAmbilKartu            *time.Time `json:"tgl_ambil_kartu" gorm:"column:tgl_ambil_kartu" form:"tgl_ambil_kartu"`
+	TglKonfirmasi            *time.Time `json:"tgl_konfirmasi" gorm:"column:tgl_konfirmasi" form:"tgl_konfirmasi"`
 	KdUserTs              string     `gorm:"column:kd_user_ts;" json:"kd_user_ts" form:"kd_user_ts"`
+	KdUserKonfirmer             string     `gorm:"column:kd_user_konfirmer;" json:"kd_user_konfirmer" form:"kd_user_konfirmer"`
 	KdUserBarcodeBawa        string    `json:"kd_user_barcode_bawa" gorm:"column:kd_user_barcode_bawa" form:"kd_user_barcode_bawa"`
 	StsBawaKartu             string     `json:"sts_bawa_kartu" gorm:"column:sts_bawa_kartu" form:"sts_bawa_kartu"`
 	StsBayar                 string    `json:"sts_bayar" gorm:"column:sts_bayar" form:"sts_bayar"`

@@ -18,6 +18,7 @@ import (
 type MstRepository interface {
 	MasterAgama() []entity.MstAgama
 	MasterTujuPak() []entity.MstTujuPak
+	AlasanVoidKonfirmasi() []entity.MstAlasanVoidKonfirmasi
 	MasterPendidikan() []entity.MstPendidikan
 	MasterKeluarBln() []entity.MstKeluarBln
 	MasterAktivitasJual() []entity.MstAktivitasJual
@@ -54,6 +55,11 @@ func (r *mstRepository) MasterTujuPak() []entity.MstTujuPak {
 	r.conn.Find(&data)
 	return data
 }
+func (r *mstRepository) AlasanVoidKonfirmasi() []entity.MstAlasanVoidKonfirmasi {
+	var data []entity.MstAlasanVoidKonfirmasi
+	r.conn.Where("sts = 1").Find(&data)
+	return data
+}
 func (r *mstRepository) MasterPendidikan() []entity.MstPendidikan {
 	var data []entity.MstPendidikan
 	r.conn.Find(&data)
@@ -66,7 +72,7 @@ func (r *mstRepository) MasterKeluarBln() []entity.MstKeluarBln {
 }
 func (r *mstRepository) MasterAktivitasJual() []entity.MstAktivitasJual {
 	var data []entity.MstAktivitasJual
-	r.conn.Find(&data)
+	r.conn.Where("sts_aktif_jual_r = 1").Find(&data)
 	return data
 }
 
@@ -131,8 +137,7 @@ func (mR *mstRepository) UpdateScript(id string, data entity.MstScript, username
 }
 func (r *mstRepository) MasterAlasanTdkMembership(tipe string) []entity.MstAlasanTdkMembership {
 	var data []entity.MstAlasanTdkMembership 
-	fmt.Println("test ", tipe)
-	r.conn.Where("jns_alasan = ?", tipe).Find(&data)
+	r.conn.Where("sts=1 and jns_alasan = ?", tipe).Find(&data)
 	return data
 }
 

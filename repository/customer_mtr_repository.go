@@ -77,7 +77,7 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, username strin
 	defer cancel()
 
 	query := strings.Builder{}
-	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where sts_bayar_renewal = 'B' and a.kd_user = ? and (a.no_msn like ? or a.nm_customer11 like ?) ")
+	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.sts_bayar_renewal = 'B' and a.kd_user = ? and (a.no_msn like ? or a.nm_customer11 like ?) ")
 	conditions := []string{}
 	now := time.Now()
 	var limitDateKartuBalikan time.Time
@@ -168,8 +168,9 @@ func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) 
 	var membership entity.Membership
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	r.conn.QueryRowContext(ctx, "select no_msn, renewal_ke, alasan_belum_bayar2, alasan_belum_bayar_detail_kurir  from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.NoMSN, &membership.RenewalKe, &membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
-	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&membership)
+	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3  from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.NoMSN, &membership.RenewalKe)
+	r.connGorm.Debug().Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&membership)
+	r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir  from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
 	if membership.KdUserTs != kd_user {
 		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
 	}
@@ -177,7 +178,7 @@ func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) 
 		return nil
 	}else {
 		membership.StsBayar = "B"
-		r.connGorm.Save(&membership)
+		r.connGorm.Debug().Save(&membership)
 		return nil
 	}
 }
@@ -245,7 +246,13 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
 		response.JnsBayar =  membership.JnsBayar
 		response.JnsMembership =  membership.JnsMembership
 		response.TypeKartu =  membership.TypeKartu
+		response.StsBayarMembership =  membership.StsBayar
 		response.TglJanjiBayar =  membership.TglJanjiBayar.Format("2006-01-02")
+
+		if membership.StsBayar == "B" {
+			r.conn.QueryRowContext(ctx, "select b.alasan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.no_msn = ? ", no_msn).Scan(&response.DescAlasanKurir)
+		}
+		response.AlasanDetailKurir = membership.AlasanTdkKurirDetail
 	}
 	r.connGorm.Where("no_msn = ?", no_msn).Find(&asuransiPa)
 	if asuransiPa.Id != "" {
@@ -308,6 +315,22 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
     case "5":
         response.NoHub = data.NoTelpWkm
     }
+
+	if response.NoKartu2 != "" {
+		if len(response.NoKartu2) >= 4 {
+			substr := response.NoKartu2[2:4]
+			switch substr {
+			case "01":
+				response.JnsMembershipSebelum = "Basic"
+			case "02":
+				response.JnsMembershipSebelum = "Gold"
+			case "03":
+				response.JnsMembershipSebelum = "Platinum"
+			case "23":
+				response.JnsMembershipSebelum = "Platinum Plus"
+			}
+		}
+	}
 	
 	return response
 }
@@ -362,7 +385,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	jsonMap["tgl_call_tele"] = now.Format("2006-01-02")
 
 	if jsonMap["sts_membership"] == "O" {
-		result := r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&entity.Membership{});
+		result := r.connGorm.Debug().Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
 		if result.Error == gorm.ErrRecordNotFound {
 			err = json.Unmarshal(jsonBytes, &membership)
 			if err != nil {
@@ -379,11 +402,60 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 			if jsonMap["sts_asuransi_pa"] != "O" {
 				customerMtrEntity.StsAsuransiPa = "M"
 			}
+			membership.AlasanVoidKonfirmasi = ""
+			membership.KdUserKonfirmer = ""
 			customerMtrEntity.AlasanTdkMembership = ""
 			customerMtrEntity.AlasanPendingMembership = ""
 			customerMtrEntity.TglProspectMembership = nil
 			r.connGorm.Save(&membership)
 		}
+		if membership.StsBayar == "B" {
+			err = json.Unmarshal(jsonBytes, &membership)
+			if err != nil {
+				fmt.Println("Error decoding JSON Membership:", err)
+				return entity.CustomerMtr{}, err
+			}
+			membership.StsKartu = "6"
+			membership.StsBayar = ""
+			r.connGorm.Save(&membership)
+			stmt, err := r.conn.Prepare("UPDATE tr_wms_faktur3 SET sts_kartu='6', sts_bawa_kartu='5', kd_user11=?, tgl_konfirmasi=?  where no_msn = ?")
+			if err != nil {
+				log.Fatal("Error preparing statement:", err)
+			}
+			defer stmt.Close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           // Ensure statement is closed after execution
+			_, err = stmt.Exec(customer.KdUserKonfirmer, now.Format("2006-01-02"), customer.NoMsn) // Update user with ID 1 to age 28
+			if err != nil {
+				log.Fatal("Error executing statement:", err)
+			}	
+
+		}
+
+	}
+
+	if jsonMap["sts_membership"] == "T"{
+		r.connGorm.Debug().Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
+		if membership.Id != "" {
+			if membership.StsBayar == "B" {
+				membership.StsKartu = "8"
+				membership.KdUserKonfirmer = customer.KdUserKonfirmer
+				membership.StsBayar = ""
+				membership.StsMembership = "C"
+				membership.TglKonfirmasi = &now
+				membership.AlasanTdkTsDetail = customer.AlasanTdkTsDetail
+				membership.AlasanVoidKonfirmasi = customer.AlasanVoidKonfirmasi
+				r.connGorm.Save(&membership)
+				stmt, err := r.conn.Prepare("UPDATE tr_wms_faktur3 SET sts_kartu='8', sts_bawa_kartu='', kd_user11=?, tgl_konfirmasi=?, sts_renewal='C',alasan_belum_bayar_detail_telesales=?,alasan_void_konfirmasi=?  where no_msn = ?")
+				if err != nil {
+					log.Fatal("Error preparing statement:", err)
+				}
+				defer stmt.Close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           // Ensure statement is closed after execution
+				_, err = stmt.Exec(customer.KdUserKonfirmer, now.Format("2006-01-02"), customer.AlasanTdkTsDetail, customer.AlasanVoidKonfirmasi, customer.NoMsn) // Update user with ID 1 to age 28
+				if err != nil {
+					log.Fatal("Error executing statement:", err)
+				}
+			}	
+		}
+
 	}
 	
 	if jsonMap["sts_asuransi_mtr"] == "O" {

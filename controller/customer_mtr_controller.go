@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 	"wkm/entity"
@@ -19,6 +20,7 @@ type CustomerMtrController interface {
 	MasterDataBalikanCount(ctx *fiber.Ctx) error
 	ListAmbilData(ctx *fiber.Ctx) error
 	AmbilData(ctx *fiber.Ctx) error
+	ShowBalikan(ctx *fiber.Ctx) error
 	Show(ctx *fiber.Ctx) error
 	Update(ctx *fiber.Ctx) error
 	UpdateOkeMembership(ctx *fiber.Ctx) error
@@ -116,6 +118,7 @@ func (tr *customerMtrController) ShowBalikan(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	if condition := tr.customerMtrService.AmbilDataBalikan(noMsn, details.Username); condition != nil {
+		fmt.Println("ini error yaa ", condition)
 		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
 	}
 	data := tr.customerMtrService.Show(noMsn)
@@ -140,6 +143,7 @@ func (tr *customerMtrController) UpdateOkeMembership(ctx *fiber.Ctx) error {
 	details,_:= user.(entity.User)
 
 	request.KdUserTs = details.Username
+	request.KdUserKonfirmer = details.Username
 	customer, err := tr.customerMtrService.UpdateOkeMembership(request)
 	if err != nil {
 		return  ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})
