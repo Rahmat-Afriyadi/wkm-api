@@ -19,8 +19,10 @@ import (
 type CustomerMtrService interface {
 	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
 	MasterDataCount(search string, sts string, jns string, username string) int64
-	MasterDataBalikan(search string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList
-	MasterDataBalikanCount(search string, username string) int64
+	MasterDataBalikan(search string, tgl1 string, tgl2 string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList
+	MasterDataBalikanCount(search string, tgl1 string, tgl2 string, username string) int64
+	MasterDataBalikanKonfirmer(search string, tgl1 string, tgl2 string, limit int, pageParams int) []response.TelesalesBalikanResponseList
+	MasterDataBalikanKonfirmerCount(search string, tgl1 string, tgl2 string) int64
 	ListAmbilData() []entity.Faktur3
 	AmbilDataBalikan(no_msn string, kd_user string) error
 	AmbilData(no_msn string, kd_user string) error
@@ -47,11 +49,17 @@ func NewCustomerMtrService(cR repository.CustomerMtrRepository) CustomerMtrServi
 func (cS *customerMtrService) SelfCount(kd_user string) int64 {
 	return 	cS.cR.SelfCount(kd_user)
 }
-func (cS *customerMtrService) MasterDataBalikan(search string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList {
-	return cS.cR.MasterDataBalikan(search, username, limit, pageParams)
+func (cS *customerMtrService) MasterDataBalikan(search string,tgl1 string, tgl2 string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList {
+	return cS.cR.MasterDataBalikan(search, tgl1, tgl2, username, limit, pageParams)
 }
-func (cS *customerMtrService) MasterDataBalikanCount(search string, username string) int64 {
-	return cS.cR.MasterDataBalikanCount(search, username)
+func (cS *customerMtrService) MasterDataBalikanCount(search string,tgl1 string, tgl2 string, username string) int64 {
+	return cS.cR.MasterDataBalikanCount(search, tgl1, tgl2, username)
+}
+func (cS *customerMtrService) MasterDataBalikanKonfirmer(search string,tgl1 string, tgl2 string, limit int, pageParams int) []response.TelesalesBalikanResponseList {
+	return cS.cR.MasterDataBalikanKonfirmer(search, tgl1, tgl2, limit, pageParams)
+}
+func (cS *customerMtrService) MasterDataBalikanKonfirmerCount(search string,tgl1 string, tgl2 string) int64 {
+	return cS.cR.MasterDataBalikanKonfirmerCount(search,tgl1, tgl2,)
 }
 func (cS *customerMtrService) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
 	return cS.cR.MasterData(search, sts, jns, username, limit, pageParams)

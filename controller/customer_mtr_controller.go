@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 	"wkm/entity"
 	"wkm/request"
+	"wkm/response"
 	"wkm/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -48,19 +48,34 @@ func (tr *customerMtrController) SelfCount(ctx *fiber.Ctx) error {
 	return ctx.Status(200).JSON(data)
 }
 func (tr *customerMtrController) MasterDataBalikan(ctx *fiber.Ctx) error {
+	data := []response.TelesalesBalikanResponseList{}
 	search := ctx.Query("search")
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
-	data := tr.customerMtrService.MasterDataBalikan(search, details.Username, limit, pageParams)
+	if details.Role.Name == "ROLE_TELESALES" {
+		data = tr.customerMtrService.MasterDataBalikan(search, tgl1, tgl2, details.Username, limit, pageParams)
+	}else if details.Role.Name == "ROLE_CONFIRMER"{
+		data = tr.customerMtrService.MasterDataBalikanKonfirmer(search, tgl1, tgl2, limit, pageParams)
+	}
 	return ctx.Status(200).JSON(data)
 }
 func (tr *customerMtrController) MasterDataBalikanCount(ctx *fiber.Ctx) error {
+	var data int64
+
 	search := ctx.Query("search")
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	data := tr.customerMtrService.MasterDataBalikanCount(search, details.Username)
+	if details.Role.Name == "ROLE_TELESALES" {
+		data = tr.customerMtrService.MasterDataBalikanCount(search,tgl1, tgl2, details.Username)
+	}else if  details.Role.Name == "ROLE_CONFIRMER"{
+		data = tr.customerMtrService.MasterDataBalikanKonfirmerCount(search, tgl1, tgl2)
+	}
 	return ctx.Status(200).JSON(data)
 }
 func (tr *customerMtrController) MasterData(ctx *fiber.Ctx) error {
@@ -118,7 +133,6 @@ func (tr *customerMtrController) ShowBalikan(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	if condition := tr.customerMtrService.AmbilDataBalikan(noMsn, details.Username); condition != nil {
-		fmt.Println("ini error yaa ", condition)
 		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
 	}
 	data := tr.customerMtrService.Show(noMsn)

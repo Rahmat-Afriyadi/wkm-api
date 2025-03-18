@@ -121,8 +121,8 @@ func main() {
 	defer scheduler.Stop()
 	// "menit jam hari"
 	_, err := scheduler.AddFunc("15 18 * * *", func() {
-		fmt.Println("running task ", time.Now().Format("2006-01-02 15:04:05"))
 		otrRepository.ListApi()
+		fmt.Println("running task ", time.Now().Format("2006-01-02 15:04:05"))
 	})
 	if err != nil {
 		fmt.Println("cron error ", err)

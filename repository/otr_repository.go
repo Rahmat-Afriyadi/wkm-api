@@ -169,6 +169,7 @@ func (lR *otrRepository) ListApi() {
 		willExcecute := []entity.Otr{}
 		whileI := 0
 		for whileI < 5{
+			fmt.Println("ini test yaa ", tahun)
 			willExcecute = append(willExcecute, entity.Otr{KdMdl: data.KdMdl, Tahun: uint16(tahun), Otr: uint64(num)})
 			tahun = tahun - 1
 			num = (num * 0.9) + 500000

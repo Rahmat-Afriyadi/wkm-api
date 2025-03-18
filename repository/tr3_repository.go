@@ -789,6 +789,42 @@ func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarReque
 			membership.TglExpired = &stockCard.TglExpired
 			membership.StsBayar = "S"
 			tr.connGorm.Save(&membership)
+		}else {
+			newMembership := entity.Membership{
+				NoMSN: faktur3.NoMsn,
+				RenewalKe: customerMtr.RenewalKe,
+				NoTandaTerima: faktur3.NoTandaTerima,
+				TglJanjiBayar: faktur3.TglBayarRenewal,
+				JnsMembership: faktur3.KdCard,
+				JnsBayar: faktur3.StsJnsBayar,
+				TglCetakTandaTerima: &faktur3.TglCetakTandaTerima,
+				NoKartu: faktur3.NoKartu,
+				TglBayar: &data.TglBayar,
+				TglInputBayar: &now,
+				KdUserFa: data.KdUserFa,
+				TglExpired: &stockCard.TglExpired,
+				StsBayar: "S",
+			}
+			tr.connGorm.Save(&newMembership)
+
+			// noTT, _ :=  entity.GenerateNoTT()
+			// faktur3.NoTandaTerima = noTT
+			// faktur3.TglCetakTandaTerima = now
+			// faktur3.TglBayarRenewalFin = &data.TglBayar
+			// faktur3.TglBayarRenewalFinKeyIn = &now
+			// faktur3.KdUser2 = data.KdUserFa
+			// faktur3.StsKartu = "3"
+			// faktur3.StsBawaKartu = "4"
+			// faktur3.StsAsuransiPa = "O"
+			// faktur3.StsBayarAsuransiPa = "S"
+			// faktur3.StsBayarRenewal = "S"
+
+			// stockCard := entity.StockCard{NoKartu: faktur3.NoKartu}
+			// tr.connGorm.Find(&stockCard)
+
+			// faktur3.TglExpired = &stockCard.TglExpired
+			// faktur3.NoKartu = stockCard.NoKartu
+
 		}
 		// if membership.TypeKartu == "E" {
 		// 	tr.conn
@@ -826,6 +862,20 @@ func (tr *tr3Repository) UpdateInputBayarAsuransiPA(data request.InputBayarReque
 
 			gormE,_ := config.GetConnectionECardPlus()
 			gormE.Save(&entity.ECardPlusMember{NoKartu: asuransiPa.NoPolis,NmCustomer: faktur3.NmCustomer,  NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
+		} else {
+			polisId, err := entity.GeneratePolisPAID(tr.connGorm)
+			if err != nil {
+				fmt.Println("ini error generate polish ", err.Error())
+			}
+			newAsurasiPa := entity.AsuransiPA{
+				NoMSN: faktur3.NoMsn,
+				NoPolis:polisId,
+				TglBayar:&data.TglBayar,
+				TglInputBayar:&now,
+				KdUserFa:data.KdUserFa,
+				StsBayar:"S",
+			}
+			tr.connGorm.Save(&newAsurasiPa)
 
 		}
 	}
