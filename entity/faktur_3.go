@@ -93,6 +93,9 @@ type Faktur3 struct {
 	TypeKartu string `json:"type_kartu" gorm:"-;type:json"`
 	AsuransiPa DetailAsuransiPA `json:"asuransi_pa" gorm:"-;type:json"`
 	AsuransiMtr DetailAsuransiMtr `json:"asuransi_mtr" gorm:"-;type:json"`
+
+	FromTable         string     `gorm:"-;type:json" json:"from_table" `
+
 }
 
 func (Faktur3) TableName() string {

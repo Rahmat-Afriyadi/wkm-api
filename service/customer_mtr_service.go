@@ -17,6 +17,8 @@ import (
 )
 
 type CustomerMtrService interface {
+	AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse
+	AllStatusMasterDataCount(search string, username string) int64
 	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
 	MasterDataCount(search string, sts string, jns string, username string) int64
 	MasterDataBalikan(search string, tgl1 string, tgl2 string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList
@@ -67,6 +69,12 @@ func (cS *customerMtrService) MasterData(search string, sts string, jns string, 
 }
 func (cS *customerMtrService) MasterDataCount(search string, sts string, jns string, username string) int64 {
 	return cS.cR.MasterDataCount(search, sts, jns, username)
+}
+func (cS *customerMtrService) AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse{
+	return cS.cR.AllStatusMasterData(search, username, limit, pageParams)
+}
+func (cS *customerMtrService) AllStatusMasterDataCount(search string, username string) int64 {
+	return cS.cR.AllStatusMasterDataCount(search, username)
 }
 
 func (cS *customerMtrService) ListAmbilData() []entity.Faktur3 {

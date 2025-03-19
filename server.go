@@ -111,6 +111,7 @@ var (
 
 func main() {
 
+
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
@@ -294,6 +295,8 @@ func main() {
 	app.Get("/mst-it-support", middleware.DeserializeUser, ticketSupportController.ListItSupport)
 
 	app.Get("/customer-mtr/self-count", middleware.DeserializeUser, customerMtrController.SelfCount)
+	app.Get("/customer-mtr/all-status-master-data", middleware.DeserializeUser, customerMtrController.AllStatusMasterData)
+	app.Get("/customer-mtr/all-status-master-data-count", middleware.DeserializeUser, customerMtrController.AllStatusMasterDataCount)
 	app.Get("/customer-mtr/master-data", middleware.DeserializeUser, customerMtrController.MasterData)
 	app.Get("/customer-mtr/master-data-count", middleware.DeserializeUser, customerMtrController.MasterDataCount)
 	app.Get("/customer-mtr/master-data-balikan", middleware.DeserializeUser, customerMtrController.MasterDataBalikan)

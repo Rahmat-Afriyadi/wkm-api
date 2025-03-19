@@ -24,6 +24,8 @@ import (
 
 
 type CustomerMtrRepository interface {
+	AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse
+	AllStatusMasterDataCount(search string, username string) int64
 	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
 	MasterDataCount(search string, sts string, jns string, username string) int64
 	MasterDataBalikan(search string, tgl1 string, tgl2 string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList
@@ -93,10 +95,9 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, tgl1 string, t
 			limitDateKartuBalikan = now.AddDate(0, 0, -3)
 		}
 		conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >= '%s'", limitDateKartuBalikan.Format("2006-01-02")))
-	}else {
-		if tgl1 != "" && tgl2 != "" {
-			conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >='%s' and a.tgl_update_kartu_balikan <= '%s'",tgl1,tgl2))
-		}
+	}
+	if tgl1 != "" && tgl2 != "" {
+		conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >='%s' and a.tgl_update_kartu_balikan <= '%s'",tgl1,tgl2))
 	}
 	conditions = append(conditions, "order by a.tgl_update_kartu_balikan asc  limit ? offset ?")
 	query.WriteString(strings.Join(conditions, " "))
@@ -185,7 +186,6 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 	}
 	conditions = append(conditions, " order by a.tgl_update_kartu_balikan asc limit ? offset ?")
 	query.WriteString(strings.Join(conditions, " "))
-
 	rows, err := cR.conn.QueryContext(ctx,query.String(), "%"+search+"%","%"+search+"%", limit, offset)
 	if err != nil {
 		fmt.Println("ini error ", err.Error())
@@ -240,6 +240,55 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmerCount(search string,t
 	return count
 }
 
+
+func (cR *customerMtrRepository) AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse {
+	offset := (pageParams - 1) * limit
+	datas := []response.AllStatusResponse{}
+	count := 0  
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%","%"+search+"%",username).Scan(&count)
+	if count > 0 {
+		rows, err := cR.conn.QueryContext(ctx,"select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, '3' from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%","%"+search+"%",username, limit, offset)
+		if err != nil {
+			fmt.Println("ini error ", err.Error())
+			return datas
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var data response.AllStatusResponse
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.FromTable); err != nil {
+				log.Fatal(err)
+			}
+			datas = append(datas, data)
+		}
+	}else {
+		rows, err := cR.conn.QueryContext(ctx,"select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, '4' from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%","%"+search+"%",username, limit, offset)
+		if err != nil {
+			fmt.Println("ini error ", err.Error())
+			return datas
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var data response.AllStatusResponse
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.FromTable); err != nil {
+				log.Fatal(err)
+			}
+			datas = append(datas, data)
+		}
+	}
+	return datas
+}
+func (cR *customerMtrRepository) AllStatusMasterDataCount(search string, username string) int64 {
+	count := 0  
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%","%"+search+"%",username).Scan(&count)
+	if count<1 {
+		cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%","%"+search+"%",username).Scan(&count)
+	}
+	return int64(count)
+}
 
 func (cR *customerMtrRepository) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
 	datas := []entity.CustomerMtr{}
@@ -297,6 +346,10 @@ func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user
 	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.NoMSN, &membership.RenewalKe)
 	r.connGorm.Debug().Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&membership)
 	r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
+	if membership.Id == "" {
+		r.CreateCustomerFFaktur(no_msn, kd_user)
+	}
+	
 	if membership.StsBayar == "B" {
 		return nil
 	}else {
@@ -307,6 +360,17 @@ func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user
 	}
 }
 
+func (r *customerMtrRepository) EmpatAmbilData(no_msn string) error {
+	count := 0  
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	r.conn.QueryContext(ctx, "insert into tr_wms_faktur3 select * from tr_wms_faktur4 where no_msn = ?", no_msn)
+	r.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where no_msn= ? ", no_msn).Scan(&count)
+	if count > 0 {
+		r.conn.QueryContext(ctx, "delete from tr_wms_faktur4 where no_msn = ?", no_msn)
+	}
+	return nil
+}
 func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	queryAmbilData := query.NewQueryAmbilData()
@@ -327,6 +391,40 @@ func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 	}
 	now := time.Now()
 	_, err = r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, tgl_verifikasi = ?, sts_renewal='P' where no_msn = ?", kd_user, now.Format("2006-01-02"), no_msn)
+	if err != nil {
+		return err
+	}
+
+	var count int64
+	r.connGorm.Model(&entity.CustomerMtr{}).Where("no_msn = ?", no_msn).Count(&count)
+	if count > 0 {
+		r.conn.QueryContext(ctx, queryUpdateAmbilData, no_msn)
+	} else {
+		r.conn.QueryContext(ctx, queryAmbilData, no_msn)
+	}
+	return nil
+}
+
+func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string, kd_user string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	queryAmbilData := query.NewQueryAmbilData()
+	queryUpdateAmbilData := query.NewQueryUpdateAmbilData()
+	defer cancel()
+	var kdUser sql.NullString
+	var stsRenewal sql.NullString
+	err := r.conn.QueryRowContext(ctx, "select kd_user, sts_renewal from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&kdUser, &stsRenewal)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.New("data tidak ditemukan")
+		} else {
+			return err
+		}
+	}
+	if stsRenewal.String != ""  {
+		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
+	}
+	now := time.Now()
+	_, err = r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, tgl_verifikasi = ? where no_msn = ?", kd_user, now.Format("2006-01-02"), no_msn)
 	if err != nil {
 		return err
 	}
