@@ -132,8 +132,15 @@ func (tr *customerMtrController) ShowBalikan(ctx *fiber.Ctx) error {
 	noMsn := ctx.Params("no_msn")
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	if condition := tr.customerMtrService.AmbilDataBalikan(noMsn, details.Username); condition != nil {
-		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+
+	if details.Role.Name == "ROLE_TELESALES" {
+		if condition := tr.customerMtrService.AmbilDataBalikan(noMsn, details.Username); condition != nil {
+			return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+		}
+	}else if details.Role.Name == "ROLE_CONFIRMER"{
+		if condition := tr.customerMtrService.AmbilDataBalikanKonfirmer(noMsn, details.Username); condition != nil {
+			return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+		}
 	}
 	data := tr.customerMtrService.Show(noMsn)
 	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
