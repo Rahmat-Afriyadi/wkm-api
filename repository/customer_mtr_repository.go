@@ -82,7 +82,7 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, tgl1 string, t
 	defer cancel()
 
 	query := strings.Builder{}
-	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.sts_bayar_renewal = 'B' and a.kd_user = ? and (a.no_msn like ? or a.nm_customer11 like ?) ")
+	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.sts_bayar_renewal = 'B' and a.sts_renewal ='O' and a.kd_user = ? and (a.no_msn like ? or a.nm_customer11 like ?) ")
 	conditions := []string{}
 	now := time.Now()
 	var limitDateKartuBalikan time.Time
@@ -99,7 +99,7 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, tgl1 string, t
 	if tgl1 != "" && tgl2 != "" {
 		conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >='%s' and a.tgl_update_kartu_balikan <= '%s'",tgl1,tgl2))
 	}
-	conditions = append(conditions, "order by a.tgl_update_kartu_balikan asc  limit ? offset ?")
+	conditions = append(conditions, "order by a.tgl_update_kartu_balikan desc  limit ? offset ?")
 	query.WriteString(strings.Join(conditions, " "))
 
 	rows, err := cR.conn.QueryContext(ctx,query.String(), username, "%"+search+"%","%"+search+"%", limit, offset)
@@ -123,7 +123,7 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, tgl1 string, t
 func (cR *customerMtrRepository) MasterDataBalikanCount(search string, tgl1 string, tgl2 string, username string) int64 {
 	var count int64
 	query := cR.connGorm.Where("no_msn like ? or nm_customer11 like ? ", "%"+search+"%","%"+search+"%")
-	query.Where("kd_user = ? and sts_bayar_renewal = 'B'", username)
+	query.Where("kd_user = ? and sts_bayar_renewal = 'B' and sts_renewal ='O'", username)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	now := time.Now()
@@ -157,7 +157,7 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 
 
 	query := strings.Builder{}
-	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.sts_bayar_renewal = 'B' and (a.no_msn like ? or a.nm_customer11 like ?) ")
+	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.sts_bayar_renewal = 'B' and a.sts_renewal ='O' and (a.no_msn like ? or a.nm_customer11 like ?) ")
 	conditions := []string{}
 	now := time.Now()
 	var limitDateKartuBalikan time.Time
@@ -184,7 +184,7 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 	}else {
 		conditions = append(conditions, "and a.no_msn  = 'a'")
 	}
-	conditions = append(conditions, " order by a.tgl_update_kartu_balikan asc limit ? offset ?")
+	conditions = append(conditions, " order by a.tgl_update_kartu_balikan desc limit ? offset ?")
 	query.WriteString(strings.Join(conditions, " "))
 	rows, err := cR.conn.QueryContext(ctx,query.String(), "%"+search+"%","%"+search+"%", limit, offset)
 	if err != nil {
@@ -207,7 +207,7 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 func (cR *customerMtrRepository) MasterDataBalikanKonfirmerCount(search string,tgl1 string, tgl2 string) int64 {
 	var count int64
 	query := cR.connGorm.Where("no_msn like ? or nm_customer11 like ? ", "%"+search+"%","%"+search+"%")
-	query.Where("sts_bayar_renewal = 'B'")
+	query.Where("sts_bayar_renewal = 'B' and sts_renewal ='O'")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	now := time.Now()
@@ -442,7 +442,7 @@ func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 
 func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string, kd_user string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	queryAmbilData := query.NewQueryAmbilData()
+	queryAmbilData := query.NewQueryAmbilDataBalikan()
 	queryUpdateAmbilData := query.NewQueryUpdateAmbilData()
 	defer cancel()
 	var kdUser sql.NullString
@@ -456,7 +456,7 @@ func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string, kd_user str
 		}
 	}
 	now := time.Now()
-	_, err = r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, tgl_verifikasi = ? where no_msn = ?", kd_user, now.Format("2006-01-02"), no_msn)
+	_, err = r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, where no_msn = ?", kd_user, now.Format("2006-01-02"), no_msn)
 	if err != nil {
 		return err
 	}
@@ -671,6 +671,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 				fmt.Println("Error decoding JSON Membership:", err)
 				return entity.CustomerMtr{}, err
 			}
+			membership.TglKonfirmasi = &now
 			membership.StsKartu = "6"
 			membership.StsBayar = ""
 			r.connGorm.Save(&membership)
