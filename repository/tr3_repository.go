@@ -911,7 +911,7 @@ func (tr *tr3Repository) UpdateInputBayarAsuransiMtr(data request.InputBayarRequ
 
 
 			gormE,_ := config.GetConnectionECardPlus()
-			gormE.Debug().Create(&entity.ECardPlusMember{NoKartu: asuransiMtr.NoPolis,NmCustomer: faktur3.NmCustomer, NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
+			gormE.Create(&entity.ECardPlusMember{NoKartu: asuransiMtr.NoPolis,NmCustomer: faktur3.NmCustomer, NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
 
 		}
 	}
@@ -962,7 +962,7 @@ func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3
 		faktur.TypeKartu = "E"
 	}
 
-	tr.connGorm.Debug().Model(&entity.AsuransiPA{}).Where("no_msn = ? and (sts_bayar != 'S' or sts_bayar is null)", faktur.NoMsn).First(&asuransiPa)
+	tr.connGorm.Model(&entity.AsuransiPA{}).Where("no_msn = ? and (sts_bayar != 'S' or sts_bayar is null)", faktur.NoMsn).First(&asuransiPa)
 	if asuransiPa.Id != "" {
 		var produkPa entity.MasterProduk
 		tr.wandaGorm.Preload("Vendor").Where("id_produk = ?",asuransiPa.IDProduk).Find(&produkPa)

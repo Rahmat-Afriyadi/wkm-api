@@ -321,11 +321,46 @@ func (r *customerMtrRepository) ListAmbilDataBalikan() []entity.Faktur3 {
 }
 
 func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) error {
+	var customerMtr entity.CustomerMtr
 	var membership entity.Membership
+	faktur3 := entity.Faktur3{NoMsn: no_msn}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.NoMSN, &membership.RenewalKe)
-	r.connGorm.Debug().Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&membership)
+	r.connGorm.Select("no_msn, sts_jenis_bayar, kd_card, tgl_bayar_renewal,sts_kirim, sts_bayar_renewal").First(&faktur3)
+	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&customerMtr)
+	if customerMtr.NmCustomerFkt == "" {
+		err := r.CreateCustomerFFaktur(no_msn, kd_user)
+		if err != nil {
+			fmt.Println("ini error pindah ", err)
+			return err
+		}else {
+			fmt.Println("belum ada nih")
+			r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).First(&customerMtr)
+		}
+	}
+	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).First(&membership)
+	if membership.Id == "" {
+		jsonBytes, err := json.Marshal(customerMtr)
+		if err != nil {
+			fmt.Println("Error encoding JSON:", err)
+			return err
+		}
+		err = json.Unmarshal(jsonBytes, &membership)
+		if err != nil {
+			fmt.Println("Error decoding JSON:", err)
+			return err
+		}
+		membership.JnsMembership = faktur3.KdCard
+		membership.JnsBayar = faktur3.StsJnsBayar
+		membership.KirimKe = faktur3.StsKirim
+		fmt.Println("tgl bayar ", faktur3.TglBayarRenewal)
+		membership.TglJanjiBayar = faktur3.TglBayarRenewal
+		membership.TypeKartu = "F"
+		membership.StsBayar = faktur3.StsBayarRenewal
+		result := r.connGorm.Save(&membership)
+		fmt.Println("kesini gk sih ", result.Error)
+	}
 	r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
 	if membership.KdUserTs != kd_user {
 		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
@@ -334,7 +369,7 @@ func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) 
 		return nil
 	}else {
 		membership.StsBayar = "B"
-		r.connGorm.Debug().Save(&membership)
+		r.connGorm.Save(&membership)
 		return nil
 	}
 }
@@ -344,7 +379,7 @@ func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.NoMSN, &membership.RenewalKe)
-	r.connGorm.Debug().Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&membership)
+	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&membership)
 	r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
 	if membership.Id == "" {
 		r.CreateCustomerFFaktur(no_msn, kd_user)
@@ -355,7 +390,7 @@ func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user
 	}else {
 		membership.StsBayar = "B"
 		membership.KdUserKonfirmer = kd_user
-		r.connGorm.Debug().Save(&membership)
+		r.connGorm.Save(&membership)
 		return nil
 	}
 }
@@ -420,9 +455,6 @@ func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string, kd_user str
 			return err
 		}
 	}
-	if stsRenewal.String != ""  {
-		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
-	}
 	now := time.Now()
 	_, err = r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, tgl_verifikasi = ? where no_msn = ?", kd_user, now.Format("2006-01-02"), no_msn)
 	if err != nil {
@@ -434,7 +466,8 @@ func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string, kd_user str
 	if count > 0 {
 		r.conn.QueryContext(ctx, queryUpdateAmbilData, no_msn)
 	} else {
-		r.conn.QueryContext(ctx, queryAmbilData, no_msn)
+		_, err := r.conn.QueryContext(ctx, queryAmbilData, no_msn)
+		fmt.Println("berhasil masuk gk sih ", err)
 	}
 	return nil
 }
@@ -608,7 +641,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	jsonMap["tgl_call_tele"] = now.Format("2006-01-02")
 
 	if jsonMap["sts_membership"] == "O" {
-		result := r.connGorm.Debug().Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
+		result := r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
 		if result.Error == gorm.ErrRecordNotFound {
 			err = json.Unmarshal(jsonBytes, &membership)
 			if err != nil {
@@ -656,7 +689,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	}
 
 	if jsonMap["sts_membership"] == "T"{
-		r.connGorm.Debug().Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
+		r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
 		if membership.Id != "" {
 			if membership.StsBayar == "B" {
 				membership.StsKartu = "8"
