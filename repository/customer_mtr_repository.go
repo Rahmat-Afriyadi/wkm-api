@@ -45,7 +45,6 @@ type CustomerMtrRepository interface {
 	ListDataAsuransiPA(username string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error)
 	ListDataAsuransiMtr(username string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error)
 }
-
 type customerMtrRepository struct {
 	conn      *sql.DB
 	connGorm  *gorm.DB
@@ -327,7 +326,7 @@ func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.NoMSN, &membership.RenewalKe)
-	r.connGorm.Select("no_msn, sts_jenis_bayar, kd_card, tgl_bayar_renewal,sts_kirim, sts_bayar_renewal").First(&faktur3)
+	r.connGorm.Debug().Select("no_msn, sts_jenis_bayar, kd_card, tgl_bayar_renewal,sts_kirim, sts_bayar_renewal").First(&faktur3)
 	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&customerMtr)
 	if customerMtr.NmCustomerFkt == "" {
 		err := r.CreateCustomerFFaktur(no_msn, kd_user)
@@ -354,7 +353,6 @@ func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) 
 		membership.JnsMembership = faktur3.KdCard
 		membership.JnsBayar = faktur3.StsJnsBayar
 		membership.KirimKe = faktur3.StsKirim
-		fmt.Println("tgl bayar ", faktur3.TglBayarRenewal)
 		membership.TglJanjiBayar = faktur3.TglBayarRenewal
 		membership.TypeKartu = "F"
 		membership.StsBayar = faktur3.StsBayarRenewal
@@ -442,7 +440,7 @@ func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 
 func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string, kd_user string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	queryAmbilData := query.NewQueryAmbilDataBalikan()
+	queryAmbilData := query.NewQueryAmbilData()
 	queryUpdateAmbilData := query.NewQueryUpdateAmbilData()
 	defer cancel()
 	var kdUser sql.NullString
@@ -606,6 +604,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	var membership entity.Membership
 	var asuransiMtr entity.AsuransiMtr
 	var asuransiPa entity.AsuransiPA
+	isUpdateConfirmer := false
 	print := 0
 	now := time.Now()
 
@@ -638,7 +637,8 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		jsonMap["tgl_janji_bayar"] = jsonMap["tgl_janji_bayar"].(string)[:10]
 	}
 
-	jsonMap["tgl_call_tele"] = now.Format("2006-01-02")
+	fmt.Println("ini tgl call tele ", jsonMap["tgl_call_tele"])
+	
 
 	if jsonMap["sts_membership"] == "O" {
 		result := r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
@@ -666,6 +666,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 			r.connGorm.Save(&membership)
 		}
 		if membership.StsBayar == "B" {
+			isUpdateConfirmer = true
 			err = json.Unmarshal(jsonBytes, &membership)
 			if err != nil {
 				fmt.Println("Error decoding JSON Membership:", err)
@@ -693,6 +694,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 		r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
 		if membership.Id != "" {
 			if membership.StsBayar == "B" {
+				isUpdateConfirmer = true
 				membership.StsKartu = "8"
 				membership.KdUserKonfirmer = customer.KdUserKonfirmer
 				membership.StsMembership = "C"
@@ -774,6 +776,13 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	if jsonMap["nm_customer_fkt"] == jsonMap["nm_customer_wkm"] {
 		jsonMap["nm_customer_wkm"] = ""
 	}
+	if isUpdateConfirmer {
+		customerMtrEntity.TglKonfirmasi = &now
+	}else {
+		jsonMap["tgl_call_tele"] = now.Format("2006-01-02")
+		customerMtrEntity.TglCallTele = &now
+	}
+
 	stmt, err := r.conn.Prepare("UPDATE tr_wms_faktur3 SET print=?, agama2=?,alamat_bantuan=?,alamat_ktr=?,alamat21=?,alasan_pending_renewal=?,alasan_tdk_renewal=?,alasan_tdk_renewal2=?,email2=?,hobby2=?,jns_klm2=?,kd_card=?,kd_aktivitas_jual_r=?,kec_ktr=?,kec2=?,kel_ktr=?,kel2=?,keluar_bln2=?,kerja_di=?,ket_alamat21=?,ket_no_hp1=?,ket_no_telp1=?,ket_no_telp2=?,sts_kirim=?,kode_didik2=?,kode_kerja2=?,kodepos_ktr=?,kodepos2=?,kota_ktr=?,kota2=?,nama_ktp=?,no_hp2=?,no_telp_ktr2=?,no_telp2=?,no_yg_dihub_renewal=?,rt_ktr=?,rt2=?,rw_ktr=?,rw2=?,sts_kawin=?,sts_renewal=?,tgl_verifikasi=?,tgl_bayar_renewal=?,tgl_prospect=?,tujuan_pakai2=?,sts_jenis_bayar=?, sts_asuransi_pa='O' where no_msn = ? and kd_user =?")
 	if err != nil {
 		log.Fatal("Error preparing statement:", err)

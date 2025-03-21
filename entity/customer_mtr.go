@@ -80,6 +80,7 @@ type CustomerMtr struct {
 	KotaWkm              string     `gorm:"column:kota_wkm;" json:"kota_wkm" form:"kota_wkm"`
 	KodeposWkm           string     `gorm:"column:kodepos_wkm;" json:"kodepos_wkm" form:"kodepos_wkm"`
 	TglCallTele           *time.Time `gorm:"column:tgl_call_tele;" json:"tgl_call_tele" form:"tgl_call_tele"`
+	TglKonfirmasi           *time.Time `gorm:"column:tgl_konfirmasi;" json:"tgl_konfirmasi" form:"tgl_konfirmasi"`
 	JnsJualWkm            string     `gorm:"column:jns_jual_wkm;" json:"jns_jual_wkm" form:"jns_jual_wkm"`
 	AktifJualWkm          string     `gorm:"column:aktif_jual_wkm;;" json:"aktif_jual_wkm" form:"aktif_jual_wkm"`
 	KetAktifJualWkm       string     `gorm:"column:ket_aktif_jual_wkm;" json:"ket_aktif_jual_wkm" form:"ket_aktif_jual_wkm"`
