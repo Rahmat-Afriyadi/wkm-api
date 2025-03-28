@@ -418,6 +418,7 @@ func (r *customerMtrRepository) FirstOrCreateMembership(customerMtr entity.Custo
 		membership.KodeKurir = faktur3.KdKurir
 		membership.KirimKe = faktur3.StsKirim
 		membership.TglJanjiBayar = faktur3.TglBayarRenewal
+		membership.KdUserTs = faktur3.KdUser
 		membership.TypeKartu = "F"
 		membership.StsBayar = faktur3.StsBayarRenewal
 		result :=r.connGorm.Save(&membership)
