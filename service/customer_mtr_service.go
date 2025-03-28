@@ -26,7 +26,9 @@ type CustomerMtrService interface {
 	MasterDataBalikanKonfirmer(search string, tgl1 string, tgl2 string, limit int, pageParams int) []response.TelesalesBalikanResponseList
 	MasterDataBalikanKonfirmerCount(search string, tgl1 string, tgl2 string) int64
 	ListAmbilData() []entity.Faktur3
+	EmpatAmbilData(no_msn string) error
 	AmbilDataBalikan(no_msn string, kd_user string) error
+	AmbilDataAllStatus(no_msn string, kd_user string) error
 	AmbilDataBalikanKonfirmer(no_msn string, kd_user string) error
 	AmbilData(no_msn string, kd_user string) error
 	SelfCount(kd_user string) int64
@@ -81,11 +83,17 @@ func (cS *customerMtrService) ListAmbilData() []entity.Faktur3 {
 	return cS.cR.ListAmbilData()
 }
 
+func (cS *customerMtrService) EmpatAmbilData(no_msn string) error  {
+	return cS.cR.EmpatAmbilData(no_msn)
+}
 func (cS *customerMtrService) AmbilDataBalikan(no_msn string, kd_user string) error {
 	return cS.cR.AmbilDataBalikan(no_msn, kd_user)
 }
+func (cS *customerMtrService) AmbilDataAllStatus(no_msn string, kd_user string) error {
+	return cS.cR.AmbilDataAllStatus(no_msn, kd_user)
+}
 func (cS *customerMtrService) AmbilDataBalikanKonfirmer(no_msn string, kd_user string) error {
-	return cS.cR.AmbilDataBalikanKonfirmer(no_msn, kd_user)
+	return cS.cR.AmbilDataAllStatus(no_msn, kd_user)
 }
 func (cS *customerMtrService) AmbilData(no_msn string, kd_user string) error {
 	return cS.cR.AmbilData(no_msn, kd_user)

@@ -766,12 +766,20 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 }
 
 func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarRequest)  error {
+	customerMtrRepo := NewCustomerMtrRepository(tr.conn, tr.connGorm, tr.wandaGorm)
 	faktur3 := entity.Faktur3{NoMsn: data.NoMsn}
 	customerMtr := entity.CustomerMtr{NoMsn: data.NoMsn}
 	tr.connGorm.Find(&faktur3)
 	tr.connGorm.Find(&customerMtr)
 	if faktur3.NmCustomer == "" {
-		return  errors.New("data tidak ditemukan")
+		err := customerMtrRepo.CreateCustomerFFaktur(data.NoMsn)
+		if err != nil {
+			fmt.Println("ini error pindah ", err)
+			return err
+		}else {
+			fmt.Println("belum ada nih")
+			tr.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&customerMtr)
+		}
 	}
 	if customerMtr.NmCustomerFkt != "" {
 		var membership entity.Membership
@@ -807,28 +815,7 @@ func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarReque
 			}
 			tr.connGorm.Save(&newMembership)
 
-			// noTT, _ :=  entity.GenerateNoTT()
-			// faktur3.NoTandaTerima = noTT
-			// faktur3.TglCetakTandaTerima = now
-			// faktur3.TglBayarRenewalFin = &data.TglBayar
-			// faktur3.TglBayarRenewalFinKeyIn = &now
-			// faktur3.KdUser2 = data.KdUserFa
-			// faktur3.StsKartu = "3"
-			// faktur3.StsBawaKartu = "4"
-			// faktur3.StsAsuransiPa = "O"
-			// faktur3.StsBayarAsuransiPa = "S"
-			// faktur3.StsBayarRenewal = "S"
-
-			// stockCard := entity.StockCard{NoKartu: faktur3.NoKartu}
-			// tr.connGorm.Find(&stockCard)
-
-			// faktur3.TglExpired = &stockCard.TglExpired
-			// faktur3.NoKartu = stockCard.NoKartu
-
 		}
-		// if membership.TypeKartu == "E" {
-		// 	tr.conn
-		// }
 	}
 
 

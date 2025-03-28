@@ -138,7 +138,7 @@ type CustomerMtr struct {
 	DpMtrWkm              uint32     `gorm:"column:dp_mtr_wkm;" json:"dp_mtr_wkm" form:"dp_mtr_wkm"`
 	KdAktivitasJualMembership string  `gorm:"column:kd_aktivitas_jual_membership;" json:"kd_aktivitas_jual_membership" form:"kd_aktivitas_jual_membership"`
 	JmlCallMembership      uint32     `gorm:"column:jml_call_membership;" json:"jml_call_membership" form:"jml_call_membership"`
-	StsStnk      string     `gorm:"column:sts_stnk;" json:"sts_stnk" form:"sts_stnk"`
+	StsStnk      *string     `gorm:"column:sts_stnk;" json:"sts_stnk" form:"sts_stnk"`
 
 	Modified               *time.Time `gorm:"column:modified;" json:"modified" form:"modified"`
 	NoKartu2 string `gorm:"column:no_kartu2;" json:"no_kartu2" form:"no_kartu2"`

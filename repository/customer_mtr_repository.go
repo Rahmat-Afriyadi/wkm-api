@@ -25,6 +25,7 @@ import (
 
 type CustomerMtrRepository interface {
 	AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse
+	CreateCustomerFFaktur(no_msn string) error
 	AllStatusMasterDataCount(search string, username string) int64
 	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
 	MasterDataCount(search string, sts string, jns string, username string) int64
@@ -35,6 +36,8 @@ type CustomerMtrRepository interface {
 	SelfCount(kd_user string) int64
 	ListAmbilData() []entity.Faktur3
 	AmbilDataBalikan(no_msn string, kd_user string) error
+	EmpatAmbilData(no_msn string) error
+	AmbilDataAllStatus(no_msn string, kd_user string) error
 	AmbilDataBalikanKonfirmer(no_msn string, kd_user string) error
 	AmbilData(no_msn string, kd_user string) error
 	Show(no_msn string) response.TelesalesResponse
@@ -81,7 +84,7 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, tgl1 string, t
 	defer cancel()
 
 	query := strings.Builder{}
-	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.sts_bayar_renewal = 'B' and a.sts_renewal ='O' and a.kd_user = ? and (a.no_msn like ? or a.nm_customer11 like ?) ")
+	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan,mk.nama_kurir from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id left join mst_kurir mk on a.kode_kurir = mk.kode_kurir where a.sts_bayar_renewal = 'B' and a.sts_renewal ='O' and a.kd_user = ? and (a.no_msn like ? or a.nm_customer11 like ?) ")
 	conditions := []string{}
 	now := time.Now()
 	var limitDateKartuBalikan time.Time
@@ -109,7 +112,7 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, tgl1 string, t
 	defer rows.Close()
 	for rows.Next() {
 		var data response.TelesalesBalikanResponseList
-		if err := rows.Scan(&data.NoMsn, &data.NmCustomerFkt, &data.AlasanBelumBayar2, &data.TglUpdateKartuBalikan); err != nil {
+		if err := rows.Scan(&data.NoMsn, &data.NmCustomerFkt, &data.AlasanBelumBayar2, &data.TglUpdateKartuBalikan, &data.NamaKurir); err != nil {
 			log.Fatal(err)
 		}
 		datas = append(datas, data)
@@ -156,7 +159,7 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 
 
 	query := strings.Builder{}
-	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.sts_bayar_renewal = 'B' and a.sts_renewal ='O' and (a.no_msn like ? or a.nm_customer11 like ?) ")
+	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan, mk.nama_kurir from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id left join mst_kurir mk on a.kode_kurir = mk.kode_kurir where a.sts_bayar_renewal = 'B' and a.sts_renewal ='O' and (a.no_msn like ? or a.nm_customer11 like ?) ")
 	conditions := []string{}
 	now := time.Now()
 	var limitDateKartuBalikan time.Time
@@ -193,7 +196,7 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 	defer rows.Close()
 	for rows.Next() {
 		var data response.TelesalesBalikanResponseList
-		if err := rows.Scan(&data.NoMsn, &data.NmCustomerFkt, &data.AlasanBelumBayar2, &data.TglUpdateKartuBalikan); err != nil {
+		if err := rows.Scan(&data.NoMsn, &data.NmCustomerFkt, &data.AlasanBelumBayar2, &data.TglUpdateKartuBalikan, &data.NamaKurir); err != nil {
 			log.Fatal(err)
 		}
 		datas = append(datas, data)
@@ -248,7 +251,7 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 	defer cancel()
 	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%","%"+search+"%",username).Scan(&count)
 	if count > 0 {
-		rows, err := cR.conn.QueryContext(ctx,"select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, '3' from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%","%"+search+"%",username, limit, offset)
+		rows, err := cR.conn.QueryContext(ctx,"select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, '3' from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%","%"+search+"%",username, limit, offset)
 		if err != nil {
 			fmt.Println("ini error ", err.Error())
 			return datas
@@ -256,13 +259,13 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 		defer rows.Close()
 		for rows.Next() {
 			var data response.AllStatusResponse
-			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.FromTable); err != nil {
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi,&data.StsBayar, &data.FromTable); err != nil {
 				log.Fatal(err)
 			}
 			datas = append(datas, data)
 		}
 	}else {
-		rows, err := cR.conn.QueryContext(ctx,"select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, '4' from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%","%"+search+"%",username, limit, offset)
+		rows, err := cR.conn.QueryContext(ctx,"select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, '4' from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%","%"+search+"%",username, limit, offset)
 		if err != nil {
 			fmt.Println("ini error ", err.Error())
 			return datas
@@ -270,7 +273,7 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 		defer rows.Close()
 		for rows.Next() {
 			var data response.AllStatusResponse
-			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.FromTable); err != nil {
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi,&data.StsBayar, &data.FromTable); err != nil {
 				log.Fatal(err)
 			}
 			datas = append(datas, data)
@@ -321,76 +324,134 @@ func (r *customerMtrRepository) ListAmbilDataBalikan() []entity.Faktur3 {
 
 func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) error {
 	var customerMtr entity.CustomerMtr
-	var membership entity.Membership
 	faktur3 := entity.Faktur3{NoMsn: no_msn}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.NoMSN, &membership.RenewalKe)
-	r.connGorm.Debug().Select("no_msn, sts_jenis_bayar, kd_card, tgl_bayar_renewal,sts_kirim, sts_bayar_renewal").First(&faktur3)
-	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&customerMtr)
+	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&customerMtr.NoMsn, &customerMtr.RenewalKe)
+	r.connGorm.Select("no_msn, sts_jenis_bayar, kd_card, tgl_bayar_renewal,sts_kirim, sts_bayar_renewal, kode_kurir").First(&faktur3)
+	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, customerMtr.RenewalKe).Find(&customerMtr)
 	if customerMtr.NmCustomerFkt == "" {
-		err := r.CreateCustomerFFaktur(no_msn, kd_user)
+		err := r.CreateCustomerFFaktur(no_msn)
 		if err != nil {
 			fmt.Println("ini error pindah ", err)
 			return err
 		}else {
 			fmt.Println("belum ada nih")
-			r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).First(&customerMtr)
+			r.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&customerMtr)
 		}
 	}
-	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).First(&membership)
+	if customerMtr.StsMembership == "O" {
+		membership, err := r.FirstOrCreateMembership(customerMtr)
+		if err != nil {
+			return err
+		}
+		r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
+		if membership.KdUserTs != kd_user {
+			return fmt.Errorf("data tersebut telah di ambil oleh user lain")
+		}
+		if membership.StsBayar == "B" {
+			return nil
+		}else {
+			membership.StsBayar = "B"
+			r.connGorm.Save(&membership)
+			return nil
+		}
+	}
+	return nil
+}
+
+func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user string) error {
+	var customerMtr entity.CustomerMtr
+	faktur3 := entity.Faktur3{NoMsn: no_msn}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&customerMtr.NoMsn, &customerMtr.RenewalKe)
+	r.connGorm.Select("no_msn, sts_jenis_bayar, kd_card, tgl_bayar_renewal,sts_kirim, sts_bayar_renewal, kode_kurir").First(&faktur3)
+	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, customerMtr.RenewalKe).Find(&customerMtr)
+	if customerMtr.NmCustomerFkt == "" {
+		err := r.CreateCustomerFFaktur(no_msn)
+		if err != nil {
+			fmt.Println("ini error pindah ", err)
+			return err
+		}else {
+			fmt.Println("belum ada nih")
+			r.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&customerMtr)
+		}
+	}
+	if customerMtr.StsMembership == "O" {
+		membership, err := r.FirstOrCreateMembership(customerMtr)
+		if err != nil {
+			return err
+		}
+		r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
+		
+		if membership.StsBayar == "B" {
+			return nil
+		}else {
+			membership.KdUserKonfirmer = kd_user
+			membership.StsBayar = "B"
+			r.connGorm.Save(&membership)
+			return nil
+		}
+	}
+	return nil
+}
+
+func (r *customerMtrRepository) FirstOrCreateMembership(customerMtr entity.CustomerMtr) (entity.Membership, error) {
+	var membership entity.Membership
+	faktur3 := entity.Faktur3{NoMsn: customerMtr.NoMsn}
+	r.connGorm.Select("no_msn, sts_jenis_bayar, kd_card, tgl_bayar_renewal,sts_kirim, sts_bayar_renewal, kode_kurir").First(&faktur3)
+	r.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&membership)
 	if membership.Id == "" {
 		jsonBytes, err := json.Marshal(customerMtr)
 		if err != nil {
 			fmt.Println("Error encoding JSON:", err)
-			return err
+			return entity.Membership{},err
 		}
 		err = json.Unmarshal(jsonBytes, &membership)
 		if err != nil {
 			fmt.Println("Error decoding JSON:", err)
-			return err
+			return entity.Membership{},err
 		}
 		membership.JnsMembership = faktur3.KdCard
 		membership.JnsBayar = faktur3.StsJnsBayar
+		membership.KodeKurir = faktur3.KdKurir
 		membership.KirimKe = faktur3.StsKirim
 		membership.TglJanjiBayar = faktur3.TglBayarRenewal
 		membership.TypeKartu = "F"
 		membership.StsBayar = faktur3.StsBayarRenewal
-		result := r.connGorm.Save(&membership)
-		fmt.Println("kesini gk sih ", result.Error)
+		result :=r.connGorm.Save(&membership)
+		if result.Error != nil {
+			return entity.Membership{},result.Error
+		}
 	}
-	r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
-	if membership.KdUserTs != kd_user {
-		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
-	}
-	if membership.StsBayar == "B" {
-		return nil
-	}else {
-		membership.StsBayar = "B"
-		r.connGorm.Save(&membership)
-		return nil
-	}
+	return membership, nil
 }
-
-func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user string) error {
-	var membership entity.Membership
+func (r *customerMtrRepository) AmbilDataAllStatus(no_msn string, kd_user string) error {
+	var customerMtr entity.CustomerMtr
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.NoMSN, &membership.RenewalKe)
-	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, membership.RenewalKe).Find(&membership)
-	r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
-	if membership.Id == "" {
-		r.CreateCustomerFFaktur(no_msn, kd_user)
+	r.conn.QueryRowContext(ctx, "select no_msn, sts_cetak3 from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&customerMtr.NoMsn, &customerMtr.RenewalKe)
+	r.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).Find(&customerMtr)
+	if customerMtr.NmCustomerFkt == "" {
+		err := r.CreateCustomerFFaktur(no_msn)
+		if err != nil {
+			fmt.Println("ini error pindah ", err)
+			return err
+		}else {
+			r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, customerMtr.RenewalKe).First(&customerMtr)
+		}
 	}
-	
-	if membership.StsBayar == "B" {
-		return nil
-	}else {
-		membership.StsBayar = "B"
-		membership.KdUserKonfirmer = kd_user
-		r.connGorm.Save(&membership)
-		return nil
+	if customerMtr.KdUserTs != kd_user {
+		return fmt.Errorf("data tersebut telah di ambil oleh user lain")
 	}
+	if customerMtr.StsMembership == "O" {
+		_, err := r.FirstOrCreateMembership(customerMtr)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *customerMtrRepository) EmpatAmbilData(no_msn string) error {
@@ -438,7 +499,7 @@ func (r *customerMtrRepository) AmbilData(no_msn string, kd_user string) error {
 	return nil
 }
 
-func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string, kd_user string) error {
+func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	queryAmbilData := query.NewQueryAmbilData()
 	queryUpdateAmbilData := query.NewQueryUpdateAmbilData()
@@ -453,21 +514,17 @@ func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string, kd_user str
 			return err
 		}
 	}
-	now := time.Now()
-	_, err = r.conn.QueryContext(ctx, "update tr_wms_faktur3 set kd_user = ?, where no_msn = ?", kd_user, now.Format("2006-01-02"), no_msn)
-	if err != nil {
-		return err
-	}
 
 	var count int64
 	r.connGorm.Model(&entity.CustomerMtr{}).Where("no_msn = ?", no_msn).Count(&count)
 	if count > 0 {
-		r.conn.QueryContext(ctx, queryUpdateAmbilData, no_msn)
+		_, err := r.conn.QueryContext(ctx, queryUpdateAmbilData, no_msn)
+		return err
 	} else {
 		_, err := r.conn.QueryContext(ctx, queryAmbilData, no_msn)
 		fmt.Println("berhasil masuk gk sih ", err)
+		return err
 	}
-	return nil
 }
 
 func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
@@ -475,11 +532,11 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
 	var asuransiPa entity.AsuransiPA
 	var asuransiMtr entity.AsuransiMtr
 	var response response.TelesalesResponse
-	data := entity.CustomerMtr{NoMsn: no_msn}
-	r.connGorm.Find(&data)
 	var produkPa entity.MasterProduk
 	var produkMtr entity.MasterProduk
-
+	
+	data := entity.CustomerMtr{NoMsn: no_msn}
+	r.connGorm.Find(&data)
 	
 	jsonBytes, _ := json.Marshal(data)
 	err := json.Unmarshal(jsonBytes, &response)
@@ -490,6 +547,8 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	r.conn.QueryRowContext(ctx, "select c.no_msn, k.nm_kerja, h.hobby, a.agama, t.nm_tujpak, p.nm_pendidikan, kb.nm_keluar_bln2 from customer_mtr c inner join mst_kerja k on k.kode_kerja2 = c.kode_kerja_fkt inner join hobby h on h.kode_hobby = c.hobby_fkt inner join mst_agama a on a.kd_agama = c.agama_fkt inner join mst_tujuanpakai t on c.tujuan_pakai_fkt = t.id inner join mst_pendidikan p on p.kd_pendidikan = c.kode_didik_fkt inner join mst_keluar_bln kb on kb.keluar_bln2 = c.keluar_bln_fkt where c.no_msn = ?", no_msn).Scan(&no_msn, &response.DescKerjaFkt, &response.DescHobbyFkt, &response.DescAgamaFkt, &response.DescTujuanPakaiFkt, &response.DescDidikFkt, &response.DescKeluarBlnFkt)
+
+	r.conn.QueryRowContext(ctx, "select b.nama_kurir from tr_wms_faktur3 a left join mst_kurir b on a.kode_kurir=b.kode_kurir where a.no_msn = ?", no_msn).Scan(&response.NamaKurir)
 	
 	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, data.RenewalKe).Find(&membership)
 	if membership.Id != "" {
@@ -502,6 +561,7 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
 		response.TypeKartu =  membership.TypeKartu
 		response.StsBayarMembership =  membership.StsBayar
 		response.TglJanjiBayar =  membership.TglJanjiBayar.Format("2006-01-02")
+		response.AlasanVoidKonfirmasi = membership.AlasanVoidKonfirmasi
 
 		if membership.StsBayar == "B" {
 			r.conn.QueryRowContext(ctx, "select b.alasan from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id  where a.no_msn = ? ", no_msn).Scan(&response.DescAlasanKurir)
@@ -568,6 +628,17 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
         response.NoHub = data.NoTelpFkt
     case "5":
         response.NoHub = data.NoTelpWkm
+    }
+
+	switch response.StsBayarMembership {
+    case "S":
+        response.DescStsBayarMembership = "Sudah Bayar"
+    case "C":
+        response.DescStsBayarMembership = "Cancel"
+    case "B":
+        response.DescStsBayarMembership = "Belum Bayar"
+    case "":
+        response.DescStsBayarMembership = ""
     }
 
 	if response.NoKartu2 != "" {

@@ -153,6 +153,7 @@ func main() {
 
 	auth := app.Group("/auth")
 	auth.Post("/login", authController.SignInUserAsuransi)
+	auth.Post("/login/admin", authController.SignInUserAsuransi)
 	auth.Post("/refresh-token", authController.RefreshAccessTokenAsuransi)
 	auth.Post("/reset-password", middleware.DeserializeUser, authController.ResetPassword)
 	auth.Post("/logout", authController.LogoutUser)
@@ -304,6 +305,7 @@ func main() {
 	app.Get("/customer-mtr/list-ambil-data", middleware.DeserializeUser, customerMtrController.ListAmbilData)
 	app.Post("/customer-mtr/ambil-data", middleware.DeserializeUser, customerMtrController.AmbilData)
 	app.Get("/customer-mtr/show/:no_msn", middleware.DeserializeUser, customerMtrController.Show)
+	app.Get("/customer-mtr/show-all/:no_msn/:from", middleware.DeserializeUser, customerMtrController.ShowAll)
 	app.Get("/customer-mtr/show-balikan/:no_msn", middleware.DeserializeUser, customerMtrController.ShowBalikan)
 	app.Get("/customer-mtr/rekap-tele", middleware.DeserializeUser, customerMtrController.RekapTele)
 	app.Post("/customer-mtr/update", middleware.DeserializeUser, customerMtrController.Update)

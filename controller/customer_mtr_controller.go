@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 	"wkm/entity"
@@ -23,6 +24,7 @@ type CustomerMtrController interface {
 	ListAmbilData(ctx *fiber.Ctx) error
 	AmbilData(ctx *fiber.Ctx) error
 	ShowBalikan(ctx *fiber.Ctx) error
+	ShowAll(ctx *fiber.Ctx) error
 	Show(ctx *fiber.Ctx) error
 	Update(ctx *fiber.Ctx) error
 	UpdateOkeMembership(ctx *fiber.Ctx) error
@@ -140,6 +142,29 @@ func (tr *customerMtrController) Show(ctx *fiber.Ctx) error {
 	data := tr.customerMtrService.Show(noMsn)
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
+	if data.KdUserTs != details.Username {
+		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+	}
+	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
+}
+
+func (tr *customerMtrController) ShowAll(ctx *fiber.Ctx) error {
+	noMsn := ctx.Params("no_msn")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	from := ctx.Params("from")
+	if from == "4" {
+		err := tr.customerMtrService.EmpatAmbilData(noMsn)
+		if err != nil {
+			fmt.Println("ini error ", err)
+			return ctx.Status(400).JSON(fiber.Map{"message": "Error Ambil Data "})
+		}
+	}
+	if condition := tr.customerMtrService.AmbilDataAllStatus(noMsn, details.Username); condition != nil {
+		fmt.Println("ini error ", condition)
+		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+	}
+	data := tr.customerMtrService.Show(noMsn)
 	if data.KdUserTs != details.Username {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
 	}

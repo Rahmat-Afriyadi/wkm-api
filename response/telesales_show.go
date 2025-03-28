@@ -165,6 +165,7 @@ type TelesalesResponse struct {
 	JnsJualFktKet            string `json:"jns_jual_fkt_ket" gorm:"-;type:json"`
 	NoHub                    string `json:"no_hub" gorm:"-;type:json"`
 	StsBayarMembership                    string `json:"sts_bayar_membership" gorm:"-;type:json"`
+	DescStsBayarMembership                    string `json:"desc_sts_bayar_membership" gorm:"-;type:json"`
 
 	AsuransiPAID        string     `json:"asuransi_pa_id" gorm:"-;type:json"`
 	IDProdukAsuransiPA  string     `json:"id_produk_asuransi_pa" gorm:"-;type:json"`
@@ -182,8 +183,10 @@ type TelesalesResponse struct {
 	RateMTR              float64 `json:"rate_mtr" gorm:"-;type:json"`
 	AdminMTR             uint64 `json:"admin_mtr" gorm:"-;type:json"`
 	
+	NamaKurir             string `json:"nm_kurir" gorm:"-;type:json"`
 	DescAlasanKurir             string `json:"desc_alasan_kurir" gorm:"-;type:json"`
 	AlasanDetailKurir             string `json:"alasan_detail_kurir" gorm:"-;type:json"`
+	AlasanVoidKonfirmasi             string `json:"alasan_void_konfirmasi" gorm:"-;type:json"`
 }
 
 
@@ -192,5 +195,6 @@ type TelesalesBalikanResponseList struct {
 	NmCustomerFkt          string     `gorm:"-;type:json" json:"nm_customer_fkt" `
 	TglUpdateKartuBalikan       string  `json:"tgl_update_kartu_balikan" gorm:"-;type:json"`
 	AlasanBelumBayar2 string	 `json:"alasan_belum_bayar2" gorm:"-;type:json"`
+	NamaKurir string	 `json:"nm_kurir" gorm:"-;type:json"`
 
 }
