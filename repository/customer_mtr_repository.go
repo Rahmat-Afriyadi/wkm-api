@@ -336,7 +336,6 @@ func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) 
 			fmt.Println("ini error pindah ", err)
 			return err
 		}else {
-			fmt.Println("belum ada nih")
 			r.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&customerMtr)
 		}
 	}
@@ -374,7 +373,6 @@ func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user
 			fmt.Println("ini error pindah ", err)
 			return err
 		}else {
-			fmt.Println("belum ada nih")
 			r.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&customerMtr)
 		}
 	}
@@ -523,7 +521,6 @@ func (r *customerMtrRepository) CreateCustomerFFaktur(no_msn string) error {
 		return err
 	} else {
 		_, err := r.conn.QueryContext(ctx, queryAmbilData, no_msn)
-		fmt.Println("berhasil masuk gk sih ", err)
 		return err
 	}
 }

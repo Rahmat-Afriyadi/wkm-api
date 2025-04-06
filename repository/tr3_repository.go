@@ -677,7 +677,7 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		}
 
 		faktur3.NoTandaTerima = noTT
-		faktur3.TglCetakTandaTerima = now
+		faktur3.TglCetakTandaTerima = &now
 		faktur3.TglExpired = &tglExpired
 		faktur3.NoKartu = noKartu
 
@@ -771,14 +771,13 @@ func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarReque
 	customerMtr := entity.CustomerMtr{NoMsn: data.NoMsn}
 	tr.connGorm.Find(&faktur3)
 	tr.connGorm.Find(&customerMtr)
-	if faktur3.NmCustomer == "" {
+	if customerMtr.NmCustomerFkt == "" {
 		err := customerMtrRepo.CreateCustomerFFaktur(data.NoMsn)
 		if err != nil {
 			fmt.Println("ini error pindah ", err)
 			return err
 		}else {
-			fmt.Println("belum ada nih")
-			tr.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&customerMtr)
+			tr.connGorm.Where("no_msn = ? and renewal_ke = ?", faktur3.NoMsn, faktur3.StsCetak3).First(&customerMtr)
 		}
 	}
 	if customerMtr.NmCustomerFkt != "" {
@@ -789,7 +788,7 @@ func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarReque
 		now := time.Now()
 		if membership.Id != "" {
 			membership.NoTandaTerima = faktur3.NoTandaTerima
-			membership.TglCetakTandaTerima = &faktur3.TglCetakTandaTerima
+			membership.TglCetakTandaTerima = faktur3.TglCetakTandaTerima
 			membership.NoKartu = faktur3.NoKartu
 			membership.TglBayar = &data.TglBayar
 			membership.TglInputBayar = &now
@@ -800,12 +799,20 @@ func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarReque
 		}else {
 			newMembership := entity.Membership{
 				NoMSN: faktur3.NoMsn,
+				StsMembership: "O",
+				TypeKartu: "F",
+				KirimKe: faktur3.StsKirim,
+				StsKartu: "3",
+				TglKonfirmasi: customerMtr.TglKonfirmasi,
+				KodeKurir: faktur3.KdKurir,
+				KdUserCetakTt: *faktur3.KdUser3,
+				KdUserTs: faktur3.KdUser,
 				RenewalKe: customerMtr.RenewalKe,
 				NoTandaTerima: faktur3.NoTandaTerima,
 				TglJanjiBayar: faktur3.TglBayarRenewal,
 				JnsMembership: faktur3.KdCard,
 				JnsBayar: faktur3.StsJnsBayar,
-				TglCetakTandaTerima: &faktur3.TglCetakTandaTerima,
+				TglCetakTandaTerima: faktur3.TglCetakTandaTerima,
 				NoKartu: faktur3.NoKartu,
 				TglBayar: &data.TglBayar,
 				TglInputBayar: &now,

@@ -15,7 +15,7 @@ type TrPembayaranRenewal struct {
 	NoTandaTerima       string    `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
 	CetakKe             uint8     `form:"cetak_ke" json:"cetak_ke" gorm:"column:cetak_ke"`
 	KdUserFa            string    `form:"kd_user_fa" json:"kd_user_fa" gorm:"column:kd_user_fa"`
-	TglCetakTandaTerima time.Time `form:"tgl_cetak_tanda_terima" json:"tgl_cetak_tanda_terima" gorm:"type:DATE;default:null;column:tgl_cetak_tanda_terima"`
+	TglCetakTandaTerima *time.Time `form:"tgl_cetak_tanda_terima" json:"tgl_cetak_tanda_terima" gorm:"type:DATE;default:null;column:tgl_cetak_tanda_terima"`
 	KdUserSS            string    `form:"kd_user_ss" json:"kd_user_ss" gorm:"column:kd_user_ss"`
 	JnsBayar            string    `form:"jns_bayar" json:"jns_bayar" gorm:"column:jns_bayar"`
 	TglBayar            time.Time `form:"tgl_bayar" json:"tgl_bayar" gorm:"type:DATE;default:null;column:tgl_bayar"`

@@ -23,7 +23,7 @@ type DetailAsuransiMtr struct {
 type Faktur3 struct {
 	NoMsn               string     `form:"no_msn" json:"no_msn" gorm:"primary_key;column:no_msn"`
 	NoTandaTerima       string     `form:"no_tanda_terima" json:"no_tanda_terima" gorm:"column:no_tanda_terima"`
-	TglCetakTandaTerima time.Time  `form:"tgl_cetak_tanda_terima" json:"tgl_cetak_tanda_terima" gorm:"column:tgl_cetak_tanda_terima"`
+	TglCetakTandaTerima *time.Time  `form:"tgl_cetak_tanda_terima" json:"tgl_cetak_tanda_terima" gorm:"column:tgl_cetak_tanda_terima"`
 	TglUpdateKartuBalikan       *time.Time  `form:"tgl_update_kartu_balikan" json:"tgl_update_kartu_balikan" gorm:"column:tgl_update_kartu_balikan"`
 	TglVerifikasi       time.Time  `form:"tgl_verifikasi" json:"tgl_verifikasi" gorm:"column:tgl_verifikasi"`
 	AlasanBelumBayar2 string	 `form:"alasan_belum_bayar2" json:"alasan_belum_bayar2" gorm:"column:alasan_belum_bayar2"`
@@ -36,6 +36,7 @@ type Faktur3 struct {
 	KdUser              string     `form:"kd_user" json:"kd_user" gorm:"column:kd_user"`
 	User                SecUser    `json:"user_2" gorm:"->;references:Username;foreignKey:kd_user"`
 	KdUser2             string     `form:"kd_user2" json:"kd_user2" gorm:"column:kd_user2"`
+	KdUser3            *string     `form:"kd_user3" json:"kd_user3" gorm:"column:kd_user3"`
 	KdUser10            *string    `form:"kd_user10" json:"kd_user10" gorm:"column:kd_user10"`
 	User10              SecUser    `json:"user_10" gorm:"->;references:Username;foreignKey:KdUser10"`
 	Print               uint8      `form:"print" json:"print" gorm:"column:print"`
