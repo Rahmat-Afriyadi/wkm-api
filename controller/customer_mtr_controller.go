@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 	"wkm/entity"
 	"wkm/request"
+	"wkm/response"
 	"wkm/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,12 +15,16 @@ import (
 
 type CustomerMtrController interface {
 	SelfCount(ctx *fiber.Ctx) error
+	AllStatusMasterData(ctx *fiber.Ctx) error
+	AllStatusMasterDataCount(ctx *fiber.Ctx) error
 	MasterData(ctx *fiber.Ctx) error
 	MasterDataCount(ctx *fiber.Ctx) error
 	MasterDataBalikan(ctx *fiber.Ctx) error
 	MasterDataBalikanCount(ctx *fiber.Ctx) error
 	ListAmbilData(ctx *fiber.Ctx) error
 	AmbilData(ctx *fiber.Ctx) error
+	ShowBalikan(ctx *fiber.Ctx) error
+	ShowAll(ctx *fiber.Ctx) error
 	Show(ctx *fiber.Ctx) error
 	Update(ctx *fiber.Ctx) error
 	UpdateOkeMembership(ctx *fiber.Ctx) error
@@ -51,19 +57,50 @@ func (tr *customerMtrController) SelfCount(ctx *fiber.Ctx) error {
 	return ctx.Status(200).JSON(data)
 }
 func (tr *customerMtrController) MasterDataBalikan(ctx *fiber.Ctx) error {
+	data := []response.TelesalesBalikanResponseList{}
+	search := ctx.Query("search")
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	limit, _ := strconv.Atoi(ctx.Query("limit"))
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
+	if details.Role.Name == "ROLE_TELESALES" {
+		data = tr.customerMtrService.MasterDataBalikan(search, tgl1, tgl2, details.Username, limit, pageParams)
+	}else if details.Role.Name == "ROLE_CONFIRMER"{
+		data = tr.customerMtrService.MasterDataBalikanKonfirmer(search, tgl1, tgl2, limit, pageParams)
+	}
+	return ctx.Status(200).JSON(data)
+}
+func (tr *customerMtrController) MasterDataBalikanCount(ctx *fiber.Ctx) error {
+	var data int64
+
+	search := ctx.Query("search")
+	tgl1 := ctx.Query("tgl1")
+	tgl2 := ctx.Query("tgl2")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	if details.Role.Name == "ROLE_TELESALES" {
+		data = tr.customerMtrService.MasterDataBalikanCount(search,tgl1, tgl2, details.Username)
+	}else if  details.Role.Name == "ROLE_CONFIRMER"{
+		data = tr.customerMtrService.MasterDataBalikanKonfirmerCount(search, tgl1, tgl2)
+	}
+	return ctx.Status(200).JSON(data)
+}
+func (tr *customerMtrController) AllStatusMasterData(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
 	limit, _ := strconv.Atoi(ctx.Query("limit"))
 	pageParams, _ := strconv.Atoi(ctx.Query("pageParams"))
-	data := tr.customerMtrService.MasterDataBalikan(search, details.Username, limit, pageParams)
+	data := tr.customerMtrService.AllStatusMasterData(search, details.Username, limit, pageParams)
 	return ctx.Status(200).JSON(data)
 }
-func (tr *customerMtrController) MasterDataBalikanCount(ctx *fiber.Ctx) error {
+func (tr *customerMtrController) AllStatusMasterDataCount(ctx *fiber.Ctx) error {
 	search := ctx.Query("search")
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	data := tr.customerMtrService.MasterDataBalikanCount(search, details.Username)
+	data := tr.customerMtrService.AllStatusMasterDataCount(search, details.Username)
 	return ctx.Status(200).JSON(data)
 }
 func (tr *customerMtrController) MasterData(ctx *fiber.Ctx) error {
@@ -116,12 +153,41 @@ func (tr *customerMtrController) Show(ctx *fiber.Ctx) error {
 	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
 }
 
+func (tr *customerMtrController) ShowAll(ctx *fiber.Ctx) error {
+	noMsn := ctx.Params("no_msn")
+	user := ctx.Locals("user")
+	details, _ := user.(entity.User)
+	from := ctx.Params("from")
+	if from == "4" {
+		err := tr.customerMtrService.EmpatAmbilData(noMsn)
+		if err != nil {
+			fmt.Println("ini error ", err)
+			return ctx.Status(400).JSON(fiber.Map{"message": "Error Ambil Data "})
+		}
+	}
+	if condition := tr.customerMtrService.AmbilDataAllStatus(noMsn, details.Username); condition != nil {
+		fmt.Println("ini error ", condition)
+		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+	}
+	data := tr.customerMtrService.Show(noMsn)
+	if data.KdUserTs != details.Username {
+		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+	}
+	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
+}
+
 func (tr *customerMtrController) ShowBalikan(ctx *fiber.Ctx) error {
 	noMsn := ctx.Params("no_msn")
 	user := ctx.Locals("user")
 	details, _ := user.(entity.User)
-	if condition := tr.customerMtrService.AmbilDataBalikan(noMsn, details.Username); condition != nil {
-		return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+	if details.Role.Name == "ROLE_TELESALES" {
+		if condition := tr.customerMtrService.AmbilDataBalikan(noMsn, details.Username); condition != nil {
+			return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+		}
+	}else if details.Role.Name == "ROLE_CONFIRMER"{
+		if condition := tr.customerMtrService.AmbilDataBalikanKonfirmer(noMsn, details.Username); condition != nil {
+			return ctx.Status(400).JSON(fiber.Map{"message": "Data tidak ditemukan"})
+		}
 	}
 	data := tr.customerMtrService.Show(noMsn)
 	return ctx.Status(200).JSON(fiber.Map{"message": "Berhasil ", "data":data})
@@ -145,6 +211,7 @@ func (tr *customerMtrController) UpdateOkeMembership(ctx *fiber.Ctx) error {
 	details,_:= user.(entity.User)
 
 	request.KdUserTs = details.Username
+	request.KdUserKonfirmer = details.Username
 	customer, err := tr.customerMtrService.UpdateOkeMembership(request)
 	if err != nil {
 		return  ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body", "details": err.Error()})

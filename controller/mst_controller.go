@@ -20,6 +20,7 @@ type MstController interface {
 	UpdateState(ctx *fiber.Ctx) error
 	MasterAgama(ctx *fiber.Ctx) error
 	MasterTujuPak(ctx *fiber.Ctx) error
+	AlasanVoidKonfirmasi(ctx *fiber.Ctx) error
 	MasterPendidikan(ctx *fiber.Ctx) error
 	MasterKeluarBln(ctx *fiber.Ctx) error
 	MasterAktivitasJual(ctx *fiber.Ctx) error
@@ -71,6 +72,14 @@ func (mS *mstController) MasterTujuPak(ctx *fiber.Ctx) error {
 	var res []response.Choices
 	for _, v := range data {
 		res = append(res, response.Choices{Name:v.NmTupak, Value:v.Id})
+	}
+    return ctx.Status(fiber.StatusOK).JSON(res)
+}
+func (mS *mstController) AlasanVoidKonfirmasi(ctx *fiber.Ctx) error {
+    data := mS.mstService.AlasanVoidKonfirmasi()
+	res := []response.Choices{}
+	for _, v := range data {
+		res = append(res, response.Choices{Name:v.Alasan, Value:v.AlasanVoidKonfirmasi})
 	}
     return ctx.Status(fiber.StatusOK).JSON(res)
 }

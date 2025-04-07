@@ -80,6 +80,7 @@ type CustomerMtr struct {
 	KotaWkm              string     `gorm:"column:kota_wkm;" json:"kota_wkm" form:"kota_wkm"`
 	KodeposWkm           string     `gorm:"column:kodepos_wkm;" json:"kodepos_wkm" form:"kodepos_wkm"`
 	TglCallTele           *time.Time `gorm:"column:tgl_call_tele;" json:"tgl_call_tele" form:"tgl_call_tele"`
+	TglKonfirmasi           *time.Time `gorm:"column:tgl_konfirmasi;" json:"tgl_konfirmasi" form:"tgl_konfirmasi"`
 	JnsJualWkm            string     `gorm:"column:jns_jual_wkm;" json:"jns_jual_wkm" form:"jns_jual_wkm"`
 	AktifJualWkm          string     `gorm:"column:aktif_jual_wkm;;" json:"aktif_jual_wkm" form:"aktif_jual_wkm"`
 	KetAktifJualWkm       string     `gorm:"column:ket_aktif_jual_wkm;" json:"ket_aktif_jual_wkm" form:"ket_aktif_jual_wkm"`
@@ -137,7 +138,7 @@ type CustomerMtr struct {
 	DpMtrWkm              uint32     `gorm:"column:dp_mtr_wkm;" json:"dp_mtr_wkm" form:"dp_mtr_wkm"`
 	KdAktivitasJualMembership string  `gorm:"column:kd_aktivitas_jual_membership;" json:"kd_aktivitas_jual_membership" form:"kd_aktivitas_jual_membership"`
 	JmlCallMembership      uint32     `gorm:"column:jml_call_membership;" json:"jml_call_membership" form:"jml_call_membership"`
-	StsStnk      string     `gorm:"column:sts_stnk;" json:"sts_stnk" form:"sts_stnk"`
+	StsStnk      *string     `gorm:"column:sts_stnk;" json:"sts_stnk" form:"sts_stnk"`
 
 	Modified               *time.Time `gorm:"column:modified;" json:"modified" form:"modified"`
 	NoKartu2 string `gorm:"column:no_kartu2;" json:"no_kartu2" form:"no_kartu2"`

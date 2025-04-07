@@ -677,7 +677,7 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 		}
 
 		faktur3.NoTandaTerima = noTT
-		faktur3.TglCetakTandaTerima = now
+		faktur3.TglCetakTandaTerima = &now
 		faktur3.TglExpired = &tglExpired
 		faktur3.NoKartu = noKartu
 
@@ -766,12 +766,19 @@ func (tr *tr3Repository) UpdateInputBayar(data request.InputBayarRequest) (entit
 }
 
 func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarRequest)  error {
+	customerMtrRepo := NewCustomerMtrRepository(tr.conn, tr.connGorm, tr.wandaGorm)
 	faktur3 := entity.Faktur3{NoMsn: data.NoMsn}
 	customerMtr := entity.CustomerMtr{NoMsn: data.NoMsn}
 	tr.connGorm.Find(&faktur3)
 	tr.connGorm.Find(&customerMtr)
-	if faktur3.NmCustomer == "" {
-		return  errors.New("data tidak ditemukan")
+	if customerMtr.NmCustomerFkt == "" {
+		err := customerMtrRepo.CreateCustomerFFaktur(data.NoMsn)
+		if err != nil {
+			fmt.Println("ini error pindah ", err)
+			return err
+		}else {
+			tr.connGorm.Where("no_msn = ? and renewal_ke = ?", faktur3.NoMsn, faktur3.StsCetak3).First(&customerMtr)
+		}
 	}
 	if customerMtr.NmCustomerFkt != "" {
 		var membership entity.Membership
@@ -781,7 +788,7 @@ func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarReque
 		now := time.Now()
 		if membership.Id != "" {
 			membership.NoTandaTerima = faktur3.NoTandaTerima
-			membership.TglCetakTandaTerima = &faktur3.TglCetakTandaTerima
+			membership.TglCetakTandaTerima = faktur3.TglCetakTandaTerima
 			membership.NoKartu = faktur3.NoKartu
 			membership.TglBayar = &data.TglBayar
 			membership.TglInputBayar = &now
@@ -789,10 +796,33 @@ func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarReque
 			membership.TglExpired = &stockCard.TglExpired
 			membership.StsBayar = "S"
 			tr.connGorm.Save(&membership)
+		}else {
+			newMembership := entity.Membership{
+				NoMSN: faktur3.NoMsn,
+				StsMembership: "O",
+				TypeKartu: "F",
+				KirimKe: faktur3.StsKirim,
+				StsKartu: "3",
+				TglKonfirmasi: customerMtr.TglKonfirmasi,
+				KodeKurir: faktur3.KdKurir,
+				KdUserCetakTt: *faktur3.KdUser3,
+				KdUserTs: faktur3.KdUser,
+				RenewalKe: customerMtr.RenewalKe,
+				NoTandaTerima: faktur3.NoTandaTerima,
+				TglJanjiBayar: faktur3.TglBayarRenewal,
+				JnsMembership: faktur3.KdCard,
+				JnsBayar: faktur3.StsJnsBayar,
+				TglCetakTandaTerima: faktur3.TglCetakTandaTerima,
+				NoKartu: faktur3.NoKartu,
+				TglBayar: &data.TglBayar,
+				TglInputBayar: &now,
+				KdUserFa: data.KdUserFa,
+				TglExpired: &stockCard.TglExpired,
+				StsBayar: "S",
+			}
+			tr.connGorm.Save(&newMembership)
+
 		}
-		// if membership.TypeKartu == "E" {
-		// 	tr.conn
-		// }
 	}
 
 
@@ -826,6 +856,20 @@ func (tr *tr3Repository) UpdateInputBayarAsuransiPA(data request.InputBayarReque
 
 			gormE,_ := config.GetConnectionECardPlus()
 			gormE.Save(&entity.ECardPlusMember{NoKartu: asuransiPa.NoPolis,NmCustomer: faktur3.NmCustomer,  NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
+		} else {
+			polisId, err := entity.GeneratePolisPAID(tr.connGorm)
+			if err != nil {
+				fmt.Println("ini error generate polish ", err.Error())
+			}
+			newAsurasiPa := entity.AsuransiPA{
+				NoMSN: faktur3.NoMsn,
+				NoPolis:polisId,
+				TglBayar:&data.TglBayar,
+				TglInputBayar:&now,
+				KdUserFa:data.KdUserFa,
+				StsBayar:"S",
+			}
+			tr.connGorm.Save(&newAsurasiPa)
 
 		}
 	}
@@ -861,7 +905,7 @@ func (tr *tr3Repository) UpdateInputBayarAsuransiMtr(data request.InputBayarRequ
 
 
 			gormE,_ := config.GetConnectionECardPlus()
-			gormE.Debug().Create(&entity.ECardPlusMember{NoKartu: asuransiMtr.NoPolis,NmCustomer: faktur3.NmCustomer, NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
+			gormE.Create(&entity.ECardPlusMember{NoKartu: asuransiMtr.NoPolis,NmCustomer: faktur3.NmCustomer, NoMsn: faktur3.NoMsn, TglExpired: stockCard.TglExpired})
 
 		}
 	}
@@ -912,7 +956,7 @@ func (tr *tr3Repository) WillBayar(data request.SearchWBRequest) (entity.Faktur3
 		faktur.TypeKartu = "E"
 	}
 
-	tr.connGorm.Debug().Model(&entity.AsuransiPA{}).Where("no_msn = ? and (sts_bayar != 'S' or sts_bayar is null)", faktur.NoMsn).First(&asuransiPa)
+	tr.connGorm.Model(&entity.AsuransiPA{}).Where("no_msn = ? and (sts_bayar != 'S' or sts_bayar is null)", faktur.NoMsn).First(&asuransiPa)
 	if asuransiPa.Id != "" {
 		var produkPa entity.MasterProduk
 		tr.wandaGorm.Preload("Vendor").Where("id_produk = ?",asuransiPa.IDProduk).Find(&produkPa)

@@ -111,6 +111,7 @@ var (
 
 func main() {
 
+
 	defer conn.Close()
 	defer sqlConnUser.Close()
 	defer sqlConnGormAsuransi.Close()
@@ -121,8 +122,8 @@ func main() {
 	defer scheduler.Stop()
 	// "menit jam hari"
 	_, err := scheduler.AddFunc("15 18 * * *", func() {
-		fmt.Println("running task ", time.Now().Format("2006-01-02 15:04:05"))
 		otrRepository.ListApi()
+		fmt.Println("running task ", time.Now().Format("2006-01-02 15:04:05"))
 	})
 	if err != nil {
 		fmt.Println("cron error ", err)
@@ -152,6 +153,7 @@ func main() {
 
 	auth := app.Group("/auth")
 	auth.Post("/login", authController.SignInUserAsuransi)
+	auth.Post("/login/admin", authController.SignInUserAsuransi)
 	auth.Post("/refresh-token", authController.RefreshAccessTokenAsuransi)
 	auth.Post("/reset-password", middleware.DeserializeUser, authController.ResetPassword)
 	auth.Post("/logout", authController.LogoutUser)
@@ -185,6 +187,7 @@ func main() {
 
 	app.Get("/mst-user-ts", mstController.ListClientUser)
 	app.Get("/mst-agama", mstController.MasterAgama)
+	app.Get("/mst-alasan-void-konfirmasi", mstController.AlasanVoidKonfirmasi)
 	app.Get("/mst-pendidikan", mstController.MasterPendidikan)
 	app.Get("/mst-tujuan-pakai", mstController.MasterTujuPak)
 	app.Get("/mst-keluar-bln", mstController.MasterKeluarBln)
@@ -293,6 +296,8 @@ func main() {
 	app.Get("/mst-it-support", middleware.DeserializeUser, ticketSupportController.ListItSupport)
 
 	app.Get("/customer-mtr/self-count", middleware.DeserializeUser, customerMtrController.SelfCount)
+	app.Get("/customer-mtr/all-status-master-data", middleware.DeserializeUser, customerMtrController.AllStatusMasterData)
+	app.Get("/customer-mtr/all-status-master-data-count", middleware.DeserializeUser, customerMtrController.AllStatusMasterDataCount)
 	app.Get("/customer-mtr/master-data", middleware.DeserializeUser, customerMtrController.MasterData)
 	app.Get("/customer-mtr/master-data-count", middleware.DeserializeUser, customerMtrController.MasterDataCount)
 	app.Get("/customer-mtr/master-data-balikan", middleware.DeserializeUser, customerMtrController.MasterDataBalikan)
@@ -300,6 +305,8 @@ func main() {
 	app.Get("/customer-mtr/list-ambil-data", middleware.DeserializeUser, customerMtrController.ListAmbilData)
 	app.Post("/customer-mtr/ambil-data", middleware.DeserializeUser, customerMtrController.AmbilData)
 	app.Get("/customer-mtr/show/:no_msn", middleware.DeserializeUser, customerMtrController.Show)
+	app.Get("/customer-mtr/show-all/:no_msn/:from", middleware.DeserializeUser, customerMtrController.ShowAll)
+	app.Get("/customer-mtr/show-balikan/:no_msn", middleware.DeserializeUser, customerMtrController.ShowBalikan)
 	app.Get("/customer-mtr/rekap-tele", middleware.DeserializeUser, customerMtrController.RekapTele)
 	app.Get("/customer-mtr/rekap-leader-ts", middleware.DeserializeUser, customerMtrController.RekapLeaderTs)
 	app.Get("/customer-mtr/rekap-per-wilayah", middleware.DeserializeUser, customerMtrController.RekapBerminatPerWilayah)

@@ -12,6 +12,7 @@ type MstService interface {
 	ListClientUser() ([]response.ClientUser, error)
 	MasterAgama() []entity.MstAgama
 	MasterTujuPak() []entity.MstTujuPak
+	AlasanVoidKonfirmasi() []entity.MstAlasanVoidKonfirmasi
 	MasterPendidikan() []entity.MstPendidikan
 	MasterKeluarBln() []entity.MstKeluarBln
 	MasterAktivitasJual() []entity.MstAktivitasJual
@@ -58,6 +59,10 @@ func (ur *mstService) GetState(tipe string) bool {
 }
 func (ur *mstService) MasterTujuPak() []entity.MstTujuPak {
 	data := ur.mR.MasterTujuPak()
+	return data
+}
+func (ur *mstService) AlasanVoidKonfirmasi() []entity.MstAlasanVoidKonfirmasi {
+	data := ur.mR.AlasanVoidKonfirmasi()
 	return data
 }
 func (ur *mstService) MasterPendidikan() []entity.MstPendidikan {
