@@ -195,7 +195,7 @@ func (s *tr3Service) ExportPembayaranRenewal(data request.RangeTanggalRequest) e
 	startRow := 3
 	for i, record := range dataPembayaran {
 		namaCustomer := record.NmCustomer
-		if record.NamaKtp != record.NmCustomer {
+		if record.NamaKtp != record.NmCustomer && record.NamaKtp != "" {
 			namaCustomer += fmt.Sprintf(" (%s)", record.NamaKtp)
 		}
 		dpp := float64(record.MstCard.HargaPokok) / 1.11

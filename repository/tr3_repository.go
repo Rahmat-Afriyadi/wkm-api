@@ -930,7 +930,7 @@ func (tr *tr3Repository) UpdateTglAkhirTenor() {
 
 func (lR *tr3Repository) DataPembayaran(tgl1 string, tgl2 string) []entity.Faktur3 {
 	var datas []entity.Faktur3
-	query := lR.connGorm.Table("tr_wms_faktur3 AS a").Joins("JOIN stock_card as b ON b.no_kartu = a.no_kartu")
+	query := lR.connGorm.Table("tr_wms_faktur3 AS a")
 	if tgl1 != "" && tgl2 != "" {
 		query.Where("a.tgl_bayar_renewal_fin >= ? and a.tgl_bayar_renewal_fin <= ? and sts_renewal = 'O' and sts_bayar_renewal = 'S'", tgl1, tgl2)
 	}
