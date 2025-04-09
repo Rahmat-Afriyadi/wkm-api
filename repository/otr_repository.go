@@ -155,9 +155,9 @@ func (lR *otrRepository) ListApi() {
 	}
 
 	var responseObject entity.ResponseOtr
-	tahun := time.Now().Year()
 	json.Unmarshal(body, &responseObject)
 	for _, data := range responseObject.Data {
+		tahun := time.Now().Year()
 		parts := strings.Split(data.OtrApi, ".")
 		num, err := strconv.ParseFloat(parts[0], 64)
 		if num == 0 {
