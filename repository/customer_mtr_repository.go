@@ -29,7 +29,7 @@ type CustomerMtrRepository interface {
 	MasterDataBalikan(search string, tgl1 string, tgl2 string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList
 	MasterDataBalikanCount(search string, tgl1 string, tgl2 string, username string) int64
 	MasterDataBalikanKonfirmer(search string, tgl1 string, tgl2 string, limit int, pageParams int) []response.TelesalesBalikanResponseList
-	MasterDataBalikanKonfirmerCount(search string,tgl1 string, tgl2 string) int64
+	MasterDataBalikanKonfirmerCount(search string, tgl1 string, tgl2 string) int64
 	SelfCount(kd_user string) int64
 	ListAmbilData() []entity.Faktur3
 	AmbilDataBalikan(no_msn string, kd_user string) error
@@ -46,6 +46,7 @@ type CustomerMtrRepository interface {
 	ListDataAsuransiMtr(username string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.ListAsuransi, int, int, error)
 	RekapLeaderTs(startDate time.Time, endDate time.Time) (response.RekapLeaderTs, error)
 	RekapBerminatPerWilayah(startDate time.Time, endDate time.Time) ([]response.RekapBerminatPerWilayah, int, error)
+	RekapBerminatPerKecamatan(startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.RekapBerminatPerWilayah, int, int, int, error)
 	RekapTransaksi(startDate, endDate time.Time) ([]response.RekapTransaksi, error)
 	RekapStatus(startDate, endDate time.Time) ([]response.RekapStatus, error)
 	ListPerformanceTs(startDate, endDate time.Time) ([]response.ListPerformanceTs, []response.ListPerformanceTs, error)
@@ -101,7 +102,7 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, tgl1 string, t
 		conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >= '%s'", limitDateKartuBalikan.Format("2006-01-02")))
 	}
 	if tgl1 != "" && tgl2 != "" {
-		conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >='%s' and a.tgl_update_kartu_balikan <= '%s'",tgl1,tgl2))
+		conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >='%s' and a.tgl_update_kartu_balikan <= '%s'", tgl1, tgl2))
 	}
 	conditions = append(conditions, "order by a.tgl_update_kartu_balikan desc  limit ? offset ?")
 	query.WriteString(strings.Join(conditions, " "))
@@ -125,7 +126,7 @@ func (cR *customerMtrRepository) MasterDataBalikan(search string, tgl1 string, t
 }
 func (cR *customerMtrRepository) MasterDataBalikanCount(search string, tgl1 string, tgl2 string, username string) int64 {
 	var count int64
-	query := cR.connGorm.Where("no_msn like ? or nm_customer11 like ? ", "%"+search+"%","%"+search+"%")
+	query := cR.connGorm.Where("no_msn like ? or nm_customer11 like ? ", "%"+search+"%", "%"+search+"%")
 	query.Where("kd_user = ? and sts_bayar_renewal = 'B' and sts_renewal ='O'", username)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -158,7 +159,6 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-
 	query := strings.Builder{}
 	query.WriteString("select a.no_msn, a.nm_customer11, b.alasan, a.tgl_update_kartu_balikan, mk.nama_kurir from tr_wms_faktur3 a inner join mst_alasan_belum_bayar_kurir b on a.alasan_belum_bayar2 = b.id left join mst_kurir mk on a.kode_kurir = mk.kode_kurir where a.sts_bayar_renewal = 'B' and a.sts_renewal ='O' and (a.no_msn like ? or a.nm_customer11 like ?) ")
 	conditions := []string{}
@@ -175,21 +175,21 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 		if tgl1 != "" && tgl2 != "" {
 			var lastDate time.Time
 			tgl2Date, _ := time.Parse("2006-01-02", tgl2)
-			if tgl2Date.After(limitDateKartuBalikan)  {
+			if tgl2Date.After(limitDateKartuBalikan) {
 				lastDate = limitDateKartuBalikan
-			}else {
+			} else {
 				lastDate = tgl2Date
 			}
-			conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >='%s' and a.tgl_update_kartu_balikan <= '%s'",tgl1,lastDate))
-		}else {
+			conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan >='%s' and a.tgl_update_kartu_balikan <= '%s'", tgl1, lastDate))
+		} else {
 			conditions = append(conditions, fmt.Sprintf("and a.tgl_update_kartu_balikan <= '%s'", limitDateKartuBalikan.Format("2006-01-02")))
 		}
-	}else {
+	} else {
 		conditions = append(conditions, "and a.no_msn  = 'a'")
 	}
 	conditions = append(conditions, " order by a.tgl_update_kartu_balikan desc limit ? offset ?")
 	query.WriteString(strings.Join(conditions, " "))
-	rows, err := cR.conn.QueryContext(ctx,query.String(), "%"+search+"%","%"+search+"%", limit, offset)
+	rows, err := cR.conn.QueryContext(ctx, query.String(), "%"+search+"%", "%"+search+"%", limit, offset)
 	if err != nil {
 		fmt.Println("ini error ", err.Error())
 		return datas
@@ -203,13 +203,12 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmer(search string, tgl1 
 		datas = append(datas, data)
 	}
 
-
 	// query.Scopes(utils.Paginate(&utils.PaginateParams{PageParams: pageParams, Limit: limit})).Order("modified desc").Find(&datas)
 	return datas
 }
-func (cR *customerMtrRepository) MasterDataBalikanKonfirmerCount(search string,tgl1 string, tgl2 string) int64 {
+func (cR *customerMtrRepository) MasterDataBalikanKonfirmerCount(search string, tgl1 string, tgl2 string) int64 {
 	var count int64
-	query := cR.connGorm.Where("no_msn like ? or nm_customer11 like ? ", "%"+search+"%","%"+search+"%")
+	query := cR.connGorm.Where("no_msn like ? or nm_customer11 like ? ", "%"+search+"%", "%"+search+"%")
 	query.Where("sts_bayar_renewal = 'B' and sts_renewal ='O'")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -226,13 +225,13 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmerCount(search string,t
 		if tgl1 != "" && tgl2 != "" {
 			var lastDate time.Time
 			tgl2Date, _ := time.Parse("2006-01-02", tgl2)
-			if tgl2Date.After(limitDateKartuBalikan)  {
+			if tgl2Date.After(limitDateKartuBalikan) {
 				lastDate = limitDateKartuBalikan
-			}else {
+			} else {
 				lastDate = tgl2Date
 			}
-			query.Where("tgl_update_kartu_balikan >=? and tgl_update_kartu_balikan <= ?",tgl1,lastDate)
-		}else {
+			query.Where("tgl_update_kartu_balikan >=? and tgl_update_kartu_balikan <= ?", tgl1, lastDate)
+		} else {
 			query.Where("tgl_update_kartu_balikan <= ?", limitDateKartuBalikan.Format("2006-01-02"))
 		}
 	} else {
@@ -247,12 +246,12 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmerCount(search string,t
 func (cR *customerMtrRepository) AllStatusMasterData(search string, username string,tgl_bayar1 string, tgl_bayar2 string, limit int, pageParams int) []response.AllStatusResponse {
 	offset := (pageParams - 1) * limit
 	datas := []response.AllStatusResponse{}
-	count := 0  
+	count := 0
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%","%"+search+"%",username).Scan(&count)
+	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%", "%"+search+"%", username).Scan(&count)
 	if count > 0 {
-		rows, err := cR.conn.QueryContext(ctx,"select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, '3' from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%","%"+search+"%",username, limit, offset)
+		rows, err := cR.conn.QueryContext(ctx, "select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, '3' from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%", "%"+search+"%", username, limit, offset)
 		if err != nil {
 			fmt.Println("ini error ", err.Error())
 			return datas
@@ -260,13 +259,13 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 		defer rows.Close()
 		for rows.Next() {
 			var data response.AllStatusResponse
-			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi,&data.StsBayar, &data.FromTable); err != nil {
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.StsBayar, &data.FromTable); err != nil {
 				log.Fatal(err)
 			}
 			datas = append(datas, data)
 		}
-	}else {
-		rows, err := cR.conn.QueryContext(ctx,"select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, '4' from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%","%"+search+"%",username, limit, offset)
+	} else {
+		rows, err := cR.conn.QueryContext(ctx, "select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, '4' from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%", "%"+search+"%", username, limit, offset)
 		if err != nil {
 			fmt.Println("ini error ", err.Error())
 			return datas
@@ -274,7 +273,7 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 		defer rows.Close()
 		for rows.Next() {
 			var data response.AllStatusResponse
-			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi,&data.StsBayar, &data.FromTable); err != nil {
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.StsBayar, &data.FromTable); err != nil {
 				log.Fatal(err)
 			}
 			datas = append(datas, data)
@@ -286,16 +285,16 @@ func (cR *customerMtrRepository) AllStatusMasterDataCount(search string, usernam
 	count := 0  
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%","%"+search+"%",username).Scan(&count)
-	if count<1 {
-		cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%","%"+search+"%",username).Scan(&count)
+	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%", "%"+search+"%", username).Scan(&count)
+	if count < 1 {
+		cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%", "%"+search+"%", username).Scan(&count)
 	}
 	return int64(count)
 }
 
 func (cR *customerMtrRepository) MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr {
 	datas := []entity.CustomerMtr{}
-	query := cR.connGorm.Select("no_msn, nm_customer_fkt, kd_user_ts, alasan_pending_membership, alasan_pending_asuransi_pa, alasan_pending_asuransi_mtr,tgl_prospect_membership,tgl_prospect_asuransi_pa,tgl_prospect_asuransi_mtr, tgl_call_tele, tgl_faktur").Where("no_msn like ? or nm_customer_wkm like ? or nm_customer_fkt like ? ", "%"+search+"%","%"+search+"%", "%"+search+"%")
+	query := cR.connGorm.Select("no_msn, nm_customer_fkt, kd_user_ts, alasan_pending_membership, alasan_pending_asuransi_pa, alasan_pending_asuransi_mtr,tgl_prospect_membership,tgl_prospect_asuransi_pa,tgl_prospect_asuransi_mtr, tgl_call_tele, tgl_faktur").Where("no_msn like ? or nm_customer_wkm like ? or nm_customer_fkt like ? ", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	query.Where("kd_user_ts = ?", username)
 	query.Where(fmt.Sprintf("%s = ?", jns), sts)
 
@@ -336,7 +335,7 @@ func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) 
 		if err != nil {
 			fmt.Println("ini error pindah ", err)
 			return err
-		}else {
+		} else {
 			r.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&customerMtr)
 		}
 	}
@@ -351,7 +350,7 @@ func (r *customerMtrRepository) AmbilDataBalikan(no_msn string, kd_user string) 
 		}
 		if membership.StsBayar == "B" {
 			return nil
-		}else {
+		} else {
 			membership.StsBayar = "B"
 			r.connGorm.Save(&membership)
 			return nil
@@ -373,7 +372,7 @@ func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user
 		if err != nil {
 			fmt.Println("ini error pindah ", err)
 			return err
-		}else {
+		} else {
 			r.connGorm.Where("no_msn = ? and renewal_ke = ?", customerMtr.NoMsn, customerMtr.RenewalKe).First(&customerMtr)
 		}
 	}
@@ -383,10 +382,10 @@ func (r *customerMtrRepository) AmbilDataBalikanKonfirmer(no_msn string, kd_user
 			return err
 		}
 		r.conn.QueryRowContext(ctx, "select alasan_belum_bayar2, alasan_belum_bayar_detail_kurir from tr_wms_faktur3 where no_msn = ?", no_msn).Scan(&membership.AlasanTdkKurir, &membership.AlasanTdkKurirDetail)
-		
+
 		if membership.StsBayar == "B" {
 			return nil
-		}else {
+		} else {
 			membership.KdUserKonfirmer = kd_user
 			membership.StsBayar = "B"
 			r.connGorm.Save(&membership)
@@ -405,12 +404,12 @@ func (r *customerMtrRepository) FirstOrCreateMembership(customerMtr entity.Custo
 		jsonBytes, err := json.Marshal(customerMtr)
 		if err != nil {
 			fmt.Println("Error encoding JSON:", err)
-			return entity.Membership{},err
+			return entity.Membership{}, err
 		}
 		err = json.Unmarshal(jsonBytes, &membership)
 		if err != nil {
 			fmt.Println("Error decoding JSON:", err)
-			return entity.Membership{},err
+			return entity.Membership{}, err
 		}
 		membership.JnsMembership = faktur3.KdCard
 		membership.JnsBayar = faktur3.StsJnsBayar
@@ -420,9 +419,9 @@ func (r *customerMtrRepository) FirstOrCreateMembership(customerMtr entity.Custo
 		membership.KdUserTs = faktur3.KdUser
 		membership.TypeKartu = "F"
 		membership.StsBayar = faktur3.StsBayarRenewal
-		result :=r.connGorm.Save(&membership)
+		result := r.connGorm.Save(&membership)
 		if result.Error != nil {
-			return entity.Membership{},result.Error
+			return entity.Membership{}, result.Error
 		}
 	}
 	return membership, nil
@@ -438,7 +437,7 @@ func (r *customerMtrRepository) AmbilDataAllStatus(no_msn string, kd_user string
 		if err != nil {
 			fmt.Println("ini error pindah ", err)
 			return err
-		}else {
+		} else {
 			r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, customerMtr.RenewalKe).First(&customerMtr)
 		}
 	}
@@ -455,7 +454,7 @@ func (r *customerMtrRepository) AmbilDataAllStatus(no_msn string, kd_user string
 }
 
 func (r *customerMtrRepository) EmpatAmbilData(no_msn string) error {
-	count := 0  
+	count := 0
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	r.conn.QueryContext(ctx, "insert into tr_wms_faktur3 select * from tr_wms_faktur4 where no_msn = ?", no_msn)
@@ -533,10 +532,10 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
 	var response response.TelesalesResponse
 	var produkPa entity.MasterProduk
 	var produkMtr entity.MasterProduk
-	
+
 	data := entity.CustomerMtr{NoMsn: no_msn}
 	r.connGorm.Find(&data)
-	
+
 	jsonBytes, _ := json.Marshal(data)
 	err := json.Unmarshal(jsonBytes, &response)
 	if err != nil {
@@ -548,18 +547,18 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
 	r.conn.QueryRowContext(ctx, "select c.no_msn, k.nm_kerja, h.hobby, a.agama, t.nm_tujpak, p.nm_pendidikan, kb.nm_keluar_bln2 from customer_mtr c inner join mst_kerja k on k.kode_kerja2 = c.kode_kerja_fkt inner join hobby h on h.kode_hobby = c.hobby_fkt inner join mst_agama a on a.kd_agama = c.agama_fkt inner join mst_tujuanpakai t on c.tujuan_pakai_fkt = t.id inner join mst_pendidikan p on p.kd_pendidikan = c.kode_didik_fkt inner join mst_keluar_bln kb on kb.keluar_bln2 = c.keluar_bln_fkt where c.no_msn = ?", no_msn).Scan(&no_msn, &response.DescKerjaFkt, &response.DescHobbyFkt, &response.DescAgamaFkt, &response.DescTujuanPakaiFkt, &response.DescDidikFkt, &response.DescKeluarBlnFkt)
 
 	r.conn.QueryRowContext(ctx, "select b.nama_kurir from tr_wms_faktur3 a left join mst_kurir b on a.kode_kurir=b.kode_kurir where a.no_msn = ?", no_msn).Scan(&response.NamaKurir)
-	
+
 	r.connGorm.Where("no_msn = ? and renewal_ke = ?", no_msn, data.RenewalKe).Find(&membership)
 	if membership.Id != "" {
 		r.conn.QueryRowContext(ctx, "select keterangan AS value, harga_pokok + asuransi_motor + asuransi from mst_card where kd_card = ? ", membership.JnsMembership).Scan(&response.JnsMembershipName)
-		response.MembershipID =  membership.Id
-		response.KdPromoTransfer =  membership.KdPromoTransfer
-		response.KirimKe =  membership.KirimKe
-		response.JnsBayar =  membership.JnsBayar
-		response.JnsMembership =  membership.JnsMembership
-		response.TypeKartu =  membership.TypeKartu
-		response.StsBayarMembership =  membership.StsBayar
-		response.TglJanjiBayar =  membership.TglJanjiBayar.Format("2006-01-02")
+		response.MembershipID = membership.Id
+		response.KdPromoTransfer = membership.KdPromoTransfer
+		response.KirimKe = membership.KirimKe
+		response.JnsBayar = membership.JnsBayar
+		response.JnsMembership = membership.JnsMembership
+		response.TypeKartu = membership.TypeKartu
+		response.StsBayarMembership = membership.StsBayar
+		response.TglJanjiBayar = membership.TglJanjiBayar.Format("2006-01-02")
 		response.AlasanVoidKonfirmasi = membership.AlasanVoidKonfirmasi
 
 		if membership.StsBayar == "B" {
@@ -619,26 +618,26 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
 	}
 
 	switch data.NoYgDihubTs {
-    case "1":
-        response.NoHub = data.NoHpFkt
-    case "2":
-        response.NoHub = data.NoHpWkm
-    case "4":
-        response.NoHub = data.NoTelpFkt
-    case "5":
-        response.NoHub = data.NoTelpWkm
-    }
+	case "1":
+		response.NoHub = data.NoHpFkt
+	case "2":
+		response.NoHub = data.NoHpWkm
+	case "4":
+		response.NoHub = data.NoTelpFkt
+	case "5":
+		response.NoHub = data.NoTelpWkm
+	}
 
 	switch response.StsBayarMembership {
-    case "S":
-        response.DescStsBayarMembership = "Sudah Bayar"
-    case "C":
-        response.DescStsBayarMembership = "Cancel"
-    case "B":
-        response.DescStsBayarMembership = "Belum Bayar"
-    case "":
-        response.DescStsBayarMembership = ""
-    }
+	case "S":
+		response.DescStsBayarMembership = "Sudah Bayar"
+	case "C":
+		response.DescStsBayarMembership = "Cancel"
+	case "B":
+		response.DescStsBayarMembership = "Belum Bayar"
+	case "":
+		response.DescStsBayarMembership = ""
+	}
 
 	if response.NoKartu2 != "" {
 		if len(response.NoKartu2) >= 4 {
@@ -655,7 +654,7 @@ func (r *customerMtrRepository) Show(no_msn string) response.TelesalesResponse {
 			}
 		}
 	}
-	
+
 	return response
 }
 
@@ -708,10 +707,9 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	}
 
 	fmt.Println("ini tgl call tele ", jsonMap["tgl_call_tele"])
-	
 
 	if jsonMap["sts_membership"] == "O" {
-		result := r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
+		result := r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership)
 		if result.Error == gorm.ErrRecordNotFound {
 			err = json.Unmarshal(jsonBytes, &membership)
 			if err != nil {
@@ -750,18 +748,18 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 			if err != nil {
 				log.Fatal("Error preparing statement:", err)
 			}
-			defer stmt.Close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           // Ensure statement is closed after execution
+			defer stmt.Close()                                                                     // Ensure statement is closed after execution
 			_, err = stmt.Exec(customer.KdUserKonfirmer, now.Format("2006-01-02"), customer.NoMsn) // Update user with ID 1 to age 28
 			if err != nil {
 				log.Fatal("Error executing statement:", err)
-			}	
+			}
 
 		}
 
 	}
 
-	if jsonMap["sts_membership"] == "T"{
-		r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership);
+	if jsonMap["sts_membership"] == "T" {
+		r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership)
 		if membership.Id != "" {
 			if membership.StsBayar == "B" {
 				isUpdateConfirmer = true
@@ -776,12 +774,12 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 				if err != nil {
 					log.Fatal("Error preparing statement:", err)
 				}
-				defer stmt.Close()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           // Ensure statement is closed after execution
+				defer stmt.Close()                                                                                                                                // Ensure statement is closed after execution
 				_, err = stmt.Exec(customer.KdUserKonfirmer, now.Format("2006-01-02"), customer.AlasanTdkTsDetail, customer.AlasanVoidKonfirmasi, customer.NoMsn) // Update user with ID 1 to age 28
 				if err != nil {
 					log.Fatal("Error executing statement:", err)
 				}
-			}	
+			}
 		}
 
 	}
@@ -848,7 +846,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	}
 	if isUpdateConfirmer {
 		customerMtrEntity.TglKonfirmasi = &now
-	}else {
+	} else {
 		jsonMap["tgl_call_tele"] = now.Format("2006-01-02")
 		customerMtrEntity.TglCallTele = &now
 	}
@@ -872,7 +870,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	// if customerMtrEntity.KetNoHpFkt == "1" || customerMtrEntity.KetNoTelpFkt == "1" {
 
 	// }
-	
+
 	customerMtrEntity.Modified = &now
 	customerMtrEntity.JmlCallMembership += 1
 	r.connGorm.Save(&customerMtrEntity)
@@ -1286,18 +1284,20 @@ func (r *customerMtrRepository) RekapTele(username string, startDate time.Time, 
 func (r *customerMtrRepository) ListBerminatMembership(username string, startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.MinatMembership, int, int, error) {
 	var results []response.MinatMembership
 	var totalRecords int
-	var totalFiltered int // Menyimpan jumlah total data setelah filter diterapkan
+	var totalFiltered int
 
 	offset := (pageParams - 1) * limit
 
-	// Base query SQL dengan JOIN ke mst_card untuk mengambil jns_card
+	// Base query dengan JOIN tambahan
 	baseQuery := `
 		FROM tr_wms_faktur3 cm
 		LEFT JOIN mst_card mc ON cm.kd_card = mc.kd_card
+		LEFT JOIN db_wkm.tr_wms_faktur3 tf ON cm.no_msn = tf.no_msn
+		LEFT JOIN db_wkm.mst_kurir mk ON tf.kode_kurir = mk.kode_kurir
 		WHERE cm.kd_user = ? AND cm.sts_renewal = 'O'
-		AND cm.tgl_verifikasi BETWEEN ? AND ?`
+		AND cm.tgl_verifikasi BETWEEN ? AND ?
+	`
 
-	// Menambahkan kondisi pencarian jika search tidak kosong
 	var params []interface{}
 	params = append(params, username, startDate, endDate)
 
@@ -1307,44 +1307,44 @@ func (r *customerMtrRepository) ListBerminatMembership(username string, startDat
 		params = append(params, searchPattern, searchPattern)
 	}
 
-	// Query untuk menghitung total records (jumlah data sebelum filter pencarian)
+	// Total record (tanpa search)
 	countTotalQuery := `SELECT COUNT(*) FROM tr_wms_faktur3 WHERE kd_user = ? AND sts_renewal = 'O' AND tgl_verifikasi BETWEEN ? AND ?`
 	err := r.conn.QueryRow(countTotalQuery, username, startDate, endDate).Scan(&totalRecords)
 	if err != nil {
 		return nil, 0, 0, fmt.Errorf("error executing total count query: %v", err)
 	}
 
-	// Query untuk menghitung totalFiltered (jumlah data setelah filter pencarian)
+	// Total filtered (dengan search)
 	countFilteredQuery := `SELECT COUNT(*) ` + baseQuery
 	err = r.conn.QueryRow(countFilteredQuery, params...).Scan(&totalFiltered)
 	if err != nil {
 		return nil, 0, 0, fmt.Errorf("error executing filtered count query: %v", err)
 	}
 
-	// Menghitung total pages berdasarkan jumlah data setelah filter
 	totalPages := int(math.Ceil(float64(totalFiltered) / float64(limit)))
 
-	// Query utama untuk mengambil data
+	// Query utama ambil data
 	query := `SELECT 
-			cm.no_msn, 
-			cm.nm_customer11, 
-			cm.sts_jenis_bayar, 
-			cm.tgl_bayar_renewal, 
-			cm.print, 
-			cm.sts_renewal, 
-			cm.sts_kartu, 
-			cm.sts_bayar_renewal, 
-			mc.jns_card AS kd_card ` + baseQuery + " ORDER BY cm.tgl_verifikasi DESC LIMIT ? OFFSET ?"
+		cm.no_msn, 
+		cm.nm_customer11, 
+		cm.sts_jenis_bayar, 
+		cm.tgl_bayar_renewal, 
+		cm.print, 
+		cm.sts_renewal, 
+		cm.sts_kartu, 
+		cm.sts_bayar_renewal, 
+		mc.jns_card AS kd_card,
+		COALESCE(mk.nama_kurir, '') AS nama_kurir
+	` + baseQuery + ` ORDER BY cm.tgl_verifikasi DESC LIMIT ? OFFSET ?`
+
 	params = append(params, limit, offset)
 
-	// Menjalankan query
 	rows, err := r.conn.Query(query, params...)
 	if err != nil {
 		return nil, 0, 0, fmt.Errorf("error executing query: %v", err)
 	}
 	defer rows.Close()
 
-	// Loop untuk membaca hasil query
 	for rows.Next() {
 		var customer response.MinatMembership
 		err := rows.Scan(
@@ -1357,6 +1357,7 @@ func (r *customerMtrRepository) ListBerminatMembership(username string, startDat
 			&customer.StsKartu,
 			&customer.StsBayarRenewal,
 			&customer.KdCard,
+			&customer.NmKurir,
 		)
 		if err != nil {
 			return nil, 0, 0, fmt.Errorf("error scanning row: %v", err)
@@ -1364,7 +1365,6 @@ func (r *customerMtrRepository) ListBerminatMembership(username string, startDat
 		results = append(results, customer)
 	}
 
-	// Jika ada error saat iterasi
 	if err := rows.Err(); err != nil {
 		return nil, 0, 0, fmt.Errorf("error iterating rows: %v", err)
 	}
@@ -1908,342 +1908,164 @@ func (r *customerMtrRepository) RekapLeaderTs(startDate time.Time, endDate time.
 	}
 	//=========================BASIC=======================================
 
-	rekap.DataMemberBasicPerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataMemberBasicPerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-		SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN membership m ON c.no_msn = m.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND m.jns_membership = 'R104'
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err := r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN membership m ON c.no_msn = m.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND m.jns_membership = 'R104'`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataMemberBasic)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_member_basic_per_bulan: %v", err)
-	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_member_basic_per_bulan: %v", err)
-		}
-		rekap.DataMemberBasicPerBulan[bulan] = jumlah
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
 
 	//========================GOLD======================================
 
-	rekap.DataMemberGoldPerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataMemberGoldPerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-		SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN membership m ON c.no_msn = m.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND m.jns_membership = 'R204'
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err = r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN membership m ON c.no_msn = m.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND m.jns_membership = 'R204'`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataMemberGold)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_member_gold_per_bulan: %v", err)
-	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_member_gold_per_bulan: %v", err)
-		}
-		rekap.DataMemberGoldPerBulan[bulan] = jumlah
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
 
 	//==========================PLATINUM====================================
-	rekap.DataMemberPlatPerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataMemberPlatPerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-		SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN membership m ON c.no_msn = m.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND m.jns_membership IN ('R314','R315')
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err = r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN membership m ON c.no_msn = m.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND m.jns_membership IN ('R314','R315')`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataMemberPlat)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_member_plat_per_bulan: %v", err)
-	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_member_plat_per_bulan: %v", err)
-		}
-		rekap.DataMemberPlatPerBulan[bulan] = jumlah
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
 
 	//=======================PLATINUM PLUS=======================================
 
-	rekap.DataMemberPlatPlusPerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataMemberPlatPlusPerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-		SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN membership m ON c.no_msn = m.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND m.jns_membership IN ('R318','R319')
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err = r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN membership m ON c.no_msn = m.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND m.jns_membership IN ('R318','R319')`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataMemberPlatPlus)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_member_plat_plus_per_bulan: %v", err)
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_member_plat_plus_per_bulan: %v", err)
-		}
-		rekap.DataMemberPlatPlusPerBulan[bulan] = jumlah
-	}
-
 	//=======================Panda 1=======================================
 
-	//Rekap PA
-	rekap.DataPanda1PerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataPanda1PerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-	SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN asuransi_pa a ON c.no_msn = a.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND a.id_produk = 'PRODUK-004'
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err = r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN asuransi_pa a ON c.no_msn = a.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND a.id_produk = 'PRODUK-004'`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataPanda1)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_panda1_per_bulan: %v", err)
-	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_panda1_per_bulan: %v", err)
-		}
-		rekap.DataPanda1PerBulan[bulan] = jumlah
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
 	//=======================Panda 2=======================================
 
-	//Rekap PA
-	rekap.DataPanda2PerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataPanda1PerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-	SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN asuransi_pa a ON c.no_msn = a.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND a.id_produk = 'PRODUK-005'
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err = r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN asuransi_pa a ON c.no_msn = a.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND a.id_produk = 'PRODUK-005'`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataPanda2)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_panda2_per_bulan: %v", err)
-	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_panda2_per_bulan: %v", err)
-		}
-		rekap.DataPanda2PerBulan[bulan] = jumlah
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
 	//=======================Panda 3=======================================
-	//Rekap PA
-	rekap.DataPanda3PerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataPanda3PerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-	SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN asuransi_pa a ON c.no_msn = a.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND a.id_produk = 'PRODUK-006'
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err = r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN asuransi_pa a ON c.no_msn = a.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND a.id_produk = 'PRODUK-006'`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataPanda3)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_panda3_per_bulan: %v", err)
-	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_panda3_per_bulan: %v", err)
-		}
-		rekap.DataPanda3PerBulan[bulan] = jumlah
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
 	//=======================TLO=======================================
 
-	//Rekap Mtr
-	rekap.DataTloPerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataTloPerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-	SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN asuransi_mtr a ON c.no_msn = a.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND a.id_produk = 'PRODUK-001'
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err = r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN asuransi_pa a ON c.no_msn = a.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND a.id_produk = 'PRODUK-001'`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataTlo)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_tlo_per_bulan: %v", err)
-	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_tlo_per_bulan: %v", err)
-		}
-		rekap.DataTloPerBulan[bulan] = jumlah
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
 
 	//=======================TLO +=======================================
 
-	//Rekap Mtr
-	rekap.DataTloPlusPerBulan = make(map[int]int)
-	for i := 1; i <= 12; i++ {
-		rekap.DataTloPlusPerBulan[i] = 0
-	}
-
-	// Query untuk menghitung data berminat per bulan dalam tahun ini
-	query = `
-	SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN asuransi_mtr a ON c.no_msn = a.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND a.id_produk = 'PRODUK-002'
-		GROUP BY MONTH(c.tgl_call_tele)`
-
-	rows, err = r.conn.Query(query)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN asuransi_pa a ON c.no_msn = a.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND a.id_produk = 'PRODUK-002'`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataTloPlus)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_tlo_plus_per_bulan: %v", err)
-	}
-	defer rows.Close()
-
-	// Memasukkan hasil query ke dalam map
-	for rows.Next() {
-		var bulan, jumlah int
-		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_tlo_plus_per_bulan: %v", err)
-		}
-		rekap.DataTloPlusPerBulan[bulan] = jumlah
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
 	}
 	//=======================Komersial=======================================
 
-	//Rekap Mtr
-	rekap.DataKomersialPerBulan = make(map[int]int)
+	query = `SELECT 
+		COUNT(*) AS jumlah
+	FROM customer_mtr c
+	JOIN asuransi_pa a ON c.no_msn = a.no_msn
+	WHERE 
+		c.tgl_call_tele BETWEEN ? AND ?
+		AND c.sts_membership = 'O'
+		AND a.id_produk = 'PRODUK-003'`
+	err = r.conn.QueryRow(query, startDate, endDate).Scan(&rekap.DataKomersial)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_pending_mtr: %v", err)
+	}
+
+	//===============================================================================================
+	rekap.DataBerminatMembershipPerBulan = make(map[int]int)
 	for i := 1; i <= 12; i++ {
-		rekap.DataKomersialPerBulan[i] = 0
+		rekap.DataBerminatMembershipPerBulan[i] = 0
 	}
 
 	// Query untuk menghitung data berminat per bulan dalam tahun ini
 	query = `
-	SELECT 
-    	MONTH(c.tgl_call_tele) AS bulan, 
-    	COUNT(*) AS jumlah
-			FROM customer_mtr c
-		JOIN asuransi_mtr a ON c.no_msn = a.no_msn
-		WHERE 
-    		YEAR(c.tgl_call_tele) = YEAR(NOW()) 
-    		AND c.sts_membership = 'O'
-    		AND a.id_produk = 'PRODUK-003'
-		GROUP BY MONTH(c.tgl_call_tele)`
+	SELECT MONTH(tgl_call_tele) AS bulan, COUNT(*) AS jumlah
+	FROM customer_mtr
+	WHERE YEAR(tgl_call_tele) = YEAR(NOW()) 
+	AND sts_membership = 'O'
+	GROUP BY MONTH(tgl_call_tele)`
 
-	rows, err = r.conn.Query(query)
+	rows, err := r.conn.Query(query)
 	if err != nil {
-		return rekap, fmt.Errorf("error fetching data_komersial_per_bulan: %v", err)
+		return rekap, fmt.Errorf("error fetching data_berminat_per_bulan: %v", err)
 	}
 	defer rows.Close()
 
@@ -2251,46 +2073,111 @@ func (r *customerMtrRepository) RekapLeaderTs(startDate time.Time, endDate time.
 	for rows.Next() {
 		var bulan, jumlah int
 		if err := rows.Scan(&bulan, &jumlah); err != nil {
-			return rekap, fmt.Errorf("error scanning data_komersial_per_bulan: %v", err)
+			return rekap, fmt.Errorf("error scanning data_berminat_per_bulan: %v", err)
 		}
-		rekap.DataKomersialPerBulan[bulan] = jumlah
+		rekap.DataBerminatMembershipPerBulan[bulan] = jumlah
+	}
+
+	//Rekap PA
+	rekap.DataBerminatPAPerBulan = make(map[int]int)
+	for i := 1; i <= 12; i++ {
+		rekap.DataBerminatPAPerBulan[i] = 0
+	}
+
+	// Query untuk menghitung data berminat per bulan dalam tahun ini
+	query = `
+	SELECT MONTH(tgl_call_tele) AS bulan, COUNT(*) AS jumlah
+	FROM customer_mtr
+	WHERE YEAR(tgl_call_tele) = YEAR(NOW()) 
+	AND sts_asuransi_pa = 'O'
+	GROUP BY MONTH(tgl_call_tele)`
+
+	rows, err = r.conn.Query(query)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_berminat_per_bulan: %v", err)
+	}
+	defer rows.Close()
+
+	// Memasukkan hasil query ke dalam map
+	for rows.Next() {
+		var bulan, jumlah int
+		if err := rows.Scan(&bulan, &jumlah); err != nil {
+			return rekap, fmt.Errorf("error scanning data_berminat_per_bulan: %v", err)
+		}
+		rekap.DataBerminatPAPerBulan[bulan] = jumlah
+	}
+
+	//Rekap Mtr
+	rekap.DataBerminatMtrPerBulan = make(map[int]int)
+	for i := 1; i <= 12; i++ {
+		rekap.DataBerminatMtrPerBulan[i] = 0
+	}
+
+	// Query untuk menghitung data berminat per bulan dalam tahun ini
+	query = `
+	SELECT MONTH(tgl_call_tele) AS bulan, COUNT(*) AS jumlah
+	FROM customer_mtr
+	WHERE YEAR(tgl_call_tele) = YEAR(NOW()) 
+	AND sts_asuransi_mtr = 'O'
+	GROUP BY MONTH(tgl_call_tele)`
+
+	rows, err = r.conn.Query(query)
+	if err != nil {
+		return rekap, fmt.Errorf("error fetching data_berminat_per_bulan: %v", err)
+	}
+	defer rows.Close()
+
+	// Memasukkan hasil query ke dalam map
+	for rows.Next() {
+		var bulan, jumlah int
+		if err := rows.Scan(&bulan, &jumlah); err != nil {
+			return rekap, fmt.Errorf("error scanning data_berminat_per_bulan: %v", err)
+		}
+		rekap.DataBerminatMtrPerBulan[bulan] = jumlah
 	}
 
 	return rekap, nil
 }
 func (r *customerMtrRepository) RekapBerminatPerWilayah(startDate time.Time, endDate time.Time) ([]response.RekapBerminatPerWilayah, int, error) {
 	query := `
-		SELECT 
-    CASE 
-        WHEN (m.kirim_ke = 1 AND cm.kota_wkm LIKE 'JAK%') OR 
-             (m.kirim_ke = 2 AND cm.kota_ktr_wkm LIKE 'JAK%') 
-        THEN 'JAKARTA'
-        WHEN (m.kirim_ke = 1 AND cm.kota_wkm LIKE '%TANGERANG%') OR 
-             (m.kirim_ke = 2 AND cm.kota_ktr_wkm LIKE '%TANGERANG%') 
-        THEN 'TANGERANG'
-        ELSE 
-            CASE 
-                WHEN m.kirim_ke = 1 THEN cm.kota_wkm
-                WHEN m.kirim_ke = 2 THEN cm.kota_ktr_wkm
-            END
-    END AS kota,
-    CASE 
-        WHEN m.kirim_ke = 1 THEN cm.kec_wkm
-        WHEN m.kirim_ke = 2 THEN cm.kec_ktr_wkm
-    END AS kecamatan,
+			SELECT
+    COALESCE(
+        CASE
+            WHEN m.kirim_ke = 1 THEN
+                CASE
+                    WHEN cm.kota_wkm = 'JAK-SEL' THEN 'Jakarta Selatan'
+                    WHEN cm.kota_wkm = 'JAK-TIM' THEN 'Jakarta Timur'
+                    WHEN cm.kota_wkm = 'JAK-BAR' THEN 'Jakarta Barat'
+                    WHEN cm.kota_wkm = 'JAK-PUS' THEN 'Jakarta Pusat'
+                    WHEN cm.kota_wkm = 'JAK-UT' THEN 'Jakarta Utara'
+                    ELSE cm.kota_wkm
+                END
+            WHEN m.kirim_ke = 2 THEN
+                CASE
+                    WHEN cm.kota_ktr_wkm = 'JAK-SEL' THEN 'Jakarta Selatan'
+                    WHEN cm.kota_ktr_wkm = 'JAK-TIM' THEN 'Jakarta Timur'
+                    WHEN cm.kota_ktr_wkm = 'JAK-BAR' THEN 'Jakarta Barat'
+                    WHEN cm.kota_ktr_wkm = 'JAK-PUS' THEN 'Jakarta Pusat'
+                    WHEN cm.kota_ktr_wkm = 'JAK-UT' THEN 'Jakarta Utara'
+                    ELSE cm.kota_ktr_wkm
+                END
+        END,
+        'UNKNOWN'
+    ) AS kota,
     COUNT(*) AS jumlah,
-    (SELECT COUNT(*) 
-     	FROM db_wkm.customer_mtr 
-     	WHERE sts_membership = 'O' 
-     	AND tgl_call_tele BETWEEN ? AND ?) AS total_data
-	FROM db_wkm.customer_mtr cm
-	JOIN db_wkm.membership m ON cm.no_msn = m.no_msn
-	WHERE cm.sts_membership = 'O' 
-    	AND cm.tgl_call_tele BETWEEN ? AND ?
-	GROUP BY kota, kecamatan
-	`
+    (SELECT COUNT(*)
+     FROM db_wkm.customer_mtr
+     WHERE sts_membership = 'O'
+       AND tgl_call_tele BETWEEN ? AND ?) AS total_data
+FROM db_wkm.customer_mtr cm
+JOIN db_wkm.membership m ON cm.no_msn = m.no_msn
+WHERE cm.sts_membership = 'O'
+  AND cm.tgl_call_tele BETWEEN ? AND ?
+  AND m.kirim_ke IN (1, 2)
+GROUP BY kota
+		`
 
-	rows, err := r.conn.Query(query, startDate, endDate,startDate, endDate)
+	rows, err := r.conn.Query(query, startDate, endDate, startDate, endDate)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -2300,10 +2187,20 @@ func (r *customerMtrRepository) RekapBerminatPerWilayah(startDate time.Time, end
 	var totalData int
 
 	for rows.Next() {
-		var data response.RekapBerminatPerWilayah
-		err := rows.Scan(&data.Kota, &data.Kecamatan, &data.Jumlah, &totalData)
+		var kota sql.NullString
+		var jumlah int
+
+		err := rows.Scan(&kota, &jumlah, &totalData)
 		if err != nil {
 			return nil, 0, err
+		}
+
+		data := response.RekapBerminatPerWilayah{
+			Kota:   "UNKNOWN",
+			Jumlah: jumlah,
+		}
+		if kota.Valid {
+			data.Kota = kota.String
 		}
 		rekap = append(rekap, data)
 	}
@@ -2313,6 +2210,146 @@ func (r *customerMtrRepository) RekapBerminatPerWilayah(startDate time.Time, end
 	}
 
 	return rekap, totalData, nil
+}
+
+func (r *customerMtrRepository) RekapBerminatPerKecamatan(startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.RekapBerminatPerWilayah, int, int, int, error) {
+
+	offset := (pageParams - 1) * limit
+
+	baseQuery := `
+		SELECT 
+			CASE 
+				WHEN (m.kirim_ke = 1 AND cm.kota_wkm LIKE 'JAK%') OR 
+					 (m.kirim_ke = 2 AND cm.kota_ktr_wkm LIKE 'JAK%') 
+				THEN 'JAKARTA'
+				WHEN (m.kirim_ke = 1 AND cm.kota_wkm LIKE '%TANGERANG%') OR 
+					 (m.kirim_ke = 2 AND cm.kota_ktr_wkm LIKE '%TANGERANG%') 
+				THEN 'TANGERANG'
+				ELSE 'OTHERS'
+			END AS kota,
+        CASE 
+            WHEN m.kirim_ke = 1 THEN cm.kec_wkm
+            WHEN m.kirim_ke = 2 THEN cm.kec_ktr_wkm
+        END
+        AS kecamatan,
+			COUNT(*) AS jumlah
+		FROM db_wkm.customer_mtr cm
+		JOIN db_wkm.membership m ON cm.no_msn = m.no_msn
+		WHERE cm.sts_membership = 'O' 
+			AND cm.tgl_call_tele BETWEEN ? AND ?
+	`
+
+	// Pencarian (jika ada)
+	if search != "" {
+		baseQuery += `
+			AND (
+				cm.kec_wkm LIKE ? OR cm.kec_ktr_wkm LIKE ? OR
+				cm.kota_wkm LIKE ? OR cm.kota_ktr_wkm LIKE ?
+			)
+		`
+	}
+
+	baseQuery += `
+		GROUP BY kota, kecamatan
+		ORDER BY jumlah DESC
+		LIMIT ? OFFSET ?
+	`
+
+	// Query untuk total data
+	var totalData int
+	err := r.conn.QueryRow(`
+		SELECT COUNT(*) FROM db_wkm.customer_mtr 
+		WHERE sts_membership = 'O' AND tgl_call_tele BETWEEN ? AND ?
+	`, startDate, endDate).Scan(&totalData)
+
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+
+	// --- Hitung total rows hasil GROUP BY (total baris rekap) ---
+	countQuery := `
+		SELECT COUNT(*) FROM (
+			SELECT 
+				CASE 
+					WHEN (m.kirim_ke = 1 AND cm.kota_wkm LIKE 'JAK%') OR 
+						 (m.kirim_ke = 2 AND cm.kota_ktr_wkm LIKE 'JAK%') 
+					THEN 'JAKARTA'
+					WHEN (m.kirim_ke = 1 AND cm.kota_wkm LIKE '%TANGERANG%') OR 
+						 (m.kirim_ke = 2 AND cm.kota_ktr_wkm LIKE '%TANGERANG%') 
+					THEN 'TANGERANG'
+					ELSE 'OTHERS'
+				END AS kota,
+				CASE 
+					WHEN m.kirim_ke = 1 THEN cm.kec_wkm
+					WHEN m.kirim_ke = 2 THEN cm.kec_ktr_wkm
+				END AS kecamatan
+			FROM db_wkm.customer_mtr cm
+			JOIN db_wkm.membership m ON cm.no_msn = m.no_msn
+			WHERE cm.sts_membership = 'O' AND cm.tgl_call_tele BETWEEN ? AND ?
+	`
+
+	countArgs := []interface{}{startDate, endDate}
+
+	if search != "" {
+		countQuery += `
+			AND (
+				cm.kec_wkm LIKE ? OR cm.kec_ktr_wkm LIKE ?
+				OR cm.kota_wkm LIKE ? OR cm.kota_ktr_wkm LIKE ?
+			)
+		`
+		like := "%" + search + "%"
+		countArgs = append(countArgs, like, like, like, like)
+	}
+
+	countQuery += `
+			GROUP BY kota, kecamatan
+		) AS subquery
+	`
+
+	var totalRows int
+	err = r.conn.QueryRow(countQuery, countArgs...).Scan(&totalRows)
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+
+	// Argumen query utama
+	args := []interface{}{startDate, endDate}
+	if search != "" {
+		like := "%" + search + "%"
+		args = append(args, like, like, like, like)
+	}
+	args = append(args, limit, offset)
+
+	// Eksekusi query data utama
+	rows, err := r.conn.Query(baseQuery, args...)
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+	defer rows.Close()
+
+	var rekap []response.RekapBerminatPerWilayah
+	var totalRowsPerPage int
+	for rows.Next() {
+		var data response.RekapBerminatPerWilayah
+		var jumlah int
+		err := rows.Scan(&data.Kota, &data.Kecamatan, &jumlah)
+		if err != nil {
+			return nil, 0, 0, 0, err
+		}
+		data.Jumlah = jumlah
+		if totalData > 0 {
+			data.Persen = math.Round((float64(jumlah)/float64(totalData)*100)*100) / 100
+		}
+		rekap = append(rekap, data)
+		totalRowsPerPage++
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, 0, 0, err
+	}
+
+	// Total record untuk pagination adalah jumlah baris yang ditemukan (bukan totalData semua)
+	return rekap, len(rekap), totalRows, totalRowsPerPage, nil
 }
 
 func (r *customerMtrRepository) RekapTransaksi(startDate, endDate time.Time) ([]response.RekapTransaksi, error) {
@@ -2378,23 +2415,24 @@ WHERE
 func (r *customerMtrRepository) ListPerformanceTs(startDate, endDate time.Time) ([]response.ListPerformanceTs, []response.ListPerformanceTs, error) {
 	query := `
 		SELECT 
-    su.nama_user, 
+    u.name AS nama_user, 
     su.jumlah_sukses,
     ROUND((su.jumlah_sukses / COALESCE(t.total, 1)) * 100, 2) AS contribution
 FROM (
     SELECT 
-        m.kd_user_ts AS nama_user, 
+        m.kd_user_ts, 
         COUNT(*) AS jumlah_sukses
-    FROM membership m
+    FROM db_wkm.membership m
     WHERE m.sts_bayar = 'S' 
         AND DATE(m.created_at) BETWEEN ? AND ?
     GROUP BY m.kd_user_ts
 ) su
+JOIN users.mst_users u ON u.username = su.kd_user_ts
 CROSS JOIN (
     SELECT SUM(jumlah_sukses) AS total 
     FROM (
         SELECT COUNT(*) AS jumlah_sukses
-        FROM membership 
+        FROM db_wkm.membership 
         WHERE sts_bayar = 'S' 
             AND DATE(created_at) BETWEEN ? AND ?
         GROUP BY kd_user_ts
@@ -2404,7 +2442,7 @@ ORDER BY su.jumlah_sukses DESC
 	`
 
 	// Eksekusi query
-	rows, err := r.conn.Query(query, startDate, endDate,startDate, endDate)
+	rows, err := r.conn.Query(query, startDate, endDate, startDate, endDate)
 	if err != nil {
 		return nil, nil, fmt.Errorf("gagal mengambil data: %w", err)
 	}
@@ -2429,7 +2467,7 @@ ORDER BY su.jumlah_sukses DESC
 	// Ambil Top 5 & Low 5
 	var top5, low5 []response.ListPerformanceTs
 	if len(performanceList) > 5 {
-		top5 = performanceList[:5]                           // Top 5 user dengan jumlah sukses tertinggi
+		top5 = performanceList[:5]                      // Top 5 user dengan jumlah sukses tertinggi
 		low5 = performanceList[len(performanceList)-5:] // Low 5 user dengan jumlah sukses terendah
 	} else {
 		top5 = performanceList
@@ -2515,4 +2553,3 @@ func (r *customerMtrRepository) RekapStatus(startDate, endDate time.Time) ([]res
 
 	return results, nil
 }
-

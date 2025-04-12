@@ -12,4 +12,5 @@ type MinatMembership struct {
 	StsKartu            string     `form:"sts_kartu" json:"sts_kartu" gorm:"column:sts_kartu"`
 	StsBayarRenewal     string     `form:"sts_bayar_renewal" json:"sts_bayar_renewal" gorm:"column:sts_bayar_renewal"`
 	KdCard              string     `form:"kd_card" json:"kd_card" gorm:"column:kd_card"`
+	NmKurir              string     `form:"nm_kurir" json:"nm_kurir" gorm:"column:nm_kurir"`
 }
