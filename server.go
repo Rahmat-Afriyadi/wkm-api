@@ -310,6 +310,7 @@ func main() {
 	app.Get("/customer-mtr/rekap-tele", middleware.DeserializeUser, customerMtrController.RekapTele)
 	app.Get("/customer-mtr/rekap-leader-ts", middleware.DeserializeUser, customerMtrController.RekapLeaderTs)
 	app.Get("/customer-mtr/rekap-per-wilayah", middleware.DeserializeUser, customerMtrController.RekapBerminatPerWilayah)
+	app.Get("/customer-mtr/rekap-per-kecamatan", middleware.DeserializeUser, customerMtrController.ListDataPerKecamatan)
 	app.Post("/customer-mtr/export-rekap-leader-ts", middleware.DeserializeUser, customerMtrController.ExportRekapLeaderTs)
 	app.Get("/customer-mtr/list-performance", middleware.DeserializeUser, customerMtrController.ListPerformanceTs)
 	app.Get("/customer-mtr/rekap-status", middleware.DeserializeUser, customerMtrController.RekapStatus)

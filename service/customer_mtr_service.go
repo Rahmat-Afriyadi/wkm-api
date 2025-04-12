@@ -44,6 +44,7 @@ type CustomerMtrService interface {
 	ExportRekapLeaderTs(startDate time.Time, endDate time.Time) (string, error)
 	ListPerformanceTs(startDate time.Time, endDate time.Time) (response.PerformanceTs, error)
 	GetRekapStatus(startDate time.Time, endDate time.Time) ([]response.RekapStatus, error)
+	ListDataPerKecamatan(startDate time.Time, endDate time.Time,limit int, pageParams int, search string) ([]response.RekapBerminatPerWilayah,int,int,int, error)
 }
 
 type customerMtrService struct {
@@ -579,4 +580,14 @@ func (cS *customerMtrService) ListPerformanceTs(startDate time.Time, endDate tim
 
 func (cS *customerMtrService) GetRekapStatus(startDate time.Time, endDate time.Time) ([]response.RekapStatus, error) {
 	return cS.cR.RekapStatus(startDate, endDate)
+}
+
+func (cS *customerMtrService) ListDataPerKecamatan(startDate time.Time, endDate time.Time, limit int, pageParams int, search string) ([]response.RekapBerminatPerWilayah, int, int,int, error) {
+	// Memanggil repository untuk mengambil data
+	data, totalPages, totalRecords,totalRowsPerPage, err := cS.cR.RekapBerminatPerKecamatan(startDate, endDate, limit, pageParams, search)
+	if err != nil {
+		return nil, 0, 0,0, err
+	}
+
+	return data, totalPages, totalRecords,totalRowsPerPage, nil
 }

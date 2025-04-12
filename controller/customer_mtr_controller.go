@@ -38,6 +38,7 @@ type CustomerMtrController interface {
 	ExportRekapLeaderTs(ctx *fiber.Ctx) error
 	ListPerformanceTs(ctx *fiber.Ctx) error
 	RekapStatus(ctx *fiber.Ctx) error
+	ListDataPerKecamatan(ctx *fiber.Ctx) error
 }
 
 type customerMtrController struct {
@@ -967,5 +968,80 @@ func (tr *customerMtrController) RekapStatus(ctx *fiber.Ctx) error {
         "Dari":    startDate.Format(layoutDate),
         "Sampai":  endDate.Format(layoutDate),
     })
+}
+
+func (tr *customerMtrController) ListDataPerKecamatan(ctx *fiber.Ctx) error {
+	// Format tanggal yang digunakan
+	layoutFull := "2006-01-02 15:04:05"
+	layoutDate := "2006-01-02"
+
+	// Load lokasi waktu Jakarta
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	now := time.Now().In(loc)
+	startDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	endDate := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, loc)
+	tgl1 := ctx.Query("tgl1", "") // Default kosong jika tidak ada
+	tgl2 := ctx.Query("tgl2", "")
+	search := ctx.Query("search", "")
+
+	// Parsing tgl1 jika ada
+	if tgl1 != "" {
+		parsedStart, err := time.ParseInLocation(layoutFull, tgl1, loc)
+		if err != nil {
+			parsedStart, err = time.ParseInLocation(layoutDate, tgl1, loc)
+			if err == nil {
+				parsedStart = time.Date(parsedStart.Year(), parsedStart.Month(), parsedStart.Day(), 0, 0, 0, 0, loc)
+			}
+		}
+		if err == nil {
+			startDate = parsedStart
+		}
+	}
+
+	// Parsing tgl2 jika ada
+	if tgl2 != "" {
+		parsedEnd, err := time.ParseInLocation(layoutFull, tgl2, loc)
+		if err != nil {
+			parsedEnd, err = time.ParseInLocation(layoutDate, tgl2, loc)
+			if err == nil {
+				parsedEnd = time.Date(parsedEnd.Year(), parsedEnd.Month(), parsedEnd.Day(), 23, 59, 59, 0, loc)
+			}
+		}
+		if err == nil {
+			endDate = parsedEnd
+		}
+	}
+
+	// Mengambil informasi user dari context
+	user := ctx.Locals("user")
+    details, ok := user.(entity.User)
+    if !ok || details.RoleId != 2 {
+        return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "error":   "Unauthorized",
+            "details": "User tidak memiliki akses",
+        })
+    }
+	limit, _ := strconv.Atoi(ctx.Query("limit", "5")) // Default limit 10 jika tidak ada
+	pageParams, _ := strconv.Atoi(ctx.Query("pageParams", "1"))
+	// Memanggil service untuk mendapatkan data rekap
+	data, totalPages,totalRecords,totalRowsPerPage, err := tr.customerMtrService.ListDataPerKecamatan(startDate, endDate, limit, pageParams,search)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Failed to fetch data",
+			"details": err.Error(),
+		})
+	}
+
+	// Response sukses dengan format hanya "YYYY-MM-DD"
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Berhasil",
+		"data":    data,
+		"pages": pageParams,
+		"total_pages": totalPages,
+		"total_records": totalRecords,
+		"total_row_per_page": totalRowsPerPage,
+		"Dari":    startDate.Format(layoutDate),
+		"Sampai":  endDate.Format(layoutDate),
+	})
 }
 
