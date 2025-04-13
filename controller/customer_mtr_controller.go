@@ -974,6 +974,7 @@ func (tr *customerMtrController) RekapStatus(ctx *fiber.Ctx) error {
     })
 }
 
+
 func (tr *customerMtrController) ListDataPerKecamatan(ctx *fiber.Ctx) error {
 	// Format tanggal yang digunakan
 	layoutFull := "2006-01-02 15:04:05"
