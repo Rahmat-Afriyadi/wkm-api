@@ -21,9 +21,9 @@ import (
 )
 
 type CustomerMtrRepository interface {
-	AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse
+	AllStatusMasterData(search string, username string,tgl_bayar1 string, tgl_bayar2 string, limit int, pageParams int) []response.AllStatusResponse
 	CreateCustomerFFaktur(no_msn string) error
-	AllStatusMasterDataCount(search string, username string) int64
+	AllStatusMasterDataCount(search string, username string,tgl_bayar1 string, tgl_bayar2 string) int64
 	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
 	MasterDataCount(search string, sts string, jns string, username string) int64
 	MasterDataBalikan(search string, tgl1 string, tgl2 string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList
@@ -244,7 +244,7 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmerCount(search string,t
 }
 
 
-func (cR *customerMtrRepository) AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse {
+func (cR *customerMtrRepository) AllStatusMasterData(search string, username string,tgl_bayar1 string, tgl_bayar2 string, limit int, pageParams int) []response.AllStatusResponse {
 	offset := (pageParams - 1) * limit
 	datas := []response.AllStatusResponse{}
 	count := 0  
@@ -282,7 +282,7 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 	}
 	return datas
 }
-func (cR *customerMtrRepository) AllStatusMasterDataCount(search string, username string) int64 {
+func (cR *customerMtrRepository) AllStatusMasterDataCount(search string, username string,tgl_bayar1 string, tgl_bayar2 string) int64 {
 	count := 0  
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
