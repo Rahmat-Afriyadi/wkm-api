@@ -21,9 +21,9 @@ import (
 )
 
 type CustomerMtrRepository interface {
-	AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse
+	AllStatusMasterData(search string, username string,tgl_bayar1 string, tgl_bayar2 string, limit int, pageParams int) []response.AllStatusResponse
 	CreateCustomerFFaktur(no_msn string) error
-	AllStatusMasterDataCount(search string, username string) int64
+	AllStatusMasterDataCount(search string, username string,tgl_bayar1 string, tgl_bayar2 string) int64
 	MasterData(search string, sts string, jns string, username string, limit int, pageParams int) []entity.CustomerMtr
 	MasterDataCount(search string, sts string, jns string, username string) int64
 	MasterDataBalikan(search string, tgl1 string, tgl2 string, username string, limit int, pageParams int) []response.TelesalesBalikanResponseList
@@ -242,7 +242,7 @@ func (cR *customerMtrRepository) MasterDataBalikanKonfirmerCount(search string, 
 	return count
 }
 
-func (cR *customerMtrRepository) AllStatusMasterData(search string, username string, limit int, pageParams int) []response.AllStatusResponse {
+func (cR *customerMtrRepository) AllStatusMasterData(search string, username string,tgl_bayar1 string, tgl_bayar2 string, limit int, pageParams int) []response.AllStatusResponse {
 	offset := (pageParams - 1) * limit
 	datas := []response.AllStatusResponse{}
 	count := 0
@@ -280,8 +280,8 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 	}
 	return datas
 }
-func (cR *customerMtrRepository) AllStatusMasterDataCount(search string, username string) int64 {
-	count := 0
+func (cR *customerMtrRepository) AllStatusMasterDataCount(search string, username string,tgl_bayar1 string, tgl_bayar2 string) int64 {
+	count := 0  
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%", "%"+search+"%", username).Scan(&count)
@@ -743,7 +743,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 			membership.StsKartu = "6"
 			membership.StsBayar = ""
 			r.connGorm.Save(&membership)
-			stmt, err := r.conn.Prepare("UPDATE tr_wms_faktur3 SET sts_kartu='6', sts_bawa_kartu='5', sts_bayar_renewal='',  kd_user11=?, tgl_konfirmasi=?  where no_msn = ?")
+			stmt, err := r.conn.Prepare("UPDATE tr_wms_faktur3 SET sts_kartu='6', sts_bawa_kartu='5', sts_bayar_renewal='', alasan_belum_bayar2='', tgl_ambil_kartu_balikan=null, kode_kurir=null,  kd_user11=?, tgl_konfirmasi=?  where no_msn = ?")
 			if err != nil {
 				log.Fatal("Error preparing statement:", err)
 			}

@@ -794,7 +794,12 @@ func (tr *tr3Repository) UpdateInputBayarMembership(data request.InputBayarReque
 			membership.TglInputBayar = &now
 			membership.KdUserFa = data.KdUserFa
 			membership.TglExpired = &stockCard.TglExpired
+			membership.KodeKurir = faktur3.KdKurir
+			membership.RenewalKe = customerMtr.RenewalKe
+			membership.AlasanTdkKurir = faktur3.AlasanBelumBayar2
+			membership.KirimKe = faktur3.StsKirim
 			membership.StsBayar = "S"
+			membership.TglExpired= &stockCard.TglExpired
 			tr.connGorm.Save(&membership)
 		}else {
 			newMembership := entity.Membership{
