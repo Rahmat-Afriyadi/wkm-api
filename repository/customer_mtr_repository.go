@@ -250,6 +250,7 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%", "%"+search+"%", username).Scan(&count)
+	// add filter
 	if tgl_bayar1 != "" {
 		tgl_bayar1 = "and tgl_bayar_renewal_fin >= '" + tgl_bayar1 + "'"
 	}
