@@ -420,32 +420,28 @@ func (cS *customerMtrService) RekapBerminatPerWilayah(startDate time.Time, endDa
 }
 
 func (cS *customerMtrService) ExportRekapLeaderTs(startDate, endDate time.Time) (string, error) {
-	// Jika startDate atau endDate kosong, set ke tanggal hari ini dengan waktu awal & akhir
 	now := time.Now()
 	if startDate.IsZero() {
-		startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()) // 00:00:00
+		startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	}
 	if endDate.IsZero() {
-		endDate = time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location()) // 23:59:59
+		endDate = time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location())
 	}
 
-	// Memanggil repository untuk mendapatkan data rekap transaksi (Sheet 1)
 	rekap, err := cS.cR.RekapTransaksi(startDate, endDate)
 	if err != nil {
 		return "", err
 	}
 
-	// Memanggil repository untuk mendapatkan data rekap status (Sheet 2)
 	rekapStatus, err := cS.cR.RekapStatus(startDate, endDate)
 	if err != nil {
 		return "", err
 	}
 
-	// Buat file Excel baru
 	file := excelize.NewFile()
-	headerStyle := setHeaderStyle(file) // Gunakan header style
+	headerStyle := setHeaderStyle(file)
+	borderStyle := setBorderStyle(file)
 
-	// **SHEET 1: Rekap Transaksi**
 	sheet1 := "Rekap 1"
 	file.SetSheetName("Sheet1", sheet1)
 
@@ -454,32 +450,29 @@ func (cS *customerMtrService) ExportRekapLeaderTs(startDate, endDate time.Time) 
 		"BASIC", "GOLD", "PLATINUM", "PLATINUMP",
 	}
 
-	// Set header di Sheet 1
 	for i, header := range headers1 {
 		col := columnNumberToName(i+1) + "1"
 		file.SetCellValue(sheet1, col, header)
 		file.SetCellStyle(sheet1, col, col, headerStyle)
 	}
 
-	// Isi data Sheet 1
 	for idx, row := range rekap {
 		rowIndex := idx + 2
-		file.SetCellValue(sheet1, fmt.Sprintf("A%d", rowIndex), row.NamaUser)
-		file.SetCellValue(sheet1, fmt.Sprintf("B%d", rowIndex), row.JmlData)
-		file.SetCellValue(sheet1, fmt.Sprintf("C%d", rowIndex), row.RenewalOkCash)
-		file.SetCellValue(sheet1, fmt.Sprintf("D%d", rowIndex), row.RenewalOkTransfer)
-		file.SetCellValue(sheet1, fmt.Sprintf("E%d", rowIndex), row.RenewalOkDigital)
-		file.SetCellValue(sheet1, fmt.Sprintf("F%d", rowIndex), row.Basic)
-		file.SetCellValue(sheet1, fmt.Sprintf("G%d", rowIndex), row.Gold)
-		file.SetCellValue(sheet1, fmt.Sprintf("H%d", rowIndex), row.Platinum)
-		file.SetCellValue(sheet1, fmt.Sprintf("I%d", rowIndex), row.PlatinumP)
+		values := []interface{}{
+			row.NamaUser, row.JmlData, row.RenewalOkCash, row.RenewalOkTransfer,
+			row.RenewalOkDigital, row.Basic, row.Gold, row.Platinum, row.PlatinumP,
+		}
+
+		for i, val := range values {
+			cell := fmt.Sprintf("%s%d", columnNumberToName(i+1), rowIndex)
+			file.SetCellValue(sheet1, cell, val)
+			file.SetCellStyle(sheet1, cell, cell, borderStyle)
+		}
 	}
 
-	// **SHEET 2: Rekap Status**
 	sheet2 := "Rekap Status"
 	file.NewSheet(sheet2)
 
-	// Header utama Sheet 2
 	headers2 := []string{
 		"Kd User", "Jumlah Data", "Sudah Terima", "Belum Terima",
 		"Renewal OK Cash Update", "Renewal OK Cash", "Renewal OK Transfer",
@@ -487,58 +480,65 @@ func (cS *customerMtrService) ExportRekapLeaderTs(startDate, endDate time.Time) 
 		"Prospek", "Basic", "Gold", "Platinum",
 	}
 
-	// Tambahkan header untuk Alasan Tidak Renewal (1-24)
 	for i := 1; i <= 24; i++ {
 		headers2 = append(headers2, fmt.Sprintf("%d", i))
 	}
 
-	// Set header di Sheet 2
 	for i, header := range headers2 {
 		col := columnNumberToName(i+1) + "1"
 		file.SetCellValue(sheet2, col, header)
 		file.SetCellStyle(sheet2, col, col, headerStyle)
 	}
 
-	// Isi data Sheet 2
 	for idx, row := range rekapStatus {
 		rowIndex := idx + 2
-		file.SetCellValue(sheet2, fmt.Sprintf("A%d", rowIndex), row.KdUser)
-		file.SetCellValue(sheet2, fmt.Sprintf("B%d", rowIndex), row.JmlData)
-		file.SetCellValue(sheet2, fmt.Sprintf("C%d", rowIndex), row.SudahTerima)
-		file.SetCellValue(sheet2, fmt.Sprintf("D%d", rowIndex), row.BelumTerima)
-		file.SetCellValue(sheet2, fmt.Sprintf("E%d", rowIndex), row.RenewalOkCashUpdate)
-		file.SetCellValue(sheet2, fmt.Sprintf("F%d", rowIndex), row.RenewalOkCash)
-		file.SetCellValue(sheet2, fmt.Sprintf("G%d", rowIndex), row.RenewalOkTransfer)
-		file.SetCellValue(sheet2, fmt.Sprintf("H%d", rowIndex), row.PikirRagu)
-		file.SetCellValue(sheet2, fmt.Sprintf("I%d", rowIndex), row.TelpKembali)
-		file.SetCellValue(sheet2, fmt.Sprintf("J%d", rowIndex), row.TidakDiangkat)
-		file.SetCellValue(sheet2, fmt.Sprintf("K%d", rowIndex), row.BelumRegist)
-		file.SetCellValue(sheet2, fmt.Sprintf("L%d", rowIndex), row.Prospek)
-		file.SetCellValue(sheet2, fmt.Sprintf("M%d", rowIndex), row.Basic)
-		file.SetCellValue(sheet2, fmt.Sprintf("N%d", rowIndex), row.Gold)
-		file.SetCellValue(sheet2, fmt.Sprintf("O%d", rowIndex), row.Platinum)
+		values := []interface{}{
+			row.KdUser, row.JmlData, row.SudahTerima, row.BelumTerima,
+			row.RenewalOkCashUpdate, row.RenewalOkCash, row.RenewalOkTransfer,
+			row.PikirRagu, row.TelpKembali, row.TidakDiangkat, row.BelumRegist,
+			row.Prospek, row.Basic, row.Gold, row.Platinum,
+		}
 
-		// Isi data alasan tidak renewal (1-24)
+		for i, val := range values {
+			cell := fmt.Sprintf("%s%d", columnNumberToName(i+1), rowIndex)
+			file.SetCellValue(sheet2, cell, val)
+			file.SetCellStyle(sheet2, cell, cell, borderStyle)
+		}
+
+		// Alasan tidak renewal
 		for i := 1; i <= 24; i++ {
 			alasanKey := fmt.Sprintf("%d", i)
-			col := columnNumberToName(15 + i) + fmt.Sprintf("%d", rowIndex) // Mulai dari kolom "P"
-	
-			// Pastikan nilai ada, jika tidak ada isi dengan 0
+			colName := columnNumberToName(15 + i)
+			cell := fmt.Sprintf("%s%d", colName, rowIndex)
+
 			if count, exists := row.AlasanTidakRenewal[alasanKey]; exists {
-				file.SetCellValue(sheet2, col, count)
+				file.SetCellValue(sheet2, cell, count)
 			} else {
-				file.SetCellValue(sheet2, col, 0)
+				file.SetCellValue(sheet2, cell, 0)
 			}
+			file.SetCellStyle(sheet2, cell, cell, borderStyle)
 		}
 	}
 
-	// Simpan file
 	fileName := "Export_Rekap_Leader_TS.xlsx"
 	if err := file.SaveAs(fileName); err != nil {
 		return "", fmt.Errorf("failed to save Excel file: %v", err)
 	}
 
 	return fileName, nil
+}
+
+
+func setBorderStyle(f *excelize.File) int {
+	style, _ := f.NewStyle(`{
+		"border": [
+			{"type": "left", "color": "#000000", "style": 1},
+			{"type": "right", "color": "#000000", "style": 1},
+			{"type": "top", "color": "#000000", "style": 1},
+			{"type": "bottom", "color": "#000000", "style": 1}
+		]
+	}`)
+	return style
 }
 
 func columnNumberToName(n int) string {
