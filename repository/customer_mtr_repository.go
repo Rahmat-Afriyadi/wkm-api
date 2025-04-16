@@ -249,8 +249,15 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%", "%"+search+"%", username).Scan(&count)
+	if tgl_bayar1 != "" {
+		tgl_bayar1 = "and tgl_bayar_renewal_fin >= '" + tgl_bayar1 + "'"
+	}
+	if tgl_bayar2 != "" {
+		tgl_bayar2 = "and tgl_bayar_renewal_fin <= '" + tgl_bayar2 + "'"
+	}
+	where := fmt.Sprintf("where (no_msn like ? or nm_customer11 like ? ) %s %s and kd_user = ? limit ? offset ?", tgl_bayar1, tgl_bayar2)
 	if count > 0 {
-		rows, err := cR.conn.QueryContext(ctx, "select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, '3' from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%", "%"+search+"%", username, limit, offset)
+		rows, err := cR.conn.QueryContext(ctx, fmt.Sprintf("select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, tgl_bayar_renewal_fin, '3' from tr_wms_faktur3 %s",where), "%"+search+"%", "%"+search+"%", username, limit, offset)
 		if err != nil {
 			fmt.Println("ini error ", err.Error())
 			return datas
@@ -258,13 +265,13 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 		defer rows.Close()
 		for rows.Next() {
 			var data response.AllStatusResponse
-			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.StsBayar, &data.FromTable); err != nil {
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.StsBayar,&data.TglBayarRenewal, &data.FromTable); err != nil {
 				log.Fatal(err)
 			}
 			datas = append(datas, data)
 		}
 	} else {
-		rows, err := cR.conn.QueryContext(ctx, "select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, '4' from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? limit ? offset ?", "%"+search+"%", "%"+search+"%", username, limit, offset)
+		rows, err := cR.conn.QueryContext(ctx, fmt.Sprintf("select no_msn, nm_customer11, sts_renewal, tgl_verifikasi, sts_bayar_renewal, tgl_bayar_renewal_fin, '4' from tr_wms_faktur4 %s",where), "%"+search+"%", "%"+search+"%", username, limit, offset)
 		if err != nil {
 			fmt.Println("ini error ", err.Error())
 			return datas
@@ -272,7 +279,7 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 		defer rows.Close()
 		for rows.Next() {
 			var data response.AllStatusResponse
-			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.StsBayar, &data.FromTable); err != nil {
+			if err := rows.Scan(&data.NoMsn, &data.NmCustomer, &data.StsMembership, &data.TglVerifikasi, &data.StsBayar, &data.TglBayarRenewal, &data.FromTable); err != nil {
 				log.Fatal(err)
 			}
 			datas = append(datas, data)
@@ -281,12 +288,21 @@ func (cR *customerMtrRepository) AllStatusMasterData(search string, username str
 	return datas
 }
 func (cR *customerMtrRepository) AllStatusMasterDataCount(search string, username string,tgl_bayar1 string, tgl_bayar2 string) int64 {
-	count := 0  
+	count := 0    
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur3 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%", "%"+search+"%", username).Scan(&count)
+	if tgl_bayar1 != "" {
+		tgl_bayar1 = "and tgl_bayar_renewal_fin >= '" + tgl_bayar1 + "'"
+	}
+	if tgl_bayar2 != "" {
+		tgl_bayar2 = "and tgl_bayar_renewal_fin <= '" + tgl_bayar2 + "'"
+	}
+	where := fmt.Sprintf("where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? %s %s", tgl_bayar1, tgl_bayar2)
+	
+	
+	cR.conn.QueryRowContext(ctx, fmt.Sprintf("select count(*) from tr_wms_faktur3 %s ",where), "%"+search+"%", "%"+search+"%", username).Scan(&count)
 	if count < 1 {
-		cR.conn.QueryRowContext(ctx, "select count(*) from tr_wms_faktur4 where (no_msn like ? or nm_customer11 like ? ) and kd_user = ? ", "%"+search+"%", "%"+search+"%", username).Scan(&count)
+		cR.conn.QueryRowContext(ctx, fmt.Sprintf("select count(*) from tr_wms_faktur4 %s ",where), "%"+search+"%", "%"+search+"%", username).Scan(&count)
 	}
 	return int64(count)
 }
