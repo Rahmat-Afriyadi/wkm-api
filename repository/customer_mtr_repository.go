@@ -2480,9 +2480,9 @@ ORDER BY su.jumlah_sukses DESC
 func (r *customerMtrRepository) RekapStatus(startDate, endDate time.Time) ([]response.RekapStatus, error) {
 	var results []response.RekapStatus
 
-	// Query utama untuk mendapatkan data rekap
+	// Query utama (tidak diubah)
 	query := `
-		SELECT kd_user,
+		SELECT u.name AS kd_user,
 			COUNT(CASE WHEN NO_MSN<>'' THEN NO_MSN ELSE NULL END) AS jml_data,
 			COUNT(CASE WHEN TERIMA_KARTU='S' THEN TERIMA_KARTU ELSE NULL END) AS sudah_terima,
 			COUNT(CASE WHEN TERIMA_KARTU='B' THEN TERIMA_KARTU ELSE NULL END) AS belum_terima,
@@ -2497,9 +2497,10 @@ func (r *customerMtrRepository) RekapStatus(startDate, endDate time.Time) ([]res
 			COUNT(CASE WHEN kd_card='16' AND sts_renewal='O' AND sts_jenis_bayar='C' THEN kd_card ELSE NULL END) AS basic,
 			COUNT(CASE WHEN kd_card='25' AND sts_renewal='O' AND sts_jenis_bayar='C' THEN kd_card ELSE NULL END) AS gold,
 			COUNT(CASE WHEN kd_card='38' AND sts_renewal='O' AND sts_jenis_bayar='C' THEN kd_card ELSE NULL END) AS platinum
-		FROM tr_wms_faktur3
-		WHERE tgl_verifikasi >= ? AND tgl_verifikasi <= ? AND kd_client = '1'
-		GROUP BY kd_user;
+		FROM tr_wms_faktur3 f
+	LEFT JOIN users.mst_users u ON u.username = f.kd_user
+	WHERE tgl_verifikasi >= ? AND tgl_verifikasi <= ? AND kd_client = '1'
+	GROUP BY u.name;
 	`
 
 	rows, err := r.conn.Query(query, startDate, endDate)
@@ -2508,9 +2509,40 @@ func (r *customerMtrRepository) RekapStatus(startDate, endDate time.Time) ([]res
 	}
 	defer rows.Close()
 
+	// Ambil semua alasan tidak renewal sekaligus
+	alasanQuery := `
+		SELECT u.name AS kd_user, ALASAN_TDK_RENEWAL, COUNT(*) as total 
+		FROM tr_wms_faktur3 f
+		LEFT JOIN users.mst_users u ON u.username = f.kd_user
+		WHERE STS_RENEWAL='T' 
+		AND tgl_verifikasi >= ? AND tgl_verifikasi <= ? AND kd_client = '1'
+		GROUP BY kd_user, ALASAN_TDK_RENEWAL
+	`
+
+	alasanRows, err := r.conn.Query(alasanQuery, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	defer alasanRows.Close()
+
+	// Map nested: map[kd_user][alasan] = count
+	alasanMap := make(map[string]map[string]int)
+	for alasanRows.Next() {
+		var kdUser, alasan string
+		var count int
+		if err := alasanRows.Scan(&kdUser, &alasan, &count); err != nil {
+			return nil, err
+		}
+		if _, ok := alasanMap[kdUser]; !ok {
+			alasanMap[kdUser] = make(map[string]int)
+		}
+		alasanMap[kdUser][alasan] = count
+	}
+
+	// Loop hasil utama
 	for rows.Next() {
 		var item response.RekapStatus
-		err := rows.Scan(
+		if err := rows.Scan(
 			&item.KdUser,
 			&item.JmlData,
 			&item.SudahTerima,
@@ -2526,28 +2558,22 @@ func (r *customerMtrRepository) RekapStatus(startDate, endDate time.Time) ([]res
 			&item.Basic,
 			&item.Gold,
 			&item.Platinum,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
 
-		// Menambahkan alasan tidak renewal dari 1 - 24
-		alasanTidakRenewal := make(map[string]int)
+		// Ambil alasan 1–24 untuk kd_user ini dari map
+		alasanPerUser := make(map[string]int)
 		for i := 1; i <= 24; i++ {
-			var count int
-			queryAlasan := `
-				SELECT COUNT(*) FROM tr_wms_faktur3 
-				WHERE STS_RENEWAL='T' AND ALASAN_TDK_RENEWAL=? 
-				AND tgl_verifikasi >= ? AND tgl_verifikasi <= ? AND kd_client = '1'
-			`
-			err := r.conn.QueryRow(queryAlasan, i, startDate, endDate).Scan(&count)
-			if err != nil {
-				return nil, err
+			key := fmt.Sprintf("%d", i)
+			if count, ok := alasanMap[item.KdUser][key]; ok {
+				alasanPerUser[key] = count
+			} else {
+				alasanPerUser[key] = 0
 			}
-			alasanTidakRenewal[fmt.Sprintf("%d", i)] = count
 		}
+		item.AlasanTidakRenewal = alasanPerUser
 
-		item.AlasanTidakRenewal = alasanTidakRenewal
 		results = append(results, item)
 	}
 
