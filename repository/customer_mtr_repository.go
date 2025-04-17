@@ -692,6 +692,10 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	print := 0
 	now := time.Now()
 
+	if customer.AlasanTdkMembership == ""  && customer.StsMembership == "T" {
+		return entity.CustomerMtr{}, errors.New("alasan tidak boleh kosong")
+	}
+
 	jsonBytes, err := json.Marshal(customer)
 	if err != nil {
 		fmt.Println("Error encoding JSON:", err)
@@ -720,8 +724,6 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 	if jsonMap["tgl_janji_bayar"] != nil {
 		jsonMap["tgl_janji_bayar"] = jsonMap["tgl_janji_bayar"].(string)[:10]
 	}
-
-	fmt.Println("ini tgl call tele ", jsonMap["tgl_call_tele"])
 
 	if jsonMap["sts_membership"] == "O" {
 		result := r.connGorm.Where("no_msn = ? and renewal_ke = ?", customer.NoMsn, customer.RenewalKe).First(&membership)
