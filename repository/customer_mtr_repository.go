@@ -761,7 +761,7 @@ func (r *customerMtrRepository) UpdateOkeMembership(customer request.CustomerMtr
 			membership.StsKartu = "6"
 			membership.StsBayar = ""
 			r.connGorm.Save(&membership)
-			stmt, err := r.conn.Prepare("UPDATE tr_wms_faktur3 SET sts_kartu='6', sts_bawa_kartu='5', sts_bayar_renewal='', alasan_belum_bayar2='', tgl_ambil_kartu_balikan=null, kode_kurir=null,  kd_user11=?, tgl_konfirmasi=?  where no_msn = ?")
+			stmt, err := r.conn.Prepare("UPDATE tr_wms_faktur3 SET sts_kartu='6', sts_bawa_kartu='5', sts_bayar_renewal='', alasan_belum_bayar2='', tgl_ambil_kartu=null, kode_kurir=null,  kd_user11=?, tgl_konfirmasi=?  where no_msn = ?")
 			if err != nil {
 				log.Fatal("Error preparing statement:", err)
 			}
